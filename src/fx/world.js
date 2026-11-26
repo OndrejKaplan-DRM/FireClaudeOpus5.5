@@ -325,6 +325,14 @@ export class Explosion {
         w.sp.spawn({ x: this.pos.x, y: this.pos.y + 0.1, z: this.pos.z, vx: Math.cos(a) * s * v, vy: Math.abs(u) * v * 0.8 + 1, vz: Math.sin(a) * s * v, life: 0.4 + r() * 1.4, T: 1600 + 600 * r(), tauC: 0.35 + r() * 0.4, size: 0.003 + r() * 0.01, drag: 1.5 + r() * 3, grav: 1, seed: r() });
       }
       if (o.scorch) w.addScorch({ pos: this.pos, radius: o.scorch, seed: o.seed, crater: o.crater || 0 });
+      // vyvržená zemina a prach z kráteru (hustý prstenec u středu, rozlet ven)
+      if (o.dust && o.W > 0) {
+        const k = Math.cbrt(o.W), n = Math.min(260, 40 + 50 * k) * w.budgetScale.smoke;
+        for (let i = 0; i < n; i++) {
+          const a = r() * 6.283, rr = 0.3 * k * r(), v = (2 + 6 * r()) * Math.min(3, 0.6 + k * 0.4);
+          w.bb.spawnSmoke({ x: this.pos.x + Math.cos(a) * rr, y: 0.1 + r() * 0.3 * k, z: this.pos.z + Math.sin(a) * rr, vx: Math.cos(a) * v, vy: 0.5 + r() * 2 * k, vz: Math.sin(a) * v, life: 4 + 6 * r(), s0: 0.25 + 0.35 * k, s1: 1 + 1.6 * k, tau: 1.4, albedo: o.dustAlbedo || [0.32, 0.27, 0.2], drag: 0.7, seed: r() });
+        }
+      }
     }
     // ohnivá koule
     if (fb) {

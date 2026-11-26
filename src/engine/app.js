@@ -102,6 +102,7 @@ export class App {
     this.fx.scnTime = 0; this.t = 0;
     this.timeScale = s.timeScale || 1;
     this.run = s.build(this.ctx());
+    if (s.startT) { this.t = s.startT; this.fx.scnTime = s.startT; this.run.update?.(0, this.t); }
     if (!keepCamera) this.setCam(0);
     this.applyWire();
     this.onScenario(s);

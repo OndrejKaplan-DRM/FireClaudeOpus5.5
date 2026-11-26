@@ -306,7 +306,7 @@ export const SCENARIOS = [
         update(dt, t) {
           if (!boom && t > 1.5) {
             boom = true; g.visible = false;
-            ctx.fx.addExplosion({ pos: V(0, 0.05, 0), W, seed: 9, flash: 2e6, scorch: 1.4, dust: true, fireball: { D: fb.D, t: fb.t, T: 2600, soot: 1 }, smoke: { n: 140, life: 7, albedo: [0.11, 0.1, 0.095], tau: 1.6, buoy: 1.8 }, debris: { n: 160, speed: 300, size: 0.006, hot: 0.9, up: 0.25, T: 1100 }, sparks: { n: 220, speed: 70 } });
+            ctx.fx.addExplosion({ pos: V(0, 0.05, 0), W, seed: 9, flash: 2e6, scorch: 1.4, dust: true, fireball: { D: fb.D, t: fb.t, T: 2600, soot: 1 }, smoke: { n: 140, life: 7, albedo: [0.11, 0.1, 0.095], tau: 1.6, buoy: 0.7, buoyAcc: 0.25 }, debris: { n: 160, speed: 300, size: 0.006, hot: 0.9, up: 0.25, T: 1100 }, sparks: { n: 220, speed: 70 } });
             ctx.fx.debris.burst(V(0, 0.05, 0), { n: 40, speed: 12, size: 0.05, hot: 0, up: 0.7 });
           }
         },
@@ -336,16 +336,16 @@ export const SCENARIOS = [
   },
   // ---------------------------------------------------------------------------------------------- les
   {
-    id: 'forest', group: 'Velké požáry', name: 'Lesní požár', ground: 'forest', time: 'soumrak', timeScale: 30, wind: 2, duration: 3600,
+    id: 'forest', group: 'Velké požáry', name: 'Lesní požár', ground: 'forest', time: 'soumrak', timeScale: 30, wind: 2, startT: 900, duration: 3600,
     desc: 'Borový les 260 × 260 m. Šíření po zemi (hrabanka) podle Andersonovy elipsy; kde Byramova intenzita překročí práh Van Wagnera, požár přechází do korun.',
-    cams: [{ name: 'nad lesem', pos: [-60, 55, 140], target: [10, 0, 0] }, { name: 'v lese', pos: [-20, 1.7, 40], target: [20, 6, 0] }, { name: 'daleko', pos: [-200, 90, 260], target: [0, 10, 0] }],
+    cams: [{ name: 'nad lesem', pos: [-95, 45, 95], target: [-45, 0, 0] }, { name: 'v lese', pos: [-12, 1.7, 22], target: [-45, 5, 0] }, { name: 'daleko', pos: [-200, 90, 260], target: [0, 10, 0] }],
     build(ctx) { return landscapeFire(ctx, { kind: 'pine', size: 260, cell: 5, fuel: 'forestLitter', crown: true, density: 1, seed: 71 }); },
   },
   // ---------------------------------------------------------------------------------------------- křoví
   {
-    id: 'brush', group: 'Velké požáry', name: 'Hoření suchého křoví', ground: 'dryGrass', time: 'den', timeScale: 6, wind: 2, duration: 1500,
+    id: 'brush', group: 'Velké požáry', name: 'Hoření suchého křoví', ground: 'dryGrass', time: 'den', timeScale: 6, wind: 2, startT: 150, duration: 1500,
     desc: 'Suché křoví a tráva 160 × 160 m. Rychlé šíření (~10 m/min ve větru), plameny 2–4 m, šedobílý kouř.',
-    cams: [{ name: 'nad plochou', pos: [-40, 30, 90], target: [10, 0, 0] }, { name: 'hráč', pos: [-30, 1.7, 30], target: [10, 2, 0] }],
+    cams: [{ name: 'nad plochou', pos: [-60, 22, 55], target: [-30, 0, 0] }, { name: 'hráč', pos: [-15, 1.7, 14], target: [-35, 2, 0] }],
     build(ctx) { return landscapeFire(ctx, { kind: 'bush', size: 160, cell: 3, fuel: 'brush', crown: false, density: 2.2, seed: 81 }); },
   },
   // ---------------------------------------------------------------------------------------------- dům
