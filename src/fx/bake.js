@@ -84,8 +84,8 @@ export function bakeAtlas(renderer, { res = 128, seed = 3, steps = 48 } = {}) {
     uCell: { value: new THREE.Vector2(res, res) }, uBakeSteps: { value: steps },
     uScale: { value: new THREE.Vector3(0.5, 1.4, 0.5) }, uSeed: { value: seed }, uSteps: { value: steps },
     uTpeak: { value: 1400 }, uTamb: { value: 500 }, uIntensity: { value: 1 },
-    uShape: { value: new THREE.Vector4(0.32, 0.9, 0.0, 0.95) }, uAxis0: { value: 0 }, uShear: { value: 0 }, uRz: { value: 0.33 },
-    uTurb: { value: new THREE.Vector4(1.3, 0.16, 1.6, 0.8) }, uPuff: { value: new THREE.Vector2(1.0 / 2.0, 0.35) },
+    uShape: { value: new THREE.Vector4(0.36, 1.3, 0.0, 0.95) }, uAxis0: { value: 0 }, uShear: { value: 0 }, uRz: { value: 0.33 },
+    uTurb: { value: new THREE.Vector4(0.75, 0.4, 1.6, 2.0) }, uPuff: { value: new THREE.Vector2(1.0 / 2.0, 0.35) },
     uSoot: { value: 0.35 }, uBlue: { value: 0 }, uSigma: { value: 0.2 }, uLift: { value: 0 }, uAge: { value: 0 }, uLoopT: { value: 2.0 },
     uRes: { value: new THREE.Vector2(W, H) },
   };

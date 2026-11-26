@@ -203,15 +203,17 @@ export class FlameVolume {
     const tanT = Math.tan(Math.min(theta, 1.35));
     const Hv = H * Math.cos(Math.min(theta, 1.35)) * 1.15 + R * 0.3;
     const lean = tanT * Hv;
-    const Wx = 2 * R * drag + lean + R * 0.6, Wz = 2 * (Rz ?? R) * 1.3;
-    this.mesh.position.copy(pos);
+    const Wx = R * (1 + drag) + lean + R * 0.6 + R * 0.3 * (drag - 1), Wz = 2 * (Rz ?? R) * 1.3;
+    // kvádr začíná 1,3 R proti větru od středu zdroje → posun středu po větru (prodloužení paty jen po větru)
+    const shift = Wx / 2 - 1.3 * R;
+    this.mesh.position.set(pos.x + Math.cos(windDir) * shift, pos.y, pos.z + Math.sin(windDir) * shift);
     this.mesh.rotation.set(0, -windDir, 0);
     this.mesh.scale.set(Wx, Hv * 1.12, Wz);
     const u = this.u;
     u.uScale.value.set(Wx, Hv * 1.12, Wz);
-    u.uShape.value.x = (R * drag) / Wx;
+    u.uShape.value.x = (R * (1 + drag) * 0.5) / Wx;
     u.uRz.value = (Rz ?? R) / Wz;
-    u.uAxis0.value = -0.5 + (R * drag + R * 0.3) / Wx;
+    u.uAxis0.value = -0.5 + (0.3 * R + R * (1 + drag) * 0.5) / Wx;
     u.uShear.value = lean / Wx;
   }
 }

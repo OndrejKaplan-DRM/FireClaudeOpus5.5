@@ -212,8 +212,8 @@ export class FireSource {
     // jazyky: rodí se u paty, za život urazí výšku plamene (střední rychlost v plameni ~1,5 Q^(1/5), McCaffrey ★3)
     const uf = 1.5 * Math.pow(ph.Q / 1000, 0.2);
     const life = Math.min(2.5, Math.max(0.22, L / uf));
-    const s0 = Math.max(Math.min(0.9 * L, Math.max(0.5 * L, 0.65 * D)), 0.004);
-    let nF = Math.min(160, 4 + 2.2 * (D / s0) ** 2 * (L / s0)) * m.flame * (useVol ? 0.3 : 1);
+    const s0 = 1.45 * Math.max(Math.min(0.9 * L, Math.max(0.5 * L, 0.65 * D)), 0.004); // jazyk v atlasu zabírá ~60 % buňky
+    let nF = Math.min(160, 5 + 4 * (D / s0) ** 2 * (L / s0)) * m.flame * (useVol ? 0.3 : 1);
     if (this.o.tongues) nF = this.o.tongues * (useVol ? 0.3 : 1);
     this.demand.flame = nF;
     if (w.layers.flame && !(useVol && this.o.volumeOnly)) {
@@ -230,7 +230,7 @@ export class FireSource {
         w.bb.spawnFlame({
           x, y: y + L * 0.08 * r(), z, vx: up * lean * cw + push[0], vy: up + push[1], vz: up * lean * sw + push[2],
           life: life * (0.75 + 0.5 * r()), s0: s0 * (0.8 + 0.4 * r()), s1: s0 * 0.55, T: ph.T + (r() - 0.5) * 100,
-          lum: flick * 0.6, tint: [1, 1, 1],
+          lum: flick * 0.75, tint: [1, 1, 1],
           ox: this.pos.x, oz: this.pos.z, pq: 0, pz0: 0, drag: life * 4, stretch: 0.6 + ph.tilt.us * 0.1, R0: D / 2,
           seed: r(),
         });
@@ -295,7 +295,7 @@ export class FireSource {
       }
     }
     // --- světlo
-    const lh = this.o.lightH ?? 0.5;
+    const lh = this.o.lightH ?? 0.65;
     w.lights.add(this.pos.x + lean * L * lh * cw, this.pos.y + L * lh, this.pos.z + lean * L * lh * sw, ph.I * flick, ph.T - 80, Math.max(D * 0.6, L * 0.5));
   }
 }

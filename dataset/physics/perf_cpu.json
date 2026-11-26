@@ -1,0 +1,515 @@
+{
+ "note": "CPU čas kroku simulace (bez kreslení) v headless Chrome na 2 jádrech sandboxu; GPU čas nevypovídá (swiftshader).",
+ "T0": {
+  "spark": {
+   "msPerFrame": 0.095,
+   "particles": 392,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 368
+  },
+  "candle": {
+   "msPerFrame": 0.032,
+   "particles": 5,
+   "volumes": 0,
+   "lights": 1,
+   "sceneTris": 1440
+  },
+  "torch": {
+   "msPerFrame": 0.037,
+   "particles": 14,
+   "volumes": 0,
+   "lights": 1,
+   "sceneTris": 436
+  },
+  "smallFire": {
+   "msPerFrame": 0.03,
+   "particles": 29,
+   "volumes": 0,
+   "lights": 1,
+   "sceneTris": 904
+  },
+  "campfire": {
+   "msPerFrame": 0.027,
+   "particles": 57,
+   "volumes": 0,
+   "lights": 1,
+   "sceneTris": 1704
+  },
+  "bonfire": {
+   "msPerFrame": 0.195,
+   "particles": 144,
+   "volumes": 0,
+   "lights": 1,
+   "sceneTris": 2264
+  },
+  "haystack": {
+   "msPerFrame": 0.102,
+   "particles": 345,
+   "volumes": 0,
+   "lights": 1,
+   "sceneTris": 320
+  },
+  "tires": {
+   "msPerFrame": 0.033,
+   "particles": 65,
+   "volumes": 0,
+   "lights": 2,
+   "sceneTris": 600
+  },
+  "diesel": {
+   "msPerFrame": 0.022,
+   "particles": 43,
+   "volumes": 0,
+   "lights": 1,
+   "sceneTris": 548
+  },
+  "car": {
+   "msPerFrame": 0.098,
+   "particles": 213,
+   "volumes": 0,
+   "lights": 2,
+   "sceneTris": 2304
+  },
+  "barrel": {
+   "msPerFrame": 0.232,
+   "particles": 548,
+   "volumes": 0,
+   "lights": 2,
+   "sceneTris": 1368
+  },
+  "acetylene": {
+   "msPerFrame": 0.03,
+   "particles": 34,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 1264
+  },
+  "grenade": {
+   "msPerFrame": 0.262,
+   "particles": 157,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 748
+  },
+  "tnt": {
+   "msPerFrame": 0.398,
+   "particles": 1327,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 1384
+  },
+  "forest": {
+   "msPerFrame": 0.337,
+   "particles": 650,
+   "volumes": 0,
+   "lights": 2,
+   "sceneTris": 9782
+  },
+  "brush": {
+   "msPerFrame": 0.27,
+   "particles": 604,
+   "volumes": 0,
+   "lights": 2,
+   "sceneTris": 70082
+  },
+  "house": {
+   "msPerFrame": 0.185,
+   "particles": 475,
+   "volumes": 0,
+   "lights": 2,
+   "sceneTris": 1288
+  },
+  "lab": {
+   "msPerFrame": 0.038,
+   "particles": 73,
+   "volumes": 0,
+   "lights": 1,
+   "sceneTris": 0
+  }
+ },
+ "T1": {
+  "spark": {
+   "msPerFrame": 0.218,
+   "particles": 418,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 1544
+  },
+  "candle": {
+   "msPerFrame": 0.065,
+   "particles": 3,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 12684
+  },
+  "torch": {
+   "msPerFrame": 0.038,
+   "particles": 11,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 2552
+  },
+  "smallFire": {
+   "msPerFrame": 0.067,
+   "particles": 22,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 4480
+  },
+  "campfire": {
+   "msPerFrame": 0.048,
+   "particles": 48,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 8416
+  },
+  "bonfire": {
+   "msPerFrame": 0.088,
+   "particles": 144,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 11328
+  },
+  "haystack": {
+   "msPerFrame": 0.237,
+   "particles": 764,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 5120
+  },
+  "tires": {
+   "msPerFrame": 0.035,
+   "particles": 62,
+   "volumes": 1,
+   "lights": 2,
+   "sceneTris": 4680
+  },
+  "diesel": {
+   "msPerFrame": 0.02,
+   "particles": 35,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 9492
+  },
+  "car": {
+   "msPerFrame": 0.122,
+   "particles": 202,
+   "volumes": 2,
+   "lights": 4,
+   "sceneTris": 18704
+  },
+  "barrel": {
+   "msPerFrame": 0.253,
+   "particles": 528,
+   "volumes": 1,
+   "lights": 4,
+   "sceneTris": 15328
+  },
+  "acetylene": {
+   "msPerFrame": 0.033,
+   "particles": 39,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 11128
+  },
+  "grenade": {
+   "msPerFrame": 1.165,
+   "particles": 157,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 5060
+  },
+  "tnt": {
+   "msPerFrame": 0.792,
+   "particles": 1385,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 15264
+  },
+  "forest": {
+   "msPerFrame": 0.478,
+   "particles": 787,
+   "volumes": 2,
+   "lights": 3,
+   "sceneTris": 65366
+  },
+  "brush": {
+   "msPerFrame": 0.622,
+   "particles": 1377,
+   "volumes": 2,
+   "lights": 4,
+   "sceneTris": 243842
+  },
+  "house": {
+   "msPerFrame": 0.165,
+   "particles": 469,
+   "volumes": 2,
+   "lights": 4,
+   "sceneTris": 8176
+  },
+  "lab": {
+   "msPerFrame": 0.027,
+   "particles": 66,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 0
+  }
+ },
+ "T2": {
+  "spark": {
+   "msPerFrame": 0.228,
+   "particles": 418,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 1544
+  },
+  "candle": {
+   "msPerFrame": 0.038,
+   "particles": 5,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 12684
+  },
+  "torch": {
+   "msPerFrame": 0.035,
+   "particles": 18,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 2552
+  },
+  "smallFire": {
+   "msPerFrame": 0.027,
+   "particles": 31,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 4480
+  },
+  "campfire": {
+   "msPerFrame": 0.075,
+   "particles": 62,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 8416
+  },
+  "bonfire": {
+   "msPerFrame": 0.088,
+   "particles": 165,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 11328
+  },
+  "haystack": {
+   "msPerFrame": 0.248,
+   "particles": 793,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 5120
+  },
+  "tires": {
+   "msPerFrame": 0.052,
+   "particles": 100,
+   "volumes": 1,
+   "lights": 2,
+   "sceneTris": 4680
+  },
+  "diesel": {
+   "msPerFrame": 0.045,
+   "particles": 61,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 9492
+  },
+  "car": {
+   "msPerFrame": 0.147,
+   "particles": 312,
+   "volumes": 2,
+   "lights": 6,
+   "sceneTris": 18704
+  },
+  "barrel": {
+   "msPerFrame": 0.437,
+   "particles": 637,
+   "volumes": 1,
+   "lights": 6,
+   "sceneTris": 15328
+  },
+  "acetylene": {
+   "msPerFrame": 0.033,
+   "particles": 39,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 11128
+  },
+  "grenade": {
+   "msPerFrame": 1.712,
+   "particles": 157,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 5060
+  },
+  "tnt": {
+   "msPerFrame": 1.542,
+   "particles": 1458,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 15264
+  },
+  "forest": {
+   "msPerFrame": 0.617,
+   "particles": 742,
+   "volumes": 3,
+   "lights": 3,
+   "sceneTris": 163966
+  },
+  "brush": {
+   "msPerFrame": 0.912,
+   "particles": 2451,
+   "volumes": 4,
+   "lights": 6,
+   "sceneTris": 597442
+  },
+  "house": {
+   "msPerFrame": 0.197,
+   "particles": 577,
+   "volumes": 6,
+   "lights": 6,
+   "sceneTris": 8176
+  },
+  "lab": {
+   "msPerFrame": 0.027,
+   "particles": 88,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 0
+  }
+ },
+ "T3": {
+  "spark": {
+   "msPerFrame": 0.117,
+   "particles": 418,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 12424
+  },
+  "candle": {
+   "msPerFrame": 0.04,
+   "particles": 5,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 135868
+  },
+  "torch": {
+   "msPerFrame": 0.057,
+   "particles": 18,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 30144
+  },
+  "smallFire": {
+   "msPerFrame": 0.13,
+   "particles": 31,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 30200
+  },
+  "campfire": {
+   "msPerFrame": 0.035,
+   "particles": 62,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 60392
+  },
+  "bonfire": {
+   "msPerFrame": 0.117,
+   "particles": 165,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 81992
+  },
+  "haystack": {
+   "msPerFrame": 0.227,
+   "particles": 793,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 41472
+  },
+  "tires": {
+   "msPerFrame": 0.05,
+   "particles": 100,
+   "volumes": 1,
+   "lights": 2,
+   "sceneTris": 46800
+  },
+  "diesel": {
+   "msPerFrame": 0.033,
+   "particles": 61,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 95596
+  },
+  "car": {
+   "msPerFrame": 0.138,
+   "particles": 312,
+   "volumes": 2,
+   "lights": 6,
+   "sceneTris": 135024
+  },
+  "barrel": {
+   "msPerFrame": 0.303,
+   "particles": 637,
+   "volumes": 1,
+   "lights": 8,
+   "sceneTris": 159584
+  },
+  "acetylene": {
+   "msPerFrame": 0.058,
+   "particles": 39,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 133784
+  },
+  "grenade": {
+   "msPerFrame": 1.84,
+   "particles": 157,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 75812
+  },
+  "tnt": {
+   "msPerFrame": 2.927,
+   "particles": 1635,
+   "volumes": 0,
+   "lights": 0,
+   "sceneTris": 184056
+  },
+  "forest": {
+   "msPerFrame": 0.902,
+   "particles": 742,
+   "volumes": 3,
+   "lights": 3,
+   "sceneTris": 461246
+  },
+  "brush": {
+   "msPerFrame": 1.095,
+   "particles": 2451,
+   "volumes": 4,
+   "lights": 8,
+   "sceneTris": 1836482
+  },
+  "house": {
+   "msPerFrame": 0.327,
+   "particles": 577,
+   "volumes": 6,
+   "lights": 8,
+   "sceneTris": 109112
+  },
+  "lab": {
+   "msPerFrame": 0.032,
+   "particles": 88,
+   "volumes": 1,
+   "lights": 1,
+   "sceneTris": 0
+  }
+ }
+}

@@ -19,7 +19,7 @@ Stav k 2026-11-26 ráno: **iterace 1 hotová** (vše níže zaškrtnuté je v `m
 2. **Lesní a křovinný požár** vypadá dobře zdálky; zblízka chybí hořící kmeny a padající větve, korunový požár je jen velké jazyky.
 3. **Dům**: plameny z oken jsou jen sprity tlačené ven; chybí zhroucení střechy a lámání skel (zvuk/praskání).
 4. **Svíčka na T2+**: bloom kolem plamene je výrazný (realistické pro fotoaparát, oko vidí méně) – zvážit menší bloom pro malé zdroje.
-5. **Výkon**: čísla v záložce Technika ze sandboxu (swiftshader) nevypovídají o GPU; reálné měření na T460 a RTX 4060 chybí.
+5. **Výkon**: CPU strana změřená (`tools/perf-cpu.mjs` → `dataset/physics/perf_cpu.json`): krok simulace 0,02–0,4 ms (T0) až 0,03–2,9 ms (T3, 1 t TNT). GPU čas ze sandboxu (swiftshader) nevypovídá – reálné měření na T460 a RTX 4060 chybí (stačí otevřít `dist/index.html` a záložku Technika).
 6. Heat haze je jen T2+ a jednoduchý (šum); rázová vlna lomí obraz jen jako prstenec.
 
 ## Nápady (neschváleno)

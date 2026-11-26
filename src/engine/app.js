@@ -161,7 +161,7 @@ export class App {
     // měření jako oko: osvětlení v místě pozorovatele a v půli cesty k cíli (ne v ohni samotném)
     const c = this.camera.position, tgt = this.controls.target;
     const mid = c.clone().lerp(tgt, 0.5);
-    const E = this.env.ambientE + (this.fx.lights.illuminanceAt(c) + this.fx.lights.illuminanceAt(mid) + 0.4 * this.fx.lights.illuminanceAt(tgt)) / 3;
+    const E = this.env.ambientE + (this.fx.lights.illuminanceAt(c) + this.fx.lights.illuminanceAt(mid) + 0.08 * this.fx.lights.illuminanceAt(tgt)) / 2.08;
     const Ls = (0.25 / Math.PI) * E;
     const Lavg = Math.exp(0.75 * Math.log(Math.max(Ls, 1e-5)) + 0.25 * Math.log(Math.max(this.env.skyL, 1e-5)));
     this.pipeline.targetExposure = Math.min(50, Math.max(2e-6, (0.25 / Lavg) * (this.expBias || 1)));

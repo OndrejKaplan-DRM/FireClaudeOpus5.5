@@ -21,7 +21,7 @@ export class FireLights {
     for (let i = 0; i < tier.lights; i++) {
       const L = new THREE.PointLight(0xffaa66, 0, 0, 2);
       if (tier.shadows && i < 1) {
-        L.castShadow = true; L.shadow.mapSize.set(1024, 1024); L.shadow.bias = -0.002; L.shadow.normalBias = 0.02;
+        L.castShadow = true; L.shadow.mapSize.set(1024, 1024); L.shadow.bias = -0.002; L.shadow.normalBias = 0.02; L.shadow.radius = 6;
         L.shadow.camera.near = 0.05; L.shadow.camera.far = 200;
       }
       this.scene.add(L); this.pool.push(L);

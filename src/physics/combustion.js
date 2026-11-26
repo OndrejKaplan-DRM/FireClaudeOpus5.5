@@ -78,7 +78,7 @@ export function ventilation(o2) {
     sootMul: 1 + 2.0 * s,
     coYield: 0.004 + 0.2 * s,
     chi: phi <= 1 ? 1 : Math.max(0.35, 1 / Math.pow(phi, 0.8)),
-    tempDrop: 220 * s, // K – chladnější, temnější oranžová/červená
+    tempDrop: 300 * s, // K – chladnější, temnější oranžová/červená
     lift: s, // „hledání vzduchu" – plameny se odlepují a vlní, zvětšují objem
   };
 }
