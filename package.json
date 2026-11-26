@@ -1,0 +1,27 @@
+{
+  "name": "firelab",
+  "version": "0.1.0",
+  "description": "FireLab – procedurální ohňové assety a efekty pro Three.js FPS engine",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "dev": "node tools/build.mjs --watch",
+    "test": "node tools/test.mjs",
+    "bake": "node tools/bake.mjs",
+    "test:physics": "node tools/test-physics.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OndrejKaplan-DRM/fireclaudeopus5.5.git"
+  },
+  "author": "",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/OndrejKaplan-DRM/fireclaudeopus5.5/issues"
+  },
+  "homepage": "https://github.com/OndrejKaplan-DRM/fireclaudeopus5.5#readme",
+  "dependencies": {
+    "esbuild": "^0.24.0",
+    "three": "^0.170.0"
+  },
+  "type": "module"
+}
