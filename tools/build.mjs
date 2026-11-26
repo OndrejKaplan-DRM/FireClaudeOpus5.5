@@ -38,6 +38,8 @@ async function once() {
   const out = html(js, css);
   fs.writeFileSync(path.join(root, 'dist/index.html'), out);
   console.log(`dist/index.html  ${(out.length / 1024).toFixed(0)} kB  (${Date.now() - t0} ms)`);
+  // knihovna pro jiné projekty: ESM, three externí
+  await esbuild.build({ entryPoints: [path.join(root, 'src/index.js')], bundle: true, format: 'esm', outfile: path.join(root, 'dist/firelab.module.js'), external: ['three', 'three/*'], target: 'es2020', logLevel: 'warning', legalComments: 'none' });
 }
 
 await once();

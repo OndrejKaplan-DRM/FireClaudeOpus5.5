@@ -22,7 +22,8 @@
    {
     "lod": 3,
     "tris": 135808,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "file": "candle_L3.glb",
+    "kB": 2951
    },
    {
     "lod": 4,
@@ -87,7 +88,7 @@
    {
     "lod": 3,
     "tris": 30200,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
@@ -119,7 +120,7 @@
    {
     "lod": 3,
     "tris": 60392,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
@@ -151,7 +152,7 @@
    {
     "lod": 3,
     "tris": 81992,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
@@ -183,7 +184,8 @@
    {
     "lod": 3,
     "tris": 129120,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "file": "tire_L3.glb",
+    "kB": 2946
    },
    {
     "lod": 4,
@@ -247,7 +249,7 @@
    {
     "lod": 3,
     "tris": 159584,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
@@ -312,7 +314,7 @@
    {
     "lod": 3,
     "tris": 184056,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
@@ -344,7 +346,8 @@
    {
     "lod": 3,
     "tris": 133784,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "file": "acetylene_L3.glb",
+    "kB": 2999
    },
    {
     "lod": 4,
@@ -442,7 +445,7 @@
    {
     "lod": 3,
     "tris": 44064,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
@@ -474,7 +477,7 @@
    {
     "lod": 3,
     "tris": 135024,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
@@ -506,7 +509,7 @@
    {
     "lod": 3,
     "tris": 109112,
-    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+    "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,

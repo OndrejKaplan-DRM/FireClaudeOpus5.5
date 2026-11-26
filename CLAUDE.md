@@ -13,8 +13,14 @@ Cizí data se nepoužívají (povolené by byly jen CC0 šablony – zatím žá
 npm install            # three 0.170, esbuild, (playwright je v systému globálně)
 npm run build          # → dist/index.html (jeden soubor, vše vložené)
 npm run dev            # watch build + http server na :8765
-npm test               # headless smoke test všech scénářů (Chrome + swiftshader)
-npm run bake           # dataset/: flipbooky PNG, GLB modely, náhledy, presety JSON
+npm test               # headless smoke test všech scénářů (Chrome + swiftshader) → /tmp/firetest_T0/sheet.png
+npm run test:physics   # korelace proti literatuře (Node, 1 s)
+npm run test:ui        # kliky na záložky, atlas, assety, časovou osu
+npm run perf           # CPU cena simulace všech scénářů na T0–T3 → dataset/physics/perf_cpu.json
+npm run bake           # dataset/: flipbooky PNG, GLB modely, náhledy, presety JSON (~25 min)
+node tools/seq.mjs <scn> <tier> <t1,t2,..> out.png [cam]   # časová řada snímků
+node tools/subcases.mjs <scn> <tier> out.png               # vítr 0–3 a kyslík v mřížce
+node tools/probe.mjs <scn> <tier> <s> [cam] [out] [query]   # jeden snímek + statistiky
 ```
 Prohlížeč: otevři `dist/index.html` dvojklikem (funguje z `file://`).
 Parametry URL: `?scn=<id>&tier=0..3&wind=0..3&o2=0..1&t=<s>&ui=0`.
@@ -27,6 +33,8 @@ Parametry URL: `?scn=<id>&tier=0..3&wind=0..3&o2=0..1&t=<s>&ui=0`.
 - `src/engine/` – renderer, stupně kvality, prostředí (vítr, kyslík, čas).
 - `src/ui/` – prohlížeč FireLab.
 - `tools/` – bake datasetu, testy. `dataset/` – vygenerovaný výstup (commitovaný).
+- `src/index.js` → `dist/firelab.module.js` – knihovna pro jiné projekty (ESM, three externí).
+- Artefakt FireLab na claude.ai: https://claude.ai/artifact/ALsY87Cfm3Sd3U4eQVJMak (slug 4ba8861b-417a-4687-8f0a-b747ffd677fd, schopnost `downloads`).
 
 ## Konvence
 - Jednotky **SI** všude (m, s, kg, W, K, Pa). Kód v angličtině, dokumenty a UI česky.
@@ -36,6 +44,13 @@ Parametry URL: `?scn=<id>&tier=0..3&wind=0..3&o2=0..1&t=<s>&ui=0`.
 - Determinismus: všechny generátory berou `seed`; stejný seed = stejný model / flipbook.
 - Rozpočty (částice, objemy, △) se kontrolují v `tiers.js`; nikdy je neobcházet natvrdo v efektu.
 - Po každé ucelené změně: `npm run build && npm test`, zápis do `TODO.md`, rozhodnutí do `DECISIONS.md`.
+
+## Pasti (ověřené)
+- Před-expozice: světla se nastavují až těsně před kreslením (`lights.applyPre`), jinak testy bez smyčky vidí intenzitu × 1.
+- `pipeline.depthTexture` se při změně velikosti vyrábí znovu – materiály ji berou každý snímek z `FXWorld.update`, ne při stavbě.
+- Testy: `?noloop=1`, simulace přes `window.__fire.ff()`, snímek přes `__fire.shot()` (toDataURL ve stejné úloze).
+- Nebuildovat, když běží `npm run bake` nebo testy (stránka se načte s jiným kódem).
+- Swiftshader: T2/T3 načtení 20–30 s (bake atlasu + překlad shaderů); na GPU desítky ms.
 
 ## Co nedělat
 - Nepřidávat CDN závislosti (artefakt i `file://` musí běžet offline).

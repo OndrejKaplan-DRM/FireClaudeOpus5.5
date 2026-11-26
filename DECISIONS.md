@@ -90,3 +90,13 @@ Formát: **D-xxx · datum · rozhodnutí** — proč, alternativy, důsledky, ji
 - Deterministické, okamžitě přepočitatelné při změně větru (dosavadní hořící/vyhořelé buňky slouží jako zdroje), bez „čtverečkového“
   tvaru. Hořící buňky dostávají zdroje z bazénu (T0 40 … T3 180) seřazené podle vzdálenosti od kamery. Přechod do korun, když Byramova
   intenzita přesáhne 0,6 × I0 (Van Wagner, CBH 4 m, FMC 100 %). ★★
+
+### D-018 · 2026-11-26 · Objem ve větru: pata se prodlužuje jen po větru
+- Původně byl kvádr centrován na zdroj a osa počítaná od jeho kraje → ve větru se plamen „rozlil“ i proti větru. Nyní kvádr začíná
+  1,3 R proti větru a střed se posouvá po větru o Wx/2 − 1,3 R; prodloužení paty (flame drag) jde jen po větru. Ověřeno `tools/subcases.mjs`.
+- Světlo ohně je ve výšce 0,65 L (střed svítivé zóny), ne uvnitř palivového lože – jinak polena stíní celé okolí (T3 stíny).
+
+### D-019 · 2026-11-26 · Export z artefaktu přes schopnost `downloads`, GLB balený do ZIP
+- Rámec claude.ai neumí `<a download>`. Artefakt deklaruje `downloads` a ukládá přes `claude.use('downloads').save()`.
+  Přípona .glb není na seznamu povolených → model se zabalí do ZIP (vlastní minimální zapisovač, metoda store, CRC32).
+  Z `dist/index.html` otevřeného z disku se stahuje přímo.
