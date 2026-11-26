@@ -1,0 +1,332 @@
+{
+ "format": "firelab-preset/1",
+ "id": "brush",
+ "name": "Hoření suchého křoví",
+ "group": "Velké požáry",
+ "desc": "Suché křoví a tráva 160 × 160 m. Rychlé šíření (~10 m/min ve větru), plameny 2–4 m, šedobílý kouř.",
+ "time": "den",
+ "timeScale": 6,
+ "duration": 1500,
+ "cams": [
+  {
+   "name": "nad plochou",
+   "pos": [
+    -40,
+    30,
+    90
+   ],
+   "target": [
+    10,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    -30,
+    1.7,
+    30
+   ],
+   "target": [
+    10,
+    2,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Palivo",
+   "v": "Suché křoví (keře, tráva)",
+   "src": "w = 1.5 kg/m²"
+  },
+  {
+   "k": "Rychlost čela R",
+   "v": "10.6 m/min",
+   "src": "Rothermel-lite ★2"
+  },
+  {
+   "k": "Byramova intenzita",
+   "v": "4759 kW/m",
+   "src": "Byram ★4"
+  },
+  {
+   "k": "Délka plamene",
+   "v": "3.8 m",
+   "src": "Byram ★4"
+  },
+  {
+   "k": "Tvar L/B",
+   "v": "2.22",
+   "src": "Anderson ★4"
+  },
+  {
+   "k": "Práh korun I0",
+   "v": "1348 kW/m",
+   "src": "Van Wagner ★3"
+  },
+  {
+   "k": "Hořící buňky",
+   "v": "20 (3×3 m)",
+   "src": ""
+  },
+  {
+   "k": "Vyhořelo",
+   "v": "0.08 ha",
+   "src": ""
+  },
+  {
+   "k": "Režim",
+   "v": "přízemní požár",
+   "src": ""
+  },
+  {
+   "k": "Porost",
+   "v": "4500 ks, △ 0.60 M",
+   "src": "LOD blízko/daleko"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "brush",
+   "pos": [
+    -27.5,
+    0.02,
+    23.5
+   ],
+   "D": 3.385,
+   "Q_W": 4523884,
+   "L_m": 2.837,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.146,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 39100
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -21.5,
+    0.02,
+    23.5
+   ],
+   "D": 3.385,
+   "Q_W": 5690494,
+   "L_m": 3.586,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.262,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 49183
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -18.5,
+    0.02,
+    23.5
+   ],
+   "D": 3.385,
+   "Q_W": 4087052,
+   "L_m": 2.743,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.111,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 35324.4
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -45.5,
+    0.02,
+    17.5
+   ],
+   "D": 3.385,
+   "Q_W": 5650543,
+   "L_m": 3.734,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.267,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 48837.7
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -30.5,
+    0.02,
+    17.5
+   ],
+   "D": 3.385,
+   "Q_W": 5584125,
+   "L_m": 3.651,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.259,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 48263.6
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -27.5,
+    0.02,
+    17.5
+   ],
+   "D": 3.385,
+   "Q_W": 5002279,
+   "L_m": 3.35,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.206,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 43234.7
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -21.5,
+    0.02,
+    17.5
+   ],
+   "D": 3.385,
+   "Q_W": 5603189,
+   "L_m": 3.76,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.265,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 48428.4
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -18.5,
+    0.02,
+    17.5
+   ],
+   "D": 3.385,
+   "Q_W": 2560728,
+   "L_m": 1.791,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 0.931,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 22132.4
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -30.5,
+    0.02,
+    11.5
+   ],
+   "D": 3.385,
+   "Q_W": 3058408,
+   "L_m": 2.315,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.003,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 26433.8
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -27.5,
+    0.02,
+    11.5
+   ],
+   "D": 3.385,
+   "Q_W": 4925918,
+   "L_m": 3.803,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.218,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 42574.7
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -24.5,
+    0.02,
+    11.5
+   ],
+   "D": 3.385,
+   "Q_W": 3941243,
+   "L_m": 3.141,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.114,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 34064.2
+  },
+  {
+   "fuel": "brush",
+   "pos": [
+    -21.5,
+    0.02,
+    11.5
+   ],
+   "D": 3.385,
+   "Q_W": 4018305,
+   "L_m": 3.125,
+   "T_K": 1180,
+   "puff_Hz": 0.82,
+   "smoke_tau": 1.121,
+   "smoke_rgb": [
+    0.503,
+    0.5,
+    0.496
+   ],
+   "light_cd": 34730.2
+  }
+ ]
+}

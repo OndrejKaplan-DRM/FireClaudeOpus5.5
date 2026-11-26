@@ -20,15 +20,34 @@ const h = (tag, attrs = {}, ...kids) => {
 };
 const $ = (s) => document.querySelector(s);
 const fmt = (v, d = 1) => (v == null || Number.isNaN(v) ? '—' : v.toFixed(d));
-function download(name, blobOrUrl) {
-  const a = document.createElement('a'); a.download = name;
-  a.href = typeof blobOrUrl === 'string' ? blobOrUrl : URL.createObjectURL(blobOrUrl);
+const SANDBOX = (() => { try { return window.top !== window; } catch { return true; } })();
+function dataURLtoBlob(u) { const [h, b] = u.split(','); const bin = atob(b), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return new Blob([a], { type: h.slice(5).split(';')[0] }); }
+// minimální ZIP (metoda „store“) – GLB není na seznamu povolených přípon náhledu claude.ai, ZIP ano
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+async function zipStore(name, blob) {
+  const data = new Uint8Array(await blob.arrayBuffer()), fn = new TextEncoder().encode(name);
+  let crc = 0xffffffff; for (let i = 0; i < data.length; i++) crc = CRC[(crc ^ data[i]) & 255] ^ (crc >>> 8); crc = (crc ^ 0xffffffff) >>> 0;
+  const lh = new DataView(new ArrayBuffer(30)); [[0, 0x04034b50, 4], [4, 20, 2], [8, 0, 2], [14, crc, 4], [18, data.length, 4], [22, data.length, 4], [26, fn.length, 2]].forEach(([o, v, n]) => (n === 4 ? lh.setUint32(o, v, true) : lh.setUint16(o, v, true)));
+  const ch = new DataView(new ArrayBuffer(46)); [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [16, crc, 4], [20, data.length, 4], [24, data.length, 4], [28, fn.length, 2]].forEach(([o, v, n]) => (n === 4 ? ch.setUint32(o, v, true) : ch.setUint16(o, v, true)));
+  const end = new DataView(new ArrayBuffer(22)); [[0, 0x06054b50, 4], [8, 1, 2], [10, 1, 2], [12, 46 + fn.length, 4], [16, 30 + fn.length + data.length, 4]].forEach(([o, v, n]) => (n === 4 ? end.setUint32(o, v, true) : end.setUint16(o, v, true)));
+  return new Blob([lh, fn, data, ch, fn, end], { type: 'application/zip' });
+}
+async function download(name, data) {
+  let blob = data instanceof Blob ? data : dataURLtoBlob(data);
+  if (SANDBOX) {
+    const dl = window.claude?.use ? await window.claude.use('downloads') : null;
+    if (!dl) { window.__fireUI?.toast('Ukládání souborů tu není dostupné – použij dist/index.html z repozitáře.'); return; }
+    if (name.endsWith('.glb')) { blob = await zipStore(name, blob); name = name.replace(/\.glb$/, '.zip'); }
+    try { await dl.save({ filename: name, data: blob }); } catch (e) { if (e?.code !== 'declined') window.__fireUI?.toast('Uložení se nepovedlo: ' + (e?.code || e?.message)); }
+    return;
+  }
+  const a = document.createElement('a'); a.download = name; a.href = URL.createObjectURL(blob);
   document.body.append(a); a.click(); a.remove();
 }
 
 export class UI {
   constructor(app) {
-    this.app = app; this.tab = 'fyzika'; this.hist = [];
+    this.app = app; this.tab = 'fyzika'; this.hist = []; window.__fireUI = this;
     this.build();
     app.onMessage = (m) => this.toast(m);
     app.onScenario = () => this.refresh();
@@ -202,7 +221,8 @@ export class UI {
     } else if (this.tab === 'export') {
       if (!full) return;
       p.innerHTML = '';
-      p.append(h('p', { class: 'note' }, 'Vše je generované kódem v prohlížeči. Stejné soubory vytváří offline nástroj npm run bake do složky dataset/.'));
+      p.append(h('p', { class: 'note' }, 'Vše je generované kódem v prohlížeči. Stejné soubory vytváří offline nástroj npm run bake do složky dataset/ (v repozitáři už jsou).'));
+      if (SANDBOX) p.append(h('p', { class: 'note' }, 'V náhledu claude.ai se soubor ukládá po potvrzení; model GLB přijde zabalený v ZIP.'));
       p.append(h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => this.exportGLB() }, a.mode === 'asset' ? 'Model GLB (aktuální LOD)' : 'Modely scény GLB')));
       p.append(h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => this.exportAtlas() }, 'Flipbook atlas PNG (16×8)')));
       p.append(h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => this.exportPreset() }, 'Preset scénáře JSON')));

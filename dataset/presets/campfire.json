@@ -1,0 +1,125 @@
+{
+ "format": "firelab-preset/1",
+ "id": "campfire",
+ "name": "Oheň (táborák)",
+ "group": "Ohně",
+ "desc": "Týpí z polen ~200 kW. Plamen ~1,2 m, pulzace 1,7 Hz, jiskry a uhlíky stoupají v oblaku.",
+ "time": "soumrak",
+ "timeScale": 1,
+ "duration": null,
+ "cams": [
+  {
+   "name": "u ohně",
+   "pos": [
+    2.6,
+    1.6,
+    3
+   ],
+   "target": [
+    0,
+    0.7,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    4,
+    1.7,
+    4.5
+   ],
+   "target": [
+    0,
+    0.8,
+    0
+   ]
+  },
+  {
+   "name": "shora",
+   "pos": [
+    0.5,
+    7,
+    1.5
+   ],
+   "target": [
+    0,
+    0.5,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Palivo",
+   "v": "Dřevo suché (smrk/buk)",
+   "src": "ΔHc 15.0 MJ/kg"
+  },
+  {
+   "k": "Tepelný výkon Q",
+   "v": "200.0 kW",
+   "src": "model scénáře"
+  },
+  {
+   "k": "Výška plamene L",
+   "v": "1.14 m",
+   "src": "Heskestad ★5"
+  },
+  {
+   "k": "Náklon plamene",
+   "v": "0°  (u* = 0.00)",
+   "src": "AGA ★4"
+  },
+  {
+   "k": "Teplota svítivé zóny",
+   "v": "1250 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "Pulzace plamene",
+   "v": "1.7 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "Optická tl. kouře τ",
+   "v": "0.53",
+   "src": "Mulholland σs ★3"
+  },
+  {
+   "k": "Ekvivalenční poměr Φ",
+   "v": "0.50  saze ×1.00",
+   "src": "Tewarson ★2"
+  },
+  {
+   "k": "Výtěžek sazí / CO",
+   "v": "0.015 / 0.004 kg/kg",
+   "src": "SFPE ★3"
+  },
+  {
+   "k": "Svítivost",
+   "v": "2176.5 cd",
+   "src": "odhad ★2"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "woodDry",
+   "pos": [
+    0,
+    0.05,
+    0
+   ],
+   "D": 0.8,
+   "Q_W": 199977,
+   "L_m": 1.14,
+   "T_K": 1250,
+   "puff_Hz": 1.68,
+   "smoke_tau": 0.526,
+   "smoke_rgb": [
+    0.469,
+    0.466,
+    0.464
+   ],
+   "light_cd": 2176.5
+  }
+ ]
+}

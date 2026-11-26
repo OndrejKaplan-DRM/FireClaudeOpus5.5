@@ -1,0 +1,117 @@
+{
+ "format": "firelab-preset/1",
+ "id": "haystack",
+ "name": "Hořící stoh slámy",
+ "group": "Materiály",
+ "desc": "Stoh 36 velkých balíků (~4,8 × 3,6 × 2,7 m). Ultrarychlý růst t², vrchol ~12 MW. Hustý bílo-žlutý kouř (vlhkost), obrovské množství uhlíků.",
+ "time": "soumrak",
+ "timeScale": 4,
+ "duration": 1500,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    16,
+    6,
+    18
+   ],
+   "target": [
+    0,
+    3,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    12,
+    1.7,
+    9
+   ],
+   "target": [
+    0,
+    2.5,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Palivo",
+   "v": "Sláma (balík)",
+   "src": "ΔHc 14.0 MJ/kg"
+  },
+  {
+   "k": "Tepelný výkon Q",
+   "v": "12.00 MW",
+   "src": "model scénáře"
+  },
+  {
+   "k": "Výška plamene L",
+   "v": "5.04 m",
+   "src": "Heskestad ★5"
+  },
+  {
+   "k": "Náklon plamene",
+   "v": "0°  (u* = 0.00)",
+   "src": "AGA ★4"
+  },
+  {
+   "k": "Teplota svítivé zóny",
+   "v": "1200 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "Pulzace plamene",
+   "v": "0.7 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "Optická tl. kouře τ",
+   "v": "1.94",
+   "src": "Mulholland σs ★3"
+  },
+  {
+   "k": "Ekvivalenční poměr Φ",
+   "v": "0.50  saze ×1.00",
+   "src": "Tewarson ★2"
+  },
+  {
+   "k": "Výtěžek sazí / CO",
+   "v": "0.010 / 0.006 kg/kg",
+   "src": "SFPE ★3"
+  },
+  {
+   "k": "Svítivost",
+   "v": "111 kcd",
+   "src": "odhad ★2"
+  },
+  {
+   "k": "Křivka HRR",
+   "v": "t² ultrarychlá, α = 188 W/s², vrchol v 4.2 min",
+   "src": "NFPA 72 ★4"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "straw",
+   "pos": [
+    0,
+    1.485,
+    0
+   ],
+   "D": 4.925,
+   "Q_W": 12000000,
+   "L_m": 5.04,
+   "T_K": 1200,
+   "puff_Hz": 0.68,
+   "smoke_tau": 1.94,
+   "smoke_rgb": [
+    0.566,
+    0.564,
+    0.564
+   ],
+   "light_cd": 110928.4
+  }
+ ]
+}

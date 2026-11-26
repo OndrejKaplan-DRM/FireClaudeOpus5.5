@@ -56,6 +56,8 @@ vec3 fieldFlame(vec3 p){
   // pulzace: prstence stoupající rychlostí ~ rise
   float puff = sin(6.2832 * (uPuff.x * uTime - y * 1.6)) * uPuff.y;
   float dd = prof * (1.0 + 0.25 * puff * y) - r + (n1 - 0.5) * uTurb.x * (0.35 + 1.4 * y) + (n2 - 0.5) * uTurb.x * 0.45;
+  // odtrhávání plaménků u špičky (přerušovaná zóna McCaffrey)
+  dd -= smoothstep(0.4, 0.95, y) * smoothstep(0.48, 0.68, n2) * 0.32;
   // nedostatek kyslíku: odtržené jazyky (lift)
   dd -= uLift * smoothstep(0.55, 0.8, n2) * 0.4 * y;
   float dens = smoothstep(0.0, 0.22, dd);
@@ -81,9 +83,9 @@ vec3 fieldBall(vec3 p){
   float shell = 0.78 + 0.22 * uAge;
   float dd = shell - r + (b1 - 0.55) * 0.55 + (b2 - 0.5) * 0.25 + (n - 0.5) * 0.2;
   float dens = smoothstep(0.0, 0.15, dd);
-  float hot = 1.0 - smoothstep(0.0, 0.9, uAge + r * 0.35 - (b1 - 0.5) * 0.6);
+  float hot = 1.0 - smoothstep(0.05, 1.05, uAge * 0.85 + r * 0.3 - (b1 - 0.5) * 0.6);
   float T = uTamb + (uTpeak - uTamb) * hot * dens;
-  float soot = uSoot * dens * smoothstep(0.15, 0.7, uAge + (0.6 - b1) * 0.5 + r * 0.2);
+  float soot = uSoot * dens * (1.0 - hot) * (1.0 - hot) * smoothstep(0.25, 0.8, uAge + (0.6 - b1) * 0.4);
   return vec3(dens, T, soot);
 }
 
@@ -141,7 +143,7 @@ void main(){
       float edge = smoothstep(0.0, 0.25, f.x) * (1.0 - smoothstep(0.3, 0.9, f.x));
       em += vec3(0.08, 0.16, 1.0) * uBlue * exp(-p.y * 14.0) * edge * 0.6;
 #endif
-      float ext = (sigmaW * f.x + f.z * 6.0);
+      float ext = (sigmaW * f.x + f.z * 2.5);
       float a = exp(-ext * dt);
       col += trans * em * uIntensity * dt * (ext > 1e-4 ? (1.0 - a) / (ext * dt) : 1.0);
       trans *= a;

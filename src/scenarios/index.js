@@ -11,6 +11,7 @@ import { bleveFireball, heFireball, blastSummary, gasTNT, gurneySphere } from '.
 import { arrivalTimes, headROS, byram, lengthToBreadth, crownInitiation } from '../physics/spread.js';
 import { mulberry32 } from '../engine/rng.js';
 import { fbm2 } from '../assets/textures.js';
+import { PRE } from '../fx/shared.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 export const fmtW = (q) => (q >= 1e6 ? (q / 1e6).toFixed(2) + ' MW' : q >= 1e3 ? (q / 1e3).toFixed(1) + ' kW' : q.toFixed(0) + ' W');
@@ -48,9 +49,9 @@ function table(ctx, w = 1.2, d = 0.7) {
 export const SCENARIOS = [
   // ---------------------------------------------------------------------------------------------- jiskra
   {
-    id: 'spark', group: 'Zážeh', name: 'Jiskra (broušení oceli)', ground: 'concrete', time: 'soumrak',
+    id: 'spark', group: 'Zážeh', name: 'Jiskra (broušení oceli)', ground: 'concrete', time: 'noc',
     desc: 'Úhlová bruska na nosníku IPE 160. Ocelové jiskry ~1 800 K chladnou zářením za desetiny sekundy, odráží se od země a občas se rozprsknou (oxidace uhlíku).',
-    cams: [{ name: 'detail', pos: [1.3, 0.95, 1.4], target: [-0.3, 0.45, 0.3] }, { name: 'z boku', pos: [0.2, 0.7, 2.6], target: [-0.6, 0.3, 0.4] }],
+    cams: [{ name: 'detail', pos: [1.1, 1.05, 1.5], target: [-0.35, 0.5, 0.25] }, { name: 'z boku', pos: [-0.6, 0.8, 2.6], target: [-0.9, 0.35, 0.6] }],
     build(ctx) {
       const rig = P.grinderRig({ lod: ctx.lod }); ctx.add(rig);
       const r = mulberry32(9); let acc = 0, burst = 0;
@@ -92,8 +93,8 @@ export const SCENARIOS = [
       const c = P.candle({ lod: ctx.lod }); ctx.add(c);
       const at = c.userData.flameAt;
       const src = ctx.fx.addSource({
-        pos: V(at.x, at.y - 0.004, at.z), fuel: 'paraffin', Q: 80, D: 0.012, L: () => 0.045, T: 1380, blue: 1.0, volume: true,
-        taper: 1.25, baseWide: -0.1, neck: 0.55, puffAmp: 0.12, turbAmp: 0.12, tongues: 2, lightH: 0.4,
+        pos: V(at.x, at.y - 0.004, at.z), fuel: 'paraffin', Q: 80, D: 0.016, L: () => 0.045, T: 1380, blue: 1.0, volume: true,
+        taper: 1.25, baseWide: -0.1, neck: 0.55, puffAmp: 0.12, turbAmp: 0.12, tongues: 3, lightH: 0.4,
         mult: { smoke: 0.4, embers: 0, sparks: 0, haze: 0.5 }, seed: 2,
       });
       let out = false, wisp = 0;
@@ -102,7 +103,7 @@ export const SCENARIOS = [
           const U = ctx.fx.air.windAt(0.1);
           if (U > 3.0 && !out) { out = true; src.enabled = false; wisp = 6; ctx.message('Vichr svíčku sfoukl (vítr u plamene > 3 m/s).'); }
           if (U <= 3.0 && out) { out = false; src.enabled = true; ctx.message('Svíčka znovu zapálena.'); }
-          c.userData.wax.emissiveIntensity = out ? 0 : 0.06;
+          c.userData.wax.emissiveIntensity = out ? 0 : 4 * PRE.value; // prosvícený vosk u knotu (podpovrchový rozptyl, odhad ~12 cd/m²)
           if (wisp > 0) { wisp -= dt; if (Math.random() < dt * 25) ctx.fx.bb.spawnSmoke({ x: at.x, y: at.y - 0.008, z: at.z, vy: 0.15, life: 3, s0: 0.004, s1: 0.06, tau: 0.6 * Math.max(wisp / 6, 0), albedo: [0.85, 0.85, 0.86], drag: 0.3 }); }
         },
         info: () => [...fireRows(src), ['Stav', out ? 'zhasnutá (vítr)' : 'hoří', 'práh ~3 m/s ★2']],
@@ -118,7 +119,7 @@ export const SCENARIOS = [
       const t = P.torch({ lod: ctx.lod }); ctx.add(t);
       t.userData.char.uChar.value = 0.55; t.userData.char.uGlow.value = 0.8;
       const at = t.userData.flameAt;
-      const src = ctx.fx.addSource({ pos: V(at.x, at.y - 0.06, at.z), fuel: 'woodResin', Q: 4000, D: 0.065, volume: true, mult: { embers: 0.5, sparks: 0.4 }, taper: 0.9, seed: 3 });
+      const src = ctx.fx.addSource({ pos: V(at.x, at.y - 0.06, at.z), fuel: 'woodResin', Q: 4000, D: 0.065, volume: true, mult: { embers: 0.12, sparks: 0.08 }, taper: 0.9, seed: 3 });
       return { update() {}, info: () => fireRows(src) };
     },
   },
@@ -253,7 +254,7 @@ export const SCENARIOS = [
             const W = film() ? 4 : Wburst;
             ctx.fx.addExplosion({
               pos: V(0, 0.4, 0), W, seed: 3, flash: 2e6, scorch: 6, dust: film(),
-              fireball: { D: fb.D * (film() ? 1.2 : 1), t: fb.t, T: 1500, rise: fb.H, soot: 0.8 },
+              fireball: { D: fb.D * (film() ? 1.2 : 1), t: fb.t, T: 1650, rise: fb.H, soot: 0.6 },
               smoke: { n: 500, life: 16, albedo: [0.07, 0.065, 0.06], tau: 2.5, buoy: 6, buoyAcc: 2 },
               debris: { n: film() ? 120 : 14, speed: film() ? 40 : 18, size: 0.12, hot: 0.5, up: 0.6, T: 1200 },
               sparks: { n: 300, speed: 12 },
@@ -326,8 +327,7 @@ export const SCENARIOS = [
         update(dt, t) {
           if (!boom && t > 2) {
             boom = true; d.visible = false;
-            ctx.fx.addExplosion({ pos: V(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70 });
-            ctx.fx.decals[ctx.fx.decals.length - 1].u.uCrater.value = 1;
+            ctx.fx.addExplosion({ pos: V(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70 });
           }
         },
         info: () => [...blastRows(W), ['Ohnivá koule', fb.D.toFixed(0) + ' m / ' + fb.t.toFixed(2) + ' s', '★2'], ['Rychlost čela v 10 m', '≈ ' + (343 * Math.sqrt(1 + (6 * blastSummary(W, [10])[0].Ps) / (7 * 101325))).toFixed(0) + ' m/s', 'Rankine–Hugoniot ★5']],
@@ -336,14 +336,14 @@ export const SCENARIOS = [
   },
   // ---------------------------------------------------------------------------------------------- les
   {
-    id: 'forest', group: 'Velké požáry', name: 'Lesní požár', ground: 'forest', time: 'soumrak', timeScale: 15, duration: 3600,
+    id: 'forest', group: 'Velké požáry', name: 'Lesní požár', ground: 'forest', time: 'soumrak', timeScale: 30, wind: 2, duration: 3600,
     desc: 'Borový les 260 × 260 m. Šíření po zemi (hrabanka) podle Andersonovy elipsy; kde Byramova intenzita překročí práh Van Wagnera, požár přechází do korun.',
     cams: [{ name: 'nad lesem', pos: [-60, 55, 140], target: [10, 0, 0] }, { name: 'v lese', pos: [-20, 1.7, 40], target: [20, 6, 0] }, { name: 'daleko', pos: [-200, 90, 260], target: [0, 10, 0] }],
     build(ctx) { return landscapeFire(ctx, { kind: 'pine', size: 260, cell: 5, fuel: 'forestLitter', crown: true, density: 1, seed: 71 }); },
   },
   // ---------------------------------------------------------------------------------------------- křoví
   {
-    id: 'brush', group: 'Velké požáry', name: 'Hoření suchého křoví', ground: 'dryGrass', time: 'den', timeScale: 6, duration: 1500,
+    id: 'brush', group: 'Velké požáry', name: 'Hoření suchého křoví', ground: 'dryGrass', time: 'den', timeScale: 6, wind: 2, duration: 1500,
     desc: 'Suché křoví a tráva 160 × 160 m. Rychlé šíření (~10 m/min ve větru), plameny 2–4 m, šedobílý kouř.',
     cams: [{ name: 'nad plochou', pos: [-40, 30, 90], target: [10, 0, 0] }, { name: 'hráč', pos: [-30, 1.7, 30], target: [10, 2, 0] }],
     build(ctx) { return landscapeFire(ctx, { kind: 'bush', size: 160, cell: 3, fuel: 'brush', crown: false, density: 2.2, seed: 81 }); },
@@ -393,7 +393,9 @@ function landscapeFire(ctx, o) {
   const flora = new InstancedFlora(ctx.scene, o.kind, items, { lodNear: Math.min(ctx.lod, o.kind === 'pine' ? 2 : 3), lodFar: 0, nearDist: o.kind === 'pine' ? 45 : 25, seed: o.seed });
   ctx.addDisposable(flora); ctx.flora.push(flora);
   const fuel = FUELS[o.fuel];
-  const ign = [[Math.round(nx * 0.18), Math.round(ny * 0.5), 0]];
+  // zapálení: krátká linie napříč větru (např. od cesty), palivo v ní zajištěné
+  const ign = [];
+  for (let k = -3; k <= 3; k++) { const i = Math.round(nx * 0.2), j = Math.round(ny * 0.5) + k; fuelMap[j * nx + i] = Math.max(fuelMap[j * nx + i], 0.8); ign.push([i, j, Math.abs(k) * 20]); }
   let arr = null, lastWind = null;
   const midflame = o.kind === 'pine' ? 0.22 : 0.4; // redukce větru ve výšce plamene (zápoj) ★3
   const recompute = (t) => {

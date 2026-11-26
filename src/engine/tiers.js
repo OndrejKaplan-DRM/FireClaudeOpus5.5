@@ -6,7 +6,7 @@ export const TIERS = [
     particles: { flame: 900, smoke: 700, spark: 400, haze: 0 }, sortSmoke: false, softParticles: false,
     volumes: 0, volumeSteps: 0, volumeScale: 0.5,
     bloom: 0, haze: false, shadows: false, lights: 2, debris: 60,
-    lod: 0, treeMax: 400, flipbookRes: 128, flameLight: 'cheap', grain: false,
+    lod: 1, treeMax: 400, flipbookRes: 128, flameLight: 'cheap', grain: false,
     frameBudgetMs: 33,
   },
   {
@@ -15,7 +15,7 @@ export const TIERS = [
     particles: { flame: 2200, smoke: 1800, spark: 1200, haze: 0 }, sortSmoke: true, softParticles: false,
     volumes: 2, volumeSteps: 24, volumeScale: 0.5,
     bloom: 3, haze: false, shadows: false, lights: 4, debris: 150,
-    lod: 1, treeMax: 1200, flipbookRes: 128, flameLight: 'normal', grain: false,
+    lod: 2, treeMax: 1200, flipbookRes: 128, flameLight: 'normal', grain: false,
     frameBudgetMs: 22,
   },
   {

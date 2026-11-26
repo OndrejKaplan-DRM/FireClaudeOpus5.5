@@ -12,7 +12,7 @@ const F = {
   type: 13, T0: 14, dT: 15, tau0: 16, drag: 17, buoy: 18, cr: 19, cg: 20, cb: 21, ox: 22, oz: 23, pq: 24, pz0: 25, grav: 26, glowR: 27, glowG: 28, glowB: 29, stretch: 30, extra: 31,
 };
 export const STRIDE = 32;
-export const PTYPE = { FLAME: 0, SMOKE: 1, EMBERGLOW: 2 };
+export const PTYPE = { FLAME: 0, SMOKE: 1, EMBERGLOW: 2, FIREPUFF: 3 };
 
 const QUAD = (() => {
   const g = new THREE.InstancedBufferGeometry();
@@ -168,17 +168,25 @@ void main(){
     vec3 em = sootColor(T) * a.r * uFlameLum * vC.a * life * vC.rgb;
     float al = a.b * a.a * life * 0.5 * vC.a;
     fragColor = vec4(em * soft, al * soft);
+  } else if (vP.w > 2.5) {
+    // ohnivý chuchvalec (ohnivá koule, horní část velkých požárů): maska z kouřového listu, emise Planck
+    float T = vG.w * (0.82 + 0.3 * a.g) ;
+    float life = smoothstep(0.0, 0.1, age) * (1.0 - smoothstep(0.6, 1.0, age));
+    float d = clamp(a.r * 1.6, 0.0, 1.0);
+    vec3 em = sootColor(T) * d * uFlameLum * vC.a * life;
+    float al = (1.0 - exp(-a.r * vC.r * 3.0)) * life * soft;
+    fragColor = vec4(em * soft, al);
   } else {
     // kouř: R = hustota, G = propustnost ke světlu shora, B = okraj
     float tau = vC.a;
     float al = (1.0 - exp(-a.r * tau * 2.2)) * a.a;
     al *= smoothstep(0.0, 0.08, age) * (1.0 - smoothstep(0.8, 1.0, age)) * soft;
     vec3 alb = vC.rgb;
-    vec3 lit = uAmb * (0.55 + 0.45 * a.g) + uSunCol * a.g * (0.6 + 0.4 * a.b);
+    vec3 lit = (uAmb * (0.55 + 0.45 * a.g) + uSunCol * a.g * (0.6 + 0.4 * a.b)) * uPreExp;
     // podsvícení ohněm zespodu (spočítáno na CPU, rozptyl ∝ albedo)
-    vec3 glow = vG.rgb * (0.35 + 0.65 * (1.0 - a.g));
+    vec3 glow = vG.rgb * (0.35 + 0.65 * (1.0 - a.g)) * uPreExp;
     vec3 c = alb * (lit + glow);
-    if (vP.w > 1.5) c += bbColor(900.0 + 300.0 * (1.0 - age)) * uFlameLum * 0.05 * (1.0 - age); // žhnoucí kouř (žár u paty)
+    if (vP.w > 1.5) c += bbColor(900.0 + 250.0 * (1.0 - age)) * uFlameLum * 0.012 * (1.0 - age) * (1.0 - age); // žhnoucí kouř u paty
     fragColor = vec4(c * al, al);
   }
 }`;
@@ -222,6 +230,17 @@ export class BillboardSystem extends BaseSystem {
     d[o + F.stretch] = stretch; d[o + F.extra] = Math.floor(d[o + F.seed] * 64); d[o + F.glowR] = R0;
   }
 
+  spawnFirePuff({ x, y, z, vx = 0, vy = 0, vz = 0, life, s0, s1, T, lum = 1, soot = 0.3, drag = 0.3, buoy = 0, ox, oz, pq = 0, pz0 = 0, seed, R0 = 0 }) {
+    const o = this.alloc(); if (o < 0) return;
+    const d = this.d;
+    d[o + F.px] = x; d[o + F.py] = y; d[o + F.pz] = z; d[o + F.vx] = vx; d[o + F.vy] = vy; d[o + F.vz] = vz;
+    d[o + F.life] = life; d[o + F.s0] = s0; d[o + F.s1] = s1; d[o + F.type] = PTYPE.FIREPUFF; d[o + F.T0] = T;
+    d[o + F.seed] = seed ?? Math.random(); d[o + F.tau0] = lum; d[o + F.cr] = soot;
+    d[o + F.rot] = d[o + F.seed] * 43.98; d[o + F.rotV] = (((d[o + F.seed] * 7919) % 1) - 0.5) * 1.2;
+    d[o + F.ox] = ox ?? x; d[o + F.oz] = oz ?? z; d[o + F.pq] = pq; d[o + F.pz0] = pz0; d[o + F.drag] = drag; d[o + F.buoy] = buoy;
+    d[o + F.extra] = Math.floor(((d[o + F.seed] * 104729) % 1) * 64); d[o + F.glowR] = R0;
+  }
+
   spawnSmoke({ x, y, z, vx = 0, vy = 0, vz = 0, life, s0, s1, tau, albedo, ox, oz, pq = 0, pz0 = 0, drag = 0.4, buoy = 0, glowing = false, seed, R0 = 0 }) {
     const o = this.alloc(); if (o < 0) return;
     const d = this.d;
@@ -236,18 +255,20 @@ export class BillboardSystem extends BaseSystem {
   update(dt, air, camera, lights) {
     this.integrate(dt, air);
     const d = this.d, n = this.n;
-    // řazení odzadu dopředu
-    const cp = camera.position, fw = new THREE.Vector3(); camera.getWorldDirection(fw);
+    // řazení odzadu dopředu: klíč = 12 bitů hloubky | 20 bitů indexu → nativní řazení Uint32Array (rychlé i pro 30 k částic)
+    const cp = camera.position, fw = this._fw || (this._fw = new THREE.Vector3()); camera.getWorldDirection(fw);
+    let dmin = Infinity, dmax = -Infinity;
     for (let i = 0; i < n; i++) {
-      this.order[i] = i;
       const o = i * STRIDE;
-      this.keys[i] = (d[o] - cp.x) * fw.x + (d[o + 1] - cp.y) * fw.y + (d[o + 2] - cp.z) * fw.z;
+      const k = (d[o] - cp.x) * fw.x + (d[o + 1] - cp.y) * fw.y + (d[o + 2] - cp.z) * fw.z;
+      this.keys[i] = k; if (k < dmin) dmin = k; if (k > dmax) dmax = k;
     }
     if (this.sort && n > 1) {
-      const ord = Array.from(this.order.subarray(0, n)); const k = this.keys;
-      ord.sort((a, b) => k[b] - k[a]);
-      for (let i = 0; i < n; i++) this.order[i] = ord[i];
-    }
+      const sk = this.sortKeys || (this.sortKeys = new Uint32Array(this.cap)), inv = 4095 / Math.max(dmax - dmin, 1e-6);
+      for (let i = 0; i < n; i++) sk[i] = (((4095 - ((this.keys[i] - dmin) * inv)) | 0) << 20 | i) >>> 0;
+      const v = sk.subarray(0, n); v.sort();
+      for (let i = 0; i < n; i++) this.order[i] = v[i] & 0xfffff;
+    } else for (let i = 0; i < n; i++) this.order[i] = i;
     const PS = this.aPS.array, P = this.aP.array, C = this.aC.array, G = this.aG.array, V = this.aV.array;
     for (let j = 0; j < n; j++) {
       const i = this.order[j], o = i * STRIDE;
@@ -256,7 +277,7 @@ export class BillboardSystem extends BaseSystem {
       const grow = 1 - Math.exp(-age / Math.max(life * 0.35, 1e-3));
       let s = d[o + F.s0] + (d[o + F.s1] - d[o + F.s0]) * grow;
       PS[j * 4] = d[o]; PS[j * 4 + 1] = d[o + 1]; PS[j * 4 + 2] = d[o + 2]; PS[j * 4 + 3] = s;
-      const frame = d[o + F.extra] + age * (type === PTYPE.FLAME ? 34 : 9) * (0.8 + d[o + F.seed] * 0.4);
+      const frame = d[o + F.extra] + age * (type === PTYPE.FLAME ? 34 : type === PTYPE.FIREPUFF ? 20 : 9) * (0.8 + d[o + F.seed] * 0.4);
       P[j * 4] = a01; P[j * 4 + 1] = d[o + F.rot]; P[j * 4 + 2] = frame; P[j * 4 + 3] = type;
       V[j * 3] = d[o + F.vx]; V[j * 3 + 1] = d[o + F.vy]; V[j * 3 + 2] = d[o + F.vz];
       if (type === PTYPE.FLAME) {
@@ -264,17 +285,20 @@ export class BillboardSystem extends BaseSystem {
         G[j * 4] = 0; G[j * 4 + 1] = 0; G[j * 4 + 2] = 0;
         G[j * 4 + 3] = d[o + F.T0] * (1 - 0.12 * a01); // teplota jazyka (chladne se stoupáním)
         P[j * 4 + 1] = d[o + F.stretch]; // pro plamen nese iP.y protažení, ne rotaci
+      } else if (type === PTYPE.FIREPUFF) {
+        C[j * 4] = d[o + F.cr]; C[j * 4 + 1] = 0; C[j * 4 + 2] = 0; C[j * 4 + 3] = d[o + F.tau0];
+        G[j * 4] = 0; G[j * 4 + 1] = 0; G[j * 4 + 2] = 0; G[j * 4 + 3] = d[o + F.T0] * (1 - 0.3 * a01);
       } else {
-        // zřeďování: optická tloušťka ∝ (s0/s)² (zachování hmoty sazí)
+        // zřeďování: v oblaku c ∝ 1/b², tloušťka ∝ b → τ ∝ s0/s
         const s0 = Math.max(d[o + F.s0], 1e-3);
-        const tau = d[o + F.tau0] * (s0 * s0) / (s * s);
+        const tau = (d[o + F.tau0] * s0) / s;
         C[j * 4] = d[o + F.cr]; C[j * 4 + 1] = d[o + F.cg]; C[j * 4 + 2] = d[o + F.cb]; C[j * 4 + 3] = tau;
         // podsvícení od světel ohně
         let gr = 0, gg = 0, gb = 0;
         for (const L of lights) {
           if (!L.on) continue;
           const dx = d[o] - L.x, dy = d[o + 1] - L.y, dz = d[o + 2] - L.z;
-          const e = (L.I * this.pre) / (dx * dx + dy * dy + dz * dz + L.r * L.r) * 0.08; // izotropní rozptyl E/4π
+          const e = L.I / (dx * dx + dy * dy + dz * dz + L.r * L.r) * 0.015; // izotropní rozptyl E/4π × zastínění uvnitř kouře (×uPreExp v shaderu)
           gr += e * L.c[0]; gg += e * L.c[1]; gb += e * L.c[2];
         }
         G[j * 4] = gr; G[j * 4 + 1] = gg; G[j * 4 + 2] = gb; G[j * 4 + 3] = 0;

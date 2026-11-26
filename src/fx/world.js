@@ -100,7 +100,7 @@ export class FXWorld {
     if (this.bb.mat.uniforms.tDepth.value !== dtex && dtex) this.bb.mat.uniforms.tDepth.value = dtex;
     for (const v of [...this.vols, ...this.balls]) if (dtex) v.u.tDepth.value = dtex;
     this.bb.pre = PRE.value;
-    if (this.env) { const T = this.env.T, k = PRE.value / Math.PI; this.bb.mat.uniforms.uAmb.value.setRGB(0.75, 0.8, 0.95).multiplyScalar(T.hemi * k * 0.9); this.bb.mat.uniforms.uSunCol.value.setRGB(1, 0.95, 0.88).multiplyScalar((T.sun + T.moon) * k * 0.6); }
+    if (this.env) { const T = this.env.T, k = 1 / Math.PI; this.bb.mat.uniforms.uAmb.value.setRGB(0.75, 0.8, 0.95).multiplyScalar(T.hemi * k * 0.9); this.bb.mat.uniforms.uSunCol.value.setRGB(1, 0.95, 0.88).multiplyScalar((T.sun + T.moon) * k * 0.6); }
     this.bb.update(dt, a, camera, lights);
     this.bb.mat.uniforms.uFlameLum.value = this.flameLum; FLAMEK.value = this.flameLum; this.sp.mat.uniforms.uLum.value = this.flameLum;
     this.sp.viewportH = this.pipeline.size?.H || 720;
@@ -222,10 +222,15 @@ export class FireSource {
         this.acc.flame -= 1;
         const [x, y, z] = this.footprintPoint();
         const up = (L / life) * 0.75;
+        if (D > 1.2 && r() < 0.35) {
+          const h = L * (0.25 + 0.5 * r());
+          w.bb.spawnFirePuff({ x: x + lean * h * cw, y: y + h, z: z + lean * h * sw, vx: up * lean * cw + push[0], vy: up * 0.8 + push[1], vz: up * lean * sw + push[2], life: life * (0.8 + 0.6 * r()), s0: s0 * 0.7, s1: s0 * 1.1, T: ph.T * (0.95 + 0.1 * r()), lum: flick * 0.8, soot: Math.min(1, f.ys * ph.vent.sootMul * 10), drag: life * 3, seed: r() });
+          continue;
+        }
         w.bb.spawnFlame({
           x, y: y + L * 0.08 * r(), z, vx: up * lean * cw + push[0], vy: up + push[1], vz: up * lean * sw + push[2],
           life: life * (0.75 + 0.5 * r()), s0: s0 * (0.8 + 0.4 * r()), s1: s0 * 0.55, T: ph.T + (r() - 0.5) * 100,
-          lum: flick, tint: [1, 1, 1],
+          lum: flick * 0.6, tint: [1, 1, 1],
           ox: this.pos.x, oz: this.pos.z, pq: 0, pz0: 0, drag: life * 4, stretch: 0.6 + ph.tilt.us * 0.1, R0: D / 2,
           seed: r(),
         });
@@ -319,7 +324,7 @@ export class Explosion {
         const u = r() * 2 - 1, a = r() * 6.283, s = Math.sqrt(1 - u * u), v = o.sparks.speed * (0.4 + 0.6 * r());
         w.sp.spawn({ x: this.pos.x, y: this.pos.y + 0.1, z: this.pos.z, vx: Math.cos(a) * s * v, vy: Math.abs(u) * v * 0.8 + 1, vz: Math.sin(a) * s * v, life: 0.4 + r() * 1.4, T: 1600 + 600 * r(), tauC: 0.35 + r() * 0.4, size: 0.003 + r() * 0.01, drag: 1.5 + r() * 3, grav: 1, seed: r() });
       }
-      if (o.scorch) w.addScorch({ pos: this.pos, radius: o.scorch, seed: o.seed });
+      if (o.scorch) w.addScorch({ pos: this.pos, radius: o.scorch, seed: o.seed, crater: o.crater || 0 });
     }
     // ohnivá koule
     if (fb) {
@@ -342,11 +347,12 @@ export class Explosion {
         u.uSeed.value = (o.seed ?? 5) * 0.21;
       } else if (t < tf * 1.6 && w.layers.flame) {
         // T0/T1: ohnivá koule ze spritů
-        this.fbAcc += dt * 260 * w.budgetScale.flame * Math.min(1, Rmax);
+        this.fbAcc += dt * (90 / Math.max(tf, 0.05)) * w.budgetScale.flame;
         while (this.fbAcc >= 1) {
           this.fbAcc -= 1;
-          const u = r() * 2 - 1, a = r() * 6.283, s = Math.sqrt(1 - u * u), rr = R * Math.cbrt(r()) * 0.8;
-          w.bb.spawnFlame({ x: this.pos.x + Math.cos(a) * s * rr, y: yc + u * rr, z: this.pos.z + Math.sin(a) * s * rr, vy: R / tf * 0.3, life: tf * (0.6 + 0.6 * r()) + 0.05, s0: R * 0.9, s1: R * 0.6, T: fb.T * (1 - age * 0.35), lum: 1, tint: [1, 1, 1], drag: 0.3, stretch: 0, seed: r() });
+          const u = r() * 2 - 1, a = r() * 6.283, s = Math.sqrt(1 - u * u), rr = R * Math.cbrt(r()) * 0.75;
+          const out = (R / tf) * 0.4;
+          w.bb.spawnFirePuff({ x: this.pos.x + Math.cos(a) * s * rr, y: yc + u * rr, z: this.pos.z + Math.sin(a) * s * rr, vx: Math.cos(a) * s * out, vy: R / tf * 0.3 + u * out, vz: Math.sin(a) * s * out, life: tf * (0.7 + 0.8 * r()) + 0.05, s0: R * 0.55, s1: R * 0.9, T: fb.T * (1 - age * 0.3) * (0.9 + 0.2 * r()), lum: 1, soot: (fb.soot ?? 0.5) * 0.6, drag: 0.5, seed: r() });
         }
       }
       // světlo: záblesk + žár koule (W∝R², T⁴)

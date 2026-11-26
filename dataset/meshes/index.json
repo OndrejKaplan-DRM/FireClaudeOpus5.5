@@ -1,0 +1,584 @@
+{
+ "candle": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 176,
+    "file": "candle_L0.glb",
+    "kB": 12
+   },
+   {
+    "lod": 1,
+    "tris": 1380,
+    "file": "candle_L1.glb",
+    "kB": 40
+   },
+   {
+    "lod": 2,
+    "tris": 12624,
+    "file": "candle_L2.glb",
+    "kB": 287
+   },
+   {
+    "lod": 3,
+    "tris": 135808,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 1329728,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "torch": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 94,
+    "file": "torch_L0.glb",
+    "kB": 172
+   },
+   {
+    "lod": 1,
+    "tris": 436,
+    "file": "torch_L1.glb",
+    "kB": 180
+   },
+   {
+    "lod": 2,
+    "tris": 2552,
+    "file": "torch_L2.glb",
+    "kB": 228
+   },
+   {
+    "lod": 3,
+    "tris": 30144,
+    "file": "torch_L3.glb",
+    "kB": 831
+   },
+   {
+    "lod": 4,
+    "tris": 347736,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "campfireS": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 228,
+    "file": "campfireS_L0.glb",
+    "kB": 366
+   },
+   {
+    "lod": 1,
+    "tris": 904,
+    "file": "campfireS_L1.glb",
+    "kB": 428
+   },
+   {
+    "lod": 2,
+    "tris": 4480,
+    "file": "campfireS_L2.glb",
+    "kB": 761
+   },
+   {
+    "lod": 3,
+    "tris": 30200,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 292340,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "campfire": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 428,
+    "file": "campfire_L0.glb",
+    "kB": 384
+   },
+   {
+    "lod": 1,
+    "tris": 1704,
+    "file": "campfire_L1.glb",
+    "kB": 503
+   },
+   {
+    "lod": 2,
+    "tris": 8416,
+    "file": "campfire_L2.glb",
+    "kB": 1130
+   },
+   {
+    "lod": 3,
+    "tris": 60392,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 613940,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "bonfire": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 568,
+    "file": "bonfire_L0.glb",
+    "kB": 397
+   },
+   {
+    "lod": 1,
+    "tris": 2264,
+    "file": "bonfire_L1.glb",
+    "kB": 555
+   },
+   {
+    "lod": 2,
+    "tris": 11328,
+    "file": "bonfire_L2.glb",
+    "kB": 1403
+   },
+   {
+    "lod": 3,
+    "tris": 81992,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 831220,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "tire": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 184,
+    "file": "tire_L0.glb",
+    "kB": 149
+   },
+   {
+    "lod": 1,
+    "tris": 1368,
+    "file": "tire_L1.glb",
+    "kB": 176
+   },
+   {
+    "lod": 2,
+    "tris": 12304,
+    "file": "tire_L2.glb",
+    "kB": 416
+   },
+   {
+    "lod": 3,
+    "tris": 129120,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 1242200,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "tirePile": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 600,
+    "file": "tirePile_L0.glb",
+    "kB": 104
+   },
+   {
+    "lod": 1,
+    "tris": 4680,
+    "file": "tirePile_L1.glb",
+    "kB": 123
+   },
+   {
+    "lod": 2,
+    "tris": 46800,
+    "file": "tirePile_L2.glb",
+    "kB": 307
+   },
+   {
+    "lod": 3,
+    "tris": 494400,
+    "note": "generuje se za běhu (D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 4780000,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "barrel": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 188,
+    "file": "barrel_L0.glb",
+    "kB": 45
+   },
+   {
+    "lod": 1,
+    "tris": 1368,
+    "file": "barrel_L1.glb",
+    "kB": 72
+   },
+   {
+    "lod": 2,
+    "tris": 15328,
+    "file": "barrel_L2.glb",
+    "kB": 379
+   },
+   {
+    "lod": 3,
+    "tris": 159584,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 960360,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "grenade": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 176,
+    "file": "grenade_L0.glb",
+    "kB": 89
+   },
+   {
+    "lod": 1,
+    "tris": 748,
+    "file": "grenade_L1.glb",
+    "kB": 103
+   },
+   {
+    "lod": 2,
+    "tris": 5060,
+    "file": "grenade_L2.glb",
+    "kB": 201
+   },
+   {
+    "lod": 3,
+    "tris": 75812,
+    "file": "grenade_L3.glb",
+    "kB": 1744
+   },
+   {
+    "lod": 4,
+    "tris": 770084,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "tntDrum": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 236,
+    "file": "tntDrum_L0.glb",
+    "kB": 100
+   },
+   {
+    "lod": 1,
+    "tris": 1384,
+    "file": "tntDrum_L1.glb",
+    "kB": 125
+   },
+   {
+    "lod": 2,
+    "tris": 15264,
+    "file": "tntDrum_L2.glb",
+    "kB": 427
+   },
+   {
+    "lod": 3,
+    "tris": 184056,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 957696,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "acetylene": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 192,
+    "file": "acetylene_L0.glb",
+    "kB": 103
+   },
+   {
+    "lod": 1,
+    "tris": 1264,
+    "file": "acetylene_L1.glb",
+    "kB": 128
+   },
+   {
+    "lod": 2,
+    "tris": 11128,
+    "file": "acetylene_L2.glb",
+    "kB": 345
+   },
+   {
+    "lod": 3,
+    "tris": 133784,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 1317848,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "grinder": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 176,
+    "file": "grinder_L0.glb",
+    "kB": 123
+   },
+   {
+    "lod": 1,
+    "tris": 368,
+    "file": "grinder_L1.glb",
+    "kB": 135
+   },
+   {
+    "lod": 2,
+    "tris": 1544,
+    "file": "grinder_L2.glb",
+    "kB": 203
+   },
+   {
+    "lod": 3,
+    "tris": 12424,
+    "file": "grinder_L3.glb",
+    "kB": 776
+   },
+   {
+    "lod": 4,
+    "tris": 83712,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "puddle": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 24,
+    "file": "puddle_L0.glb",
+    "kB": 39
+   },
+   {
+    "lod": 1,
+    "tris": 548,
+    "file": "puddle_L1.glb",
+    "kB": 51
+   },
+   {
+    "lod": 2,
+    "tris": 9492,
+    "file": "puddle_L2.glb",
+    "kB": 245
+   },
+   {
+    "lod": 3,
+    "tris": 95596,
+    "file": "puddle_L3.glb",
+    "kB": 2104
+   },
+   {
+    "lod": 4,
+    "tris": 958644,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "strawStack": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 48,
+    "file": "strawStack_L0.glb",
+    "kB": 262
+   },
+   {
+    "lod": 1,
+    "tris": 340,
+    "file": "strawStack_L1.glb",
+    "kB": 289
+   },
+   {
+    "lod": 2,
+    "tris": 5440,
+    "file": "strawStack_L2.glb",
+    "kB": 767
+   },
+   {
+    "lod": 3,
+    "tris": 44064,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 462400,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "car": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 824,
+    "file": "car_L0.glb",
+    "kB": 293
+   },
+   {
+    "lod": 1,
+    "tris": 2304,
+    "file": "car_L1.glb",
+    "kB": 334
+   },
+   {
+    "lod": 2,
+    "tris": 18704,
+    "file": "car_L2.glb",
+    "kB": 712
+   },
+   {
+    "lod": 3,
+    "tris": 135024,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 1360368,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "house": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 964,
+    "file": "house_L0.glb",
+    "kB": 414
+   },
+   {
+    "lod": 1,
+    "tris": 1288,
+    "file": "house_L1.glb",
+    "kB": 445
+   },
+   {
+    "lod": 2,
+    "tris": 8176,
+    "file": "house_L2.glb",
+    "kB": 1090
+   },
+   {
+    "lod": 3,
+    "tris": 109112,
+    "note": "generuje se za běhu (soubor > 3 MB, D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 1464024,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "pine": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 24,
+    "file": "pine_L0.glb",
+    "kB": 218
+   },
+   {
+    "lod": 1,
+    "tris": 60,
+    "file": "pine_L1.glb",
+    "kB": 222
+   },
+   {
+    "lod": 2,
+    "tris": 1132,
+    "file": "pine_L2.glb",
+    "kB": 322
+   },
+   {
+    "lod": 3,
+    "tris": 12936,
+    "file": "pine_L3.glb",
+    "kB": 1429
+   },
+   {
+    "lod": 4,
+    "tris": 160536,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "bush": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 112,
+    "file": "bush_L0.glb",
+    "kB": 243
+   },
+   {
+    "lod": 1,
+    "tris": 352,
+    "file": "bush_L1.glb",
+    "kB": 266
+   },
+   {
+    "lod": 2,
+    "tris": 1392,
+    "file": "bush_L2.glb",
+    "kB": 363
+   },
+   {
+    "lod": 3,
+    "tris": 2992,
+    "file": "bush_L3.glb",
+    "kB": 513
+   },
+   {
+    "lod": 4,
+    "tris": 5232,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ }
+}

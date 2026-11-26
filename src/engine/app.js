@@ -36,7 +36,7 @@ export class App {
     this.fx.env = this.env;
     this.objects = []; this.disposables = []; this.flora = [];
     this.timeScale = 1; this.paused = false; this.t = 0; this.wind = 0; this.windDir = 0; this.o2 = 1;
-    this.flameKey = 40; this.lodOverride = null; this.wire = false;
+    this.flameKey = 16; this.lodOverride = null; this.wire = false;
     this.controlsVals = {};
     this.mode = 'scenario';
     this.frameMs = 16; this.cpuMs = 0; this._fpsAcc = []; this.shakeN = fbm1(3);
@@ -95,6 +95,9 @@ export class App {
     this.env.ground.visible = true;
     for (const c of s.controls || []) if (!(c.id in this.controlsVals) || this._lastScn !== s.id) this.controlsVals[c.id] = c.value;
     this._lastScn = s.id;
+    if (s.wind != null && this._lastWindScn !== s.id) { this.wind = s.wind; this._windFromScn = true; }
+    else if (s.wind == null && this._windFromScn) { this.wind = 0; this._windFromScn = false; }
+    this._lastWindScn = s.id;
     this.fx.setWind(this.wind, this.windDir); this.fx.setOxygen(this.o2);
     this.fx.scnTime = 0; this.t = 0;
     this.timeScale = s.timeScale || 1;
@@ -132,7 +135,7 @@ export class App {
     this.camIndex = i;
   }
 
-  setWind(cls) { this.wind = cls; this.fx.setWind(cls, this.windDir); }
+  setWind(cls) { this.wind = cls; this._windFromScn = false; this.fx.setWind(cls, this.windDir); }
   setWindDir(rad) { this.windDir = rad; this.fx.setWind(this.wind, rad); }
   setO2(v) { this.o2 = v; this.fx.setOxygen(v); }
   applyWire() { this.scene.traverse((o) => { if (o.isMesh && o.material && !o.material.isShaderMaterial) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { if ('wireframe' in m) m.wireframe = this.wire; }); }); }
@@ -158,11 +161,12 @@ export class App {
     // měření jako oko: osvětlení v místě pozorovatele a v půli cesty k cíli (ne v ohni samotném)
     const c = this.camera.position, tgt = this.controls.target;
     const mid = c.clone().lerp(tgt, 0.5);
-    const E = this.env.ambientE + 0.5 * (this.fx.lights.illuminanceAt(c) + this.fx.lights.illuminanceAt(mid));
+    const E = this.env.ambientE + (this.fx.lights.illuminanceAt(c) + this.fx.lights.illuminanceAt(mid) + 0.4 * this.fx.lights.illuminanceAt(tgt)) / 3;
     const Ls = (0.25 / Math.PI) * E;
     const Lavg = Math.exp(0.75 * Math.log(Math.max(Ls, 1e-5)) + 0.25 * Math.log(Math.max(this.env.skyL, 1e-5)));
-    this.pipeline.targetExposure = Math.min(50, Math.max(2e-6, (0.16 / Lavg) * (this.expBias || 1)));
+    this.pipeline.targetExposure = Math.min(50, Math.max(2e-6, (0.25 / Lavg) * (this.expBias || 1)));
     this.fx.flameLum = Math.min(FLAME_LUM, this.flameKey / Math.max(this.pipeline.exposure, 1e-9));
+    PRE.value = this.pipeline.exposure;
   }
 
   renderFrame(dtVis) {
@@ -175,6 +179,7 @@ export class App {
     this.camera.position.add(off);
     PRE.value = this.pipeline.exposure;
     this.env.update(PRE.value);
+    this.fx.lights.applyPre(this.fx.layers.light);
     this.pipeline.render(this.scene, this.camera, dtVis, this.fx.time);
     this.camera.position.sub(off);
   }

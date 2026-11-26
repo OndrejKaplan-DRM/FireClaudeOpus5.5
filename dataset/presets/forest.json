@@ -1,0 +1,185 @@
+{
+ "format": "firelab-preset/1",
+ "id": "forest",
+ "name": "Lesní požár",
+ "group": "Velké požáry",
+ "desc": "Borový les 260 × 260 m. Šíření po zemi (hrabanka) podle Andersonovy elipsy; kde Byramova intenzita překročí práh Van Wagnera, požár přechází do korun.",
+ "time": "soumrak",
+ "timeScale": 30,
+ "duration": 3600,
+ "cams": [
+  {
+   "name": "nad lesem",
+   "pos": [
+    -60,
+    55,
+    140
+   ],
+   "target": [
+    10,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "v lese",
+   "pos": [
+    -20,
+    1.7,
+    40
+   ],
+   "target": [
+    20,
+    6,
+    0
+   ]
+  },
+  {
+   "name": "daleko",
+   "pos": [
+    -200,
+    90,
+    260
+   ],
+   "target": [
+    0,
+    10,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Palivo",
+   "v": "Lesní hrabanka + podrost (borovice)",
+   "src": "w = 1.2 kg/m²"
+  },
+  {
+   "k": "Rychlost čela R",
+   "v": "1.9 m/min",
+   "src": "Rothermel-lite ★2"
+  },
+  {
+   "k": "Byramova intenzita",
+   "v": "711 kW/m",
+   "src": "Byram ★4"
+  },
+  {
+   "k": "Délka plamene",
+   "v": "1.6 m",
+   "src": "Byram ★4"
+  },
+  {
+   "k": "Tvar L/B",
+   "v": "1.50",
+   "src": "Anderson ★4"
+  },
+  {
+   "k": "Práh korun I0",
+   "v": "1348 kW/m",
+   "src": "Van Wagner ★3"
+  },
+  {
+   "k": "Hořící buňky",
+   "v": "4 (5×5 m)",
+   "src": ""
+  },
+  {
+   "k": "Vyhořelo",
+   "v": "0.15 ha",
+   "src": ""
+  },
+  {
+   "k": "Režim",
+   "v": "přízemní požár",
+   "src": ""
+  },
+  {
+   "k": "Porost",
+   "v": "3000 ks, △ 0.16 M",
+   "src": "LOD blízko/daleko"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "forestLitter",
+   "pos": [
+    -52.5,
+    0.02,
+    17.5
+   ],
+   "D": 5.642,
+   "Q_W": 1048481,
+   "L_m": 0.458,
+   "T_K": 1150,
+   "puff_Hz": 0.63,
+   "smoke_tau": 0.976,
+   "smoke_rgb": [
+    0.477,
+    0.471,
+    0.464
+   ],
+   "light_cd": 8175
+  },
+  {
+   "fuel": "forestLitter",
+   "pos": [
+    -47.5,
+    0.02,
+    2.5
+   ],
+   "D": 5.642,
+   "Q_W": 1502542,
+   "L_m": 1.114,
+   "T_K": 1150,
+   "puff_Hz": 0.63,
+   "smoke_tau": 1.151,
+   "smoke_rgb": [
+    0.477,
+    0.471,
+    0.464
+   ],
+   "light_cd": 11715.3
+  },
+  {
+   "fuel": "forestLitter",
+   "pos": [
+    -52.5,
+    0.02,
+    -2.5
+   ],
+   "D": 5.642,
+   "Q_W": 1879858,
+   "L_m": 1.298,
+   "T_K": 1150,
+   "puff_Hz": 0.63,
+   "smoke_tau": 1.286,
+   "smoke_rgb": [
+    0.477,
+    0.471,
+    0.464
+   ],
+   "light_cd": 14657.3
+  },
+  {
+   "fuel": "forestLitter",
+   "pos": [
+    -82.5,
+    0.02,
+    -12.5
+   ],
+   "D": 5.642,
+   "Q_W": 1240641,
+   "L_m": 0.529,
+   "T_K": 1150,
+   "puff_Hz": 0.63,
+   "smoke_tau": 1.066,
+   "smoke_rgb": [
+    0.477,
+    0.471,
+    0.464
+   ],
+   "light_cd": 9673.3
+  }
+ ]
+}

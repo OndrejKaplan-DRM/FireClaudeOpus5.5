@@ -1,0 +1,112 @@
+{
+ "format": "firelab-preset/1",
+ "id": "torch",
+ "name": "Louč",
+ "group": "Zážeh",
+ "desc": "Smolná louč ~4 kW: oranžový plamen 30–40 cm, tmavší kouř z pryskyřice, odlétající uhlíky.",
+ "time": "noc",
+ "timeScale": 1,
+ "duration": null,
+ "cams": [
+  {
+   "name": "detail",
+   "pos": [
+    0.9,
+    0.9,
+    1.2
+   ],
+   "target": [
+    0,
+    0.65,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    1.6,
+    1.7,
+    2.2
+   ],
+   "target": [
+    0,
+    0.7,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Palivo",
+   "v": "Louč (smolné dřevo)",
+   "src": "ΔHc 18.0 MJ/kg"
+  },
+  {
+   "k": "Tepelný výkon Q",
+   "v": "4.0 kW",
+   "src": "model scénáře"
+  },
+  {
+   "k": "Výška plamene L",
+   "v": "0.343 m",
+   "src": "Heskestad ★5"
+  },
+  {
+   "k": "Náklon plamene",
+   "v": "0°  (u* = 0.00)",
+   "src": "AGA ★4"
+  },
+  {
+   "k": "Teplota svítivé zóny",
+   "v": "1200 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "Pulzace plamene",
+   "v": "5.9 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "Optická tl. kouře τ",
+   "v": "0.25",
+   "src": "Mulholland σs ★3"
+  },
+  {
+   "k": "Ekvivalenční poměr Φ",
+   "v": "0.50  saze ×1.00",
+   "src": "Tewarson ★2"
+  },
+  {
+   "k": "Výtěžek sazí / CO",
+   "v": "0.040 / 0.010 kg/kg",
+   "src": "SFPE ★3"
+  },
+  {
+   "k": "Svítivost",
+   "v": "37.0 cd",
+   "src": "odhad ★2"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "woodResin",
+   "pos": [
+    -0.086,
+    0.655,
+    0
+   ],
+   "D": 0.065,
+   "Q_W": 4000,
+   "L_m": 0.343,
+   "T_K": 1200,
+   "puff_Hz": 5.88,
+   "smoke_tau": 0.247,
+   "smoke_rgb": [
+    0.322,
+    0.312,
+    0.3
+   ],
+   "light_cd": 37
+  }
+ ]
+}

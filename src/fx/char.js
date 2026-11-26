@@ -26,7 +26,8 @@ export function applyChar(mat, { instanced = false, scale = 2.0, bias = 'y' } = 
       .replace('#include <map_fragment>', `#include <map_fragment>
   float chv = vCharA.x >= 0.0 ? vCharA.x : uChar;
   float glv = vCharA.x >= 0.0 ? vCharA.y : uGlow;
-  float hgt = clamp((vCharP.y - uCharBase) / max(uCharH, 0.01), 0.0, 1.0);
+  float hgt = clamp((vCharP.y - uCharBase) / max(abs(uCharH), 0.01), 0.0, 1.0);
+  if (uCharH < 0.0) hgt = 1.0 - hgt; // hoření shora (louč)
   float cn = fbm3(vCharP * uCharScale * 0.11);
   float front = chv * 1.35 - 0.2;
   float charM = smoothstep(front + 0.12, front - 0.12, cn * 0.7 + hgt * 0.45);

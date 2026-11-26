@@ -114,7 +114,7 @@ export function car({ lod = 2, color = 'carPaint' }) {
   const steel = makeMaterial('steel'); steel.name = 'rim';
   const rimG = new THREE.CylinderGeometry(0.2, 0.2, 0.19, segs(lod, 6, 12, 32, 96, 300));
   for (const wx of wheelX) for (const wz of [-0.78, 0.78]) {
-    const t = mesh(tg, rm, { name: 'tire' }); t.scale.setScalar(wheelR / 0.316); t.position.set(wx, wheelR, wz); grp.add(t);
+    const t = mesh(tg, rm, { name: 'tire' }); t.rotation.x = Math.PI / 2; t.scale.setScalar(wheelR / 0.316); t.position.set(wx, wheelR, wz); grp.add(t);
     const rr = mesh(rimG, steel, { name: 'rim' }); rr.rotation.x = Math.PI / 2; rr.position.set(wx, wheelR, wz); grp.add(rr);
   }
   // světla

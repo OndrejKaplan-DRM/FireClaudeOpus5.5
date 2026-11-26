@@ -33,7 +33,12 @@ export function candle({ lod = 2 }) {
   if (lod >= 2) displace(g, (x, y, z) => (y > H * 0.55 ? 0.0009 * Math.max(0, n.fbm(Math.atan2(z, x) * 3, y * 120, 0, 3)) * ((y - H * 0.55) / (H * 0.45)) : 0) + 0.00015 * n(x * 900, y * 900, z * 900));
   const wax = makeMaterial('wax', { roughness: 0.4 }); wax.name = 'wax';
   // podpovrchový rozptyl vosku – levná náhrada: emisivní prosvícení u vrcholu (umělecké)
-  wax.emissive = new THREE.Color(1.0, 0.45, 0.12); wax.emissiveIntensity = 0;
+  wax.emissive = new THREE.Color(1.0, 0.5, 0.18); wax.emissiveIntensity = 0;
+  { // prosvícení jen u horního okraje (v ≈ 1 u knotu)
+    const c = document.createElement('canvas'); c.width = 4; c.height = 64; const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 64, 0, 0); gr.addColorStop(0, '#1a1a1a'); gr.addColorStop(0.7, '#333'); gr.addColorStop(0.92, '#888'); gr.addColorStop(1, '#fff');
+    g.fillStyle = gr; g.fillRect(0, 0, 4, 64); wax.emissiveMap = new THREE.CanvasTexture(c); wax.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+  }
   const wick = tube(new THREE.Vector3(0, H - 0.005, 0), new THREE.Vector3(0.0012, H + 0.009, 0.0004), 0.0006, 0.0004, segs(lod, 4, 6, 8, 16, 32), segs(lod, 1, 2, 4, 8, 16));
   const wickM = new THREE.MeshStandardMaterial({ color: 0x070605, roughness: 0.9, name: 'wick' });
   const plate = lathe(resample([[0, 0], [0.04, 0], [0.042, 0.004], [0.04, 0.006], [R * 1.25, 0.006], [R * 1.25, 0.018], [R * 1.1, 0.018], [R * 1.1, 0.008], [0, 0.008]], segs(lod, 6, 12, 30, 90, 280)), rad);
@@ -58,7 +63,7 @@ export function torch({ lod = 2 }) {
     return wrap + 0.0012 * n(x * 300, y * 40, z * 300);
   });
   const { m, u } = charMat('bark', { scale: 30 });
-  u.uCharBase.value = 0.55; u.uCharH.value = 0.3;
+  u.uCharBase.value = 0.5; u.uCharH.value = -0.3; // ohořívá od hlavice dolů
   const grp = new THREE.Group();
   const t = mesh(g, m, { name: 'torch' }); t.rotation.z = 0.12; grp.add(t);
   // železný držák zapíchnutý v zemi
@@ -158,11 +163,11 @@ export function tire({ lod = 2, rim = true }) {
   const grp = new THREE.Group();
   const { m, u } = charMat('rubber', { scale: 20 });
   u.uCharBase.value = 0; u.uCharH.value = 0.6;
-  const t = mesh(tireGeometry(lod), m, { name: 'tire' }); t.rotation.x = Math.PI / 2; grp.add(t);
+  const t = mesh(tireGeometry(lod), m, { name: 'tire' }); t.rotation.x = Math.PI / 2; t.position.y = 0.316; grp.add(t);
   if (rim) {
     const rg = lathe(resample([[0.0, -0.03], [0.06, -0.035], [0.17, -0.05], [0.203, -0.09], [0.205, -0.1], [0.205, 0.1], [0.198, 0.09], [0.17, 0.03], [0.06, 0.02], [0, 0.02]], segs(lod, 5, 10, 24, 64, 160)), segs(lod, 8, 24, 64, 240, 900));
     const steel = makeMaterial('steel'); steel.name = 'rim';
-    const rm = mesh(rg, steel, { name: 'rim' }); rm.rotation.x = Math.PI / 2; grp.add(rm);
+    const rm = mesh(rg, steel, { name: 'rim' }); rm.rotation.x = Math.PI / 2; rm.position.y = 0.316; grp.add(rm);
   }
   grp.userData = { char: u };
   return grp;

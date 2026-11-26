@@ -1,0 +1,247 @@
+{
+ "format": "firelab-preset/1",
+ "id": "barrel",
+ "name": "Výbuch sudu s benzínem",
+ "group": "Exploze",
+ "desc": "Zahřívaný sud praskne (~6 s) → ohnivá koule CCPS (25 kg zapojeného paliva: D ≈ 17 m, 1,3 s), sud odletí nahoru, hořící louže a cákance. Tlaková vlna je slabá – benzín ve volném sudu nedetonuje (D-008).",
+ "time": "soumrak",
+ "timeScale": 1,
+ "duration": 40,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    24,
+    6,
+    28
+   ],
+   "target": [
+    0,
+    6,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    16,
+    1.7,
+    14
+   ],
+   "target": [
+    0,
+    4,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Zapojené palivo",
+   "v": "25 kg (z ~150 kg)",
+   "src": "předpoklad ★2"
+  },
+  {
+   "k": "Ohnivá koule D",
+   "v": "17.0 m",
+   "src": "CCPS ★4"
+  },
+  {
+   "k": "Trvání koule",
+   "v": "1.32 s",
+   "src": "CCPS ★4"
+  },
+  {
+   "k": "Výška středu",
+   "v": "12.7 m",
+   "src": "CCPS ★3"
+  },
+  {
+   "k": "Energie roztržení",
+   "v": "≈ 0,05 kg TNT (3 bar, 0,2 m³)",
+   "src": "Brode ★3"
+  },
+  {
+   "k": "  přetlak v 1 m",
+   "v": "161.2 kPa",
+   "src": "poškození plic, převrácení aut"
+  },
+  {
+   "k": "  přetlak v 3 m",
+   "v": "17.8 kPa",
+   "src": "poškození lehkých konstrukcí, prasklé ušní bubínky ~1 %"
+  },
+  {
+   "k": "  přetlak v 10 m",
+   "v": "3.9 kPa",
+   "src": "rozbitá okna (část)"
+  },
+  {
+   "k": "  přetlak v 30 m",
+   "v": "1.3 kPa",
+   "src": "rozbitá okna (část)"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "gasoline",
+   "pos": [
+    2,
+    0.01,
+    0
+   ],
+   "D": 0.4,
+   "Q_W": 120000,
+   "L_m": 1.187,
+   "T_K": 1200,
+   "puff_Hz": 2.37,
+   "smoke_tau": 0.39,
+   "smoke_rgb": [
+    0.338,
+    0.336,
+    0.334
+   ],
+   "light_cd": 1109.3
+  },
+  {
+   "fuel": "gasoline",
+   "pos": [
+    2.611,
+    0.01,
+    3.29
+   ],
+   "D": 0.4,
+   "Q_W": 120000,
+   "L_m": 1.187,
+   "T_K": 1200,
+   "puff_Hz": 2.37,
+   "smoke_tau": 0.39,
+   "smoke_rgb": [
+    0.338,
+    0.336,
+    0.334
+   ],
+   "light_cd": 1109.3
+  },
+  {
+   "fuel": "gasoline",
+   "pos": [
+    -1.454,
+    0.01,
+    6.233
+   ],
+   "D": 0.4,
+   "Q_W": 120000,
+   "L_m": 1.187,
+   "T_K": 1200,
+   "puff_Hz": 2.37,
+   "smoke_tau": 0.39,
+   "smoke_rgb": [
+    0.338,
+    0.336,
+    0.334
+   ],
+   "light_cd": 1109.3
+  },
+  {
+   "fuel": "gasoline",
+   "pos": [
+    -1.808,
+    0.01,
+    0.855
+   ],
+   "D": 0.4,
+   "Q_W": 120000,
+   "L_m": 1.187,
+   "T_K": 1200,
+   "puff_Hz": 2.37,
+   "smoke_tau": 0.39,
+   "smoke_rgb": [
+    0.338,
+    0.336,
+    0.334
+   ],
+   "light_cd": 1109.3
+  },
+  {
+   "fuel": "gasoline",
+   "pos": [
+    -3.766,
+    0.01,
+    -1.859
+   ],
+   "D": 0.4,
+   "Q_W": 120000,
+   "L_m": 1.187,
+   "T_K": 1200,
+   "puff_Hz": 2.37,
+   "smoke_tau": 0.39,
+   "smoke_rgb": [
+    0.338,
+    0.336,
+    0.334
+   ],
+   "light_cd": 1109.3
+  },
+  {
+   "fuel": "gasoline",
+   "pos": [
+    -1.349,
+    0.01,
+    -6.256
+   ],
+   "D": 0.4,
+   "Q_W": 120000,
+   "L_m": 1.187,
+   "T_K": 1200,
+   "puff_Hz": 2.37,
+   "smoke_tau": 0.39,
+   "smoke_rgb": [
+    0.338,
+    0.336,
+    0.334
+   ],
+   "light_cd": 1109.3
+  },
+  {
+   "fuel": "gasoline",
+   "pos": [
+    1.269,
+    0.01,
+    -1.546
+   ],
+   "D": 0.4,
+   "Q_W": 120000,
+   "L_m": 1.187,
+   "T_K": 1200,
+   "puff_Hz": 2.37,
+   "smoke_tau": 0.39,
+   "smoke_rgb": [
+    0.338,
+    0.336,
+    0.334
+   ],
+   "light_cd": 1109.3
+  },
+  {
+   "fuel": "gasoline",
+   "pos": [
+    0,
+    0.01,
+    0
+   ],
+   "D": 3.5,
+   "Q_W": 5792308,
+   "L_m": 3.95,
+   "T_K": 1200,
+   "puff_Hz": 0.8,
+   "smoke_tau": 1.851,
+   "smoke_rgb": [
+    0.338,
+    0.336,
+    0.334
+   ],
+   "light_cd": 53544.3
+  }
+ ]
+}

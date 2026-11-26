@@ -1,0 +1,26 @@
+{
+ "res": 128,
+ "frames": 64,
+ "layout": "16x8: 0-7 flame, 8-15 smoke",
+ "bakeMs": 29.399999999906868,
+ "grid": [
+  16,
+  8
+ ],
+ "loopSeconds": 2,
+ "channels": {
+  "flame": {
+   "R": "intenzita emise 1−e^−H",
+   "G": "vážená normovaná teplota",
+   "B": "opacita sazí",
+   "A": "pokrytí"
+  },
+  "smoke": {
+   "R": "optická tloušťka/3",
+   "G": "propustnost ke světlu shora",
+   "B": "okraj (1 − τ)",
+   "A": "1"
+  }
+ },
+ "usage": "barva plamene = sootColor(T_částice × (0,8 + 0,25 G)) × R; kouř: α = 1 − e^(−R·τ·2,2)"
+}

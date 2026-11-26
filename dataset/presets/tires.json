@@ -1,0 +1,142 @@
+{
+ "format": "firelab-preset/1",
+ "id": "tires",
+ "name": "Hořící pneumatiky",
+ "group": "Materiály",
+ "desc": "Hromada 5 pneumatik. Pryž (SBR) má výtěžek sazí ~0,13 kg/kg → neprůhledný černý sloup s hnědavým dehtovým okrajem; tavenina vytváří hořící louži.",
+ "time": "den",
+ "timeScale": 3,
+ "duration": 1200,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    7,
+    3,
+    9
+   ],
+   "target": [
+    0,
+    3,
+    0
+   ]
+  },
+  {
+   "name": "sloup",
+   "pos": [
+    18,
+    6,
+    22
+   ],
+   "target": [
+    0,
+    8,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Palivo",
+   "v": "Pryž (pneumatika, SBR)",
+   "src": "ΔHc 27.0 MJ/kg"
+  },
+  {
+   "k": "Tepelný výkon Q",
+   "v": "848.7 kW",
+   "src": "model scénáře"
+  },
+  {
+   "k": "Výška plamene L",
+   "v": "2.81 m",
+   "src": "Heskestad ★5"
+  },
+  {
+   "k": "Náklon plamene",
+   "v": "0°  (u* = 0.00)",
+   "src": "AGA ★4"
+  },
+  {
+   "k": "Teplota svítivé zóny",
+   "v": "1100 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "Pulzace plamene",
+   "v": "1.8 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "Optická tl. kouře τ",
+   "v": "4.96",
+   "src": "Mulholland σs ★3"
+  },
+  {
+   "k": "Ekvivalenční poměr Φ",
+   "v": "0.50  saze ×1.00",
+   "src": "Tewarson ★2"
+  },
+  {
+   "k": "Výtěžek sazí / CO",
+   "v": "0.130 / 0.050 kg/kg",
+   "src": "SFPE ★3"
+  },
+  {
+   "k": "Svítivost",
+   "v": "5539.4 cd",
+   "src": "odhad ★2"
+  },
+  {
+   "k": "louže taveniny: Tepelný výkon Q",
+   "v": "300.0 kW",
+   "src": "model scénáře"
+  },
+  {
+   "k": "louže taveniny: Výška plamene L",
+   "v": "0.771 m",
+   "src": "Heskestad ★5"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "rubber",
+   "pos": [
+    0,
+    0.25,
+    0
+   ],
+   "D": 0.66,
+   "Q_W": 848702,
+   "L_m": 2.815,
+   "T_K": 1100,
+   "puff_Hz": 1.85,
+   "smoke_tau": 4.963,
+   "smoke_rgb": [
+    0.035,
+    0.033,
+    0.032
+   ],
+   "light_cd": 5539.4
+  },
+  {
+   "fuel": "rubber",
+   "pos": [
+    0,
+    0.01,
+    0
+   ],
+   "D": 1.5,
+   "Q_W": 300000,
+   "L_m": 0.771,
+   "T_K": 1100,
+   "puff_Hz": 1.22,
+   "smoke_tau": 3.311,
+   "smoke_rgb": [
+    0.035,
+    0.033,
+    0.032
+   ],
+   "light_cd": 1958.1
+  }
+ ]
+}

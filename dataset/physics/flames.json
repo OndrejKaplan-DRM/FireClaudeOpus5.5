@@ -1,0 +1,114 @@
+[
+ {
+  "fuel": "paraffin",
+  "Q_W": 80,
+  "D_m": 0.012,
+  "L_heskestad_m": 0.073,
+  "puff_Hz": 13.69,
+  "smoke_tau_at_1_2L": 0.005,
+  "smoke_rgb": [
+   0.458,
+   0.458,
+   0.458
+  ],
+  "light_cd": 1
+ },
+ {
+  "fuel": "woodResin",
+  "Q_W": 4000,
+  "D_m": 0.065,
+  "L_heskestad_m": 0.343,
+  "puff_Hz": 5.88,
+  "smoke_tau_at_1_2L": 0.249,
+  "smoke_rgb": [
+   0.322,
+   0.312,
+   0.3
+  ],
+  "light_cd": 50.9
+ },
+ {
+  "fuel": "woodDry",
+  "Q_W": 15000,
+  "D_m": 0.32,
+  "L_heskestad_m": 0.368,
+  "puff_Hz": 2.65,
+  "smoke_tau_at_1_2L": 0.183,
+  "smoke_rgb": [
+   0.469,
+   0.466,
+   0.464
+  ],
+  "light_cd": 191
+ },
+ {
+  "fuel": "woodDry",
+  "Q_W": 200000,
+  "D_m": 0.8,
+  "L_heskestad_m": 1.141,
+  "puff_Hz": 1.68,
+  "smoke_tau_at_1_2L": 0.519,
+  "smoke_rgb": [
+   0.469,
+   0.466,
+   0.464
+  ],
+  "light_cd": 2546.5
+ },
+ {
+  "fuel": "woodDry",
+  "Q_W": 3000000,
+  "D_m": 2.4,
+  "L_heskestad_m": 3.332,
+  "puff_Hz": 0.97,
+  "smoke_tau_at_1_2L": 1.531,
+  "smoke_rgb": [
+   0.469,
+   0.466,
+   0.464
+  ],
+  "light_cd": 38197.2
+ },
+ {
+  "fuel": "rubber",
+  "Q_W": 1500000,
+  "D_m": 0.66,
+  "L_heskestad_m": 3.707,
+  "puff_Hz": 1.85,
+  "smoke_tau_at_1_2L": 6.265,
+  "smoke_rgb": [
+   0.035,
+   0.033,
+   0.032
+  ],
+  "light_cd": 19098.6
+ },
+ {
+  "fuel": "diesel",
+  "Q_W": 13317673,
+  "D_m": 4.12,
+  "L_heskestad_m": 6.289,
+  "puff_Hz": 0.74,
+  "smoke_tau_at_1_2L": 3.89,
+  "smoke_rgb": [
+   0.247,
+   0.243,
+   0.239
+  ],
+  "light_cd": 169565.9
+ },
+ {
+  "fuel": "straw",
+  "Q_W": 12000000,
+  "D_m": 4.7,
+  "L_heskestad_m": 5.269,
+  "puff_Hz": 0.69,
+  "smoke_tau_at_1_2L": 1.898,
+  "smoke_rgb": [
+   0.566,
+   0.564,
+   0.564
+  ],
+  "light_cd": 152788.7
+ }
+]

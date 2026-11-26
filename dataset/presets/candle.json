@@ -1,0 +1,117 @@
+{
+ "format": "firelab-preset/1",
+ "id": "candle",
+ "name": "Plamen svíčky",
+ "group": "Zážeh",
+ "desc": "Parafínová svíčka ~80 W. Modrá zóna u knotu, žlutý sazový plamen, pulzace ~14 Hz. Ve vichru zhasne a vypustí bílý dým parafínu.",
+ "time": "noc",
+ "timeScale": 1,
+ "duration": null,
+ "cams": [
+  {
+   "name": "detail",
+   "pos": [
+    0.18,
+    0.16,
+    0.26
+   ],
+   "target": [
+    0,
+    0.1,
+    0
+   ]
+  },
+  {
+   "name": "stůl",
+   "pos": [
+    0.6,
+    0.45,
+    0.8
+   ],
+   "target": [
+    0,
+    0.05,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Palivo",
+   "v": "Parafín (svíčka)",
+   "src": "ΔHc 42.0 MJ/kg"
+  },
+  {
+   "k": "Tepelný výkon Q",
+   "v": "80 W",
+   "src": "model scénáře"
+  },
+  {
+   "k": "Výška plamene L",
+   "v": "0.045 m",
+   "src": "měřená hodnota"
+  },
+  {
+   "k": "Náklon plamene",
+   "v": "0°  (u* = 0.00)",
+   "src": "AGA ★4"
+  },
+  {
+   "k": "Teplota svítivé zóny",
+   "v": "1380 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "Pulzace plamene",
+   "v": "11.9 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "Optická tl. kouře τ",
+   "v": "0.00",
+   "src": "Mulholland σs ★3"
+  },
+  {
+   "k": "Ekvivalenční poměr Φ",
+   "v": "0.50  saze ×1.00",
+   "src": "Tewarson ★2"
+  },
+  {
+   "k": "Výtěžek sazí / CO",
+   "v": "0.010 / 0.004 kg/kg",
+   "src": "SFPE ★3"
+  },
+  {
+   "k": "Svítivost",
+   "v": "1.3 cd",
+   "src": "odhad ★2"
+  },
+  {
+   "k": "Stav",
+   "v": "hoří",
+   "src": "práh ~3 m/s ★2"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "paraffin",
+   "pos": [
+    0.001,
+    0.113,
+    0
+   ],
+   "D": 0.016,
+   "Q_W": 80,
+   "L_m": 0.045,
+   "T_K": 1380,
+   "puff_Hz": 11.86,
+   "smoke_tau": 0.003,
+   "smoke_rgb": [
+    0.458,
+    0.458,
+    0.458
+   ],
+   "light_cd": 1.3
+  }
+ ]
+}

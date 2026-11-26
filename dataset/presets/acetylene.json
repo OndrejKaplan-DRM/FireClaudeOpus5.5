@@ -1,0 +1,96 @@
+{
+ "format": "firelab-preset/1",
+ "id": "acetylene",
+ "name": "Výbuch acetylenové bomby",
+ "group": "Exploze",
+ "desc": "50 l PE sáček se stechiometrickou směsí C₂H₂ + O₂ (≈ 15 g C₂H₂). Detonace → modrobílý záblesk ~3 000 K, téměř bez sazí, ostrá tlaková vlna.",
+ "time": "soumrak",
+ "timeScale": 1,
+ "duration": 12,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    5,
+    2,
+    6
+   ],
+   "target": [
+    0,
+    0.6,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    9,
+    1.7,
+    9
+   ],
+   "target": [
+    0,
+    0.6,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Směs",
+   "v": "C₂H₂ : O₂ = 1 : 2,5, 50 l",
+   "src": ""
+  },
+  {
+   "k": "Hmotnost C₂H₂",
+   "v": "15 g",
+   "src": ""
+  },
+  {
+   "k": "Účinnost → TNT",
+   "v": "45 %",
+   "src": "odhad ★2"
+  },
+  {
+   "k": "TNT ekv.",
+   "v": "78 g",
+   "src": "Kinney–Graham ★4"
+  },
+  {
+   "k": "  přetlak v 1 m",
+   "v": "227.0 kPa",
+   "src": "letální práh plic ~1 %"
+  },
+  {
+   "k": "  přetlak v 3 m",
+   "v": "22.7 kPa",
+   "src": "poškození lehkých konstrukcí, prasklé ušní bubínky ~1 %"
+  },
+  {
+   "k": "  přetlak v 10 m",
+   "v": "4.6 kPa",
+   "src": "rozbitá okna (část)"
+  },
+  {
+   "k": "  přetlak v 30 m",
+   "v": "1.5 kPa",
+   "src": "rozbitá okna (část)"
+  },
+  {
+   "k": "  přetlak v 100 m",
+   "v": "436 Pa",
+   "src": "—"
+  },
+  {
+   "k": "  přetlak v 300 m",
+   "v": "145 Pa",
+   "src": "—"
+  },
+  {
+   "k": "Ohnivá koule",
+   "v": "1.07 m / 41 ms",
+   "src": "objem produktů ★2"
+  }
+ ],
+ "sources": []
+}

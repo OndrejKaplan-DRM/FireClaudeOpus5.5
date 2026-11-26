@@ -1,0 +1,91 @@
+{
+ "format": "firelab-preset/1",
+ "id": "grenade",
+ "name": "Výbuch granátu",
+ "group": "Exploze",
+ "desc": "Ruční granát typu M67: 180 g Composition B (≈ 0,24 kg TNT). Krátký záblesk, černý kouř (výbušnina s nedostatkem kyslíku), prach a střepiny ~2 km/s.",
+ "time": "den",
+ "timeScale": 1,
+ "duration": 12,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    6,
+    2.2,
+    7
+   ],
+   "target": [
+    0,
+    0.6,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    12,
+    1.7,
+    10
+   ],
+   "target": [
+    0,
+    0.6,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Náplň",
+   "v": "180 g Composition B (RE 1,33)",
+   "src": "★4"
+  },
+  {
+   "k": "TNT ekv.",
+   "v": "239 g",
+   "src": "Kinney–Graham ★4"
+  },
+  {
+   "k": "  přetlak v 1 m",
+   "v": "540.6 kPa",
+   "src": "letální práh plic ~1 %"
+  },
+  {
+   "k": "  přetlak v 3 m",
+   "v": "45.5 kPa",
+   "src": "zničení dřevostaveb, ušní bubínky ~50 %"
+  },
+  {
+   "k": "  přetlak v 10 m",
+   "v": "7.0 kPa",
+   "src": "okna rozbitá, lehké poškození střech"
+  },
+  {
+   "k": "  přetlak v 30 m",
+   "v": "2.1 kPa",
+   "src": "rozbitá okna (část)"
+  },
+  {
+   "k": "  přetlak v 100 m",
+   "v": "634 Pa",
+   "src": "—"
+  },
+  {
+   "k": "  přetlak v 300 m",
+   "v": "211 Pa",
+   "src": "—"
+  },
+  {
+   "k": "Rychlost střepin",
+   "v": "2000 m/s",
+   "src": "Gurney ★4"
+  },
+  {
+   "k": "Ohnivá koule",
+   "v": "1.55 m / 51 ms",
+   "src": "★2"
+  }
+ ],
+ "sources": []
+}

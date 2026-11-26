@@ -1,0 +1,304 @@
+{
+ "granat_M67": {
+  "W_TNT_kg": 0.24,
+  "table": [
+   {
+    "R_m": 1,
+    "Ps_kPa": 541.656,
+    "td_ms": 0.58,
+    "effect": "letální práh plic ~1 %"
+   },
+   {
+    "R_m": 2,
+    "Ps_kPa": 109.07,
+    "td_ms": 1.14,
+    "effect": "poškození plic, převrácení aut"
+   },
+   {
+    "R_m": 3,
+    "Ps_kPa": 45.564,
+    "td_ms": 1.59,
+    "effect": "zničení dřevostaveb, ušní bubínky ~50 %"
+   },
+   {
+    "R_m": 5,
+    "Ps_kPa": 18.146,
+    "td_ms": 2.2,
+    "effect": "poškození lehkých konstrukcí, prasklé ušní bubínky ~1 %"
+   },
+   {
+    "R_m": 10,
+    "Ps_kPa": 7.032,
+    "td_ms": 2.82,
+    "effect": "okna rozbitá, lehké poškození střech"
+   },
+   {
+    "R_m": 20,
+    "Ps_kPa": 3.256,
+    "td_ms": 3.08,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 30,
+    "Ps_kPa": 2.138,
+    "td_ms": 3.14,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 50,
+    "Ps_kPa": 1.273,
+    "td_ms": 3.17,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 100,
+    "Ps_kPa": 0.634,
+    "td_ms": 3.18,
+    "effect": "—"
+   },
+   {
+    "R_m": 200,
+    "Ps_kPa": 0.317,
+    "td_ms": 3.18,
+    "effect": "—"
+   },
+   {
+    "R_m": 500,
+    "Ps_kPa": 0.127,
+    "td_ms": 3.18,
+    "effect": "—"
+   }
+  ]
+ },
+ "acetylen_50l": {
+  "W_TNT_kg": 0.16,
+  "table": [
+   {
+    "R_m": 1,
+    "Ps_kPa": 397.3,
+    "td_ms": 0.59,
+    "effect": "letální práh plic ~1 %"
+   },
+   {
+    "R_m": 2,
+    "Ps_kPa": 80.646,
+    "td_ms": 1.12,
+    "effect": "zničení dřevostaveb, ušní bubínky ~50 %"
+   },
+   {
+    "R_m": 3,
+    "Ps_kPa": 34.96,
+    "td_ms": 1.53,
+    "effect": "poškození lehkých konstrukcí, prasklé ušní bubínky ~1 %"
+   },
+   {
+    "R_m": 5,
+    "Ps_kPa": 14.738,
+    "td_ms": 2.06,
+    "effect": "okna rozbitá, lehké poškození střech"
+   },
+   {
+    "R_m": 10,
+    "Ps_kPa": 6,
+    "td_ms": 2.53,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 20,
+    "Ps_kPa": 2.826,
+    "td_ms": 2.71,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 30,
+    "Ps_kPa": 1.863,
+    "td_ms": 2.75,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 50,
+    "Ps_kPa": 1.111,
+    "td_ms": 2.77,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 100,
+    "Ps_kPa": 0.554,
+    "td_ms": 2.78,
+    "effect": "—"
+   },
+   {
+    "R_m": 200,
+    "Ps_kPa": 0.277,
+    "td_ms": 2.78,
+    "effect": "—"
+   },
+   {
+    "R_m": 500,
+    "Ps_kPa": 0.111,
+    "td_ms": 2.78,
+    "effect": "—"
+   }
+  ]
+ },
+ "sud_roztrzeni": {
+  "W_TNT_kg": 0.05,
+  "table": [
+   {
+    "R_m": 1,
+    "Ps_kPa": 161.186,
+    "td_ms": 0.58,
+    "effect": "poškození plic, převrácení aut"
+   },
+   {
+    "R_m": 2,
+    "Ps_kPa": 36.166,
+    "td_ms": 1.03,
+    "effect": "zničení dřevostaveb, ušní bubínky ~50 %"
+   },
+   {
+    "R_m": 3,
+    "Ps_kPa": 17.803,
+    "td_ms": 1.31,
+    "effect": "poškození lehkých konstrukcí, prasklé ušní bubínky ~1 %"
+   },
+   {
+    "R_m": 5,
+    "Ps_kPa": 8.669,
+    "td_ms": 1.61,
+    "effect": "okna rozbitá, lehké poškození střech"
+   },
+   {
+    "R_m": 10,
+    "Ps_kPa": 3.902,
+    "td_ms": 1.8,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 20,
+    "Ps_kPa": 1.897,
+    "td_ms": 1.87,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 30,
+    "Ps_kPa": 1.258,
+    "td_ms": 1.88,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 50,
+    "Ps_kPa": 0.753,
+    "td_ms": 1.88,
+    "effect": "—"
+   },
+   {
+    "R_m": 100,
+    "Ps_kPa": 0.376,
+    "td_ms": 1.89,
+    "effect": "—"
+   },
+   {
+    "R_m": 200,
+    "Ps_kPa": 0.188,
+    "td_ms": 1.89,
+    "effect": "—"
+   },
+   {
+    "R_m": 500,
+    "Ps_kPa": 0.075,
+    "td_ms": 1.89,
+    "effect": "—"
+   }
+  ]
+ },
+ "TNT_1t": {
+  "W_TNT_kg": 1000,
+  "table": [
+   {
+    "R_m": 1,
+    "Ps_kPa": 39922.756,
+    "td_ms": 169.21,
+    "effect": "letální práh plic ~1 %"
+   },
+   {
+    "R_m": 2,
+    "Ps_kPa": 20285.234,
+    "td_ms": 21.41,
+    "effect": "letální práh plic ~1 %"
+   },
+   {
+    "R_m": 3,
+    "Ps_kPa": 12223.612,
+    "td_ms": 6.34,
+    "effect": "letální práh plic ~1 %"
+   },
+   {
+    "R_m": 5,
+    "Ps_kPa": 5627.186,
+    "td_ms": 1.42,
+    "effect": "letální práh plic ~1 %"
+   },
+   {
+    "R_m": 10,
+    "Ps_kPa": 1527.896,
+    "td_ms": 4.02,
+    "effect": "letální práh plic ~1 %"
+   },
+   {
+    "R_m": 20,
+    "Ps_kPa": 328.315,
+    "td_ms": 11.78,
+    "effect": "letální práh plic ~1 %"
+   },
+   {
+    "R_m": 30,
+    "Ps_kPa": 127.998,
+    "td_ms": 17.24,
+    "effect": "poškození plic, převrácení aut"
+   },
+   {
+    "R_m": 50,
+    "Ps_kPa": 42.472,
+    "td_ms": 26.23,
+    "effect": "zničení dřevostaveb, ušní bubínky ~50 %"
+   },
+   {
+    "R_m": 100,
+    "Ps_kPa": 13.069,
+    "td_ms": 39.26,
+    "effect": "okna rozbitá, lehké poškození střech"
+   },
+   {
+    "R_m": 200,
+    "Ps_kPa": 5.462,
+    "td_ms": 47.26,
+    "effect": "rozbitá okna (část)"
+   },
+   {
+    "R_m": 500,
+    "Ps_kPa": 2.063,
+    "td_ms": 50.54,
+    "effect": "rozbitá okna (část)"
+   }
+  ]
+ },
+ "fireballs": {
+  "bleve_25kg": {
+   "D": 16.959302881634624,
+   "t": 1.3158079821957898,
+   "H": 12.719477161225967,
+   "SEP": 350000
+  },
+  "he_1t": {
+   "D": 25,
+   "t": 0.52,
+   "T": 2300
+  },
+  "he_grenade": {
+   "D": 1.5536162529769293,
+   "t": 0.051072325059538584,
+   "T": 2300
+  }
+ }
+}

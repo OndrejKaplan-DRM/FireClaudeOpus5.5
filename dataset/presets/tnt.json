@@ -1,0 +1,99 @@
+{
+ "format": "firelab-preset/1",
+ "id": "tnt",
+ "name": "Exploze 1 t TNT",
+ "group": "Exploze",
+ "desc": "1 000 kg TNT v sudu na zemi. Ohnivá koule ~25 m (0,5 s), rázová vlna (kondenzace a prach), stoupající černý mrak (TNT má nedostatek kyslíku → saze), kráter.",
+ "time": "den",
+ "timeScale": 1,
+ "duration": 60,
+ "cams": [
+  {
+   "name": "160 m",
+   "pos": [
+    130,
+    8,
+    95
+   ],
+   "target": [
+    0,
+    18,
+    0
+   ]
+  },
+  {
+   "name": "400 m",
+   "pos": [
+    330,
+    25,
+    230
+   ],
+   "target": [
+    0,
+    40,
+    0
+   ]
+  },
+  {
+   "name": "blízko (60 m)",
+   "pos": [
+    50,
+    4,
+    35
+   ],
+   "target": [
+    0,
+    10,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "TNT ekv.",
+   "v": "1000.0 kg",
+   "src": "Kinney–Graham ★4"
+  },
+  {
+   "k": "  přetlak v 1 m",
+   "v": "39922.8 kPa",
+   "src": "letální práh plic ~1 %"
+  },
+  {
+   "k": "  přetlak v 3 m",
+   "v": "12223.6 kPa",
+   "src": "letální práh plic ~1 %"
+  },
+  {
+   "k": "  přetlak v 10 m",
+   "v": "1527.9 kPa",
+   "src": "letální práh plic ~1 %"
+  },
+  {
+   "k": "  přetlak v 30 m",
+   "v": "128.0 kPa",
+   "src": "poškození plic, převrácení aut"
+  },
+  {
+   "k": "  přetlak v 100 m",
+   "v": "13.1 kPa",
+   "src": "okna rozbitá, lehké poškození střech"
+  },
+  {
+   "k": "  přetlak v 300 m",
+   "v": "3.5 kPa",
+   "src": "rozbitá okna (část)"
+  },
+  {
+   "k": "Ohnivá koule",
+   "v": "25 m / 0.52 s",
+   "src": "★2"
+  },
+  {
+   "k": "Rychlost čela v 10 m",
+   "v": "≈ 1280 m/s",
+   "src": "Rankine–Hugoniot ★5"
+  }
+ ],
+ "sources": []
+}

@@ -34,14 +34,14 @@ export class Environment {
     this.skyMat = new THREE.ShaderMaterial({
       vertexShader: 'varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }',
       fragmentShader: SKY_FS, side: THREE.BackSide, depthWrite: false,
-      uniforms: { c0: { value: new THREE.Color() }, c1: { value: new THREE.Color() }, sunDir: { value: new THREE.Vector3(-0.6, 0.08, -0.8) }, stars: { value: 0 } },
+      uniforms: { c0: { value: new THREE.Color() }, c1: { value: new THREE.Color() }, sunDir: { value: new THREE.Vector3(0.55, 0.6, 0.7) }, stars: { value: 0 } },
     });
     this.sky = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), this.skyMat);
     this.sky.frustumCulled = false; this.sky.renderOrder = -10;
     this.sky.onBeforeRender = (r, s, cam) => { this.sky.position.copy(cam.position); this.sky.scale.setScalar(cam.far * 0.9); this.sky.updateMatrixWorld(); };
     scene.add(this.sky);
-    this.hemi = new THREE.HemisphereLight(0x8899bb, 0x2a2018, 0.1); scene.add(this.hemi);
-    this.sun = new THREE.DirectionalLight(0xfff0dd, 0.1); this.sun.position.set(-60, 70, -50); scene.add(this.sun);
+    this.hemi = new THREE.HemisphereLight(0x9aa8c8, 0x5a4a3a, 0.1); scene.add(this.hemi);
+    this.sun = new THREE.DirectionalLight(0xfff0dd, 0.1); this.sun.position.set(55, 60, 70); scene.add(this.sun);
     this.moon = new THREE.DirectionalLight(0x8fa6d8, 0.0); this.moon.position.set(40, 60, 30); scene.add(this.moon);
     this.fog = new THREE.FogExp2(0x000000, 0.004); scene.fog = this.fog;
     this.groundMat = new THREE.MeshStandardMaterial({ map: groundTexture('dirt'), roughness: 0.95, metalness: 0 });

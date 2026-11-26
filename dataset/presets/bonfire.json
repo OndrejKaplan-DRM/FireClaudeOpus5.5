@@ -1,0 +1,112 @@
+{
+ "format": "firelab-preset/1",
+ "id": "bonfire",
+ "name": "Požár (velká hranice)",
+ "group": "Ohně",
+ "desc": "Hranice ~3 MW, plamen ~3,3 m, silné stoupání uhlíků, výrazný horký vzduch.",
+ "time": "noc",
+ "timeScale": 1,
+ "duration": null,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    7,
+    3,
+    8
+   ],
+   "target": [
+    0,
+    2,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    6,
+    1.7,
+    6
+   ],
+   "target": [
+    0,
+    1.6,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Palivo",
+   "v": "Dřevo suché (smrk/buk)",
+   "src": "ΔHc 15.0 MJ/kg"
+  },
+  {
+   "k": "Tepelný výkon Q",
+   "v": "2.94 MW",
+   "src": "model scénáře"
+  },
+  {
+   "k": "Výška plamene L",
+   "v": "3.28 m",
+   "src": "Heskestad ★5"
+  },
+  {
+   "k": "Náklon plamene",
+   "v": "0°  (u* = 0.00)",
+   "src": "AGA ★4"
+  },
+  {
+   "k": "Teplota svítivé zóny",
+   "v": "1250 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "Pulzace plamene",
+   "v": "1.0 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "Optická tl. kouře τ",
+   "v": "1.54",
+   "src": "Mulholland σs ★3"
+  },
+  {
+   "k": "Ekvivalenční poměr Φ",
+   "v": "0.50  saze ×1.00",
+   "src": "Tewarson ★2"
+  },
+  {
+   "k": "Výtěžek sazí / CO",
+   "v": "0.015 / 0.004 kg/kg",
+   "src": "SFPE ★3"
+  },
+  {
+   "k": "Svítivost",
+   "v": "32 kcd",
+   "src": "odhad ★2"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "woodDry",
+   "pos": [
+    0,
+    0.08,
+    0
+   ],
+   "D": 2.4,
+   "Q_W": 2936851,
+   "L_m": 3.283,
+   "T_K": 1250,
+   "puff_Hz": 0.97,
+   "smoke_tau": 1.543,
+   "smoke_rgb": [
+    0.469,
+    0.466,
+    0.464
+   ],
+   "light_cd": 31963.8
+  }
+ ]
+}

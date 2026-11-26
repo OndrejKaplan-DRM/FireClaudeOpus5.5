@@ -58,7 +58,7 @@ export const FUELS = {
     name: 'Lesní hrabanka + podrost (borovice)', dHc: 18.6e6, rho: 0, ys: 0.02, yCO: 0.06, chiR: 0.25,
     Tflame: 1150, water: 0.35, tar: 0.25, embers: 0.8, sparks: 0.2, conf: 3,
     // lesní parametry: w [kg/m²] spotřebované palivo, R0 [m/s] rychlost bez větru, wind a·U^b, tr doba hoření v místě [s]
-    w: 1.2, R0: 0.006, wa: 0.45, wb: 1.3, tr: 90,
+    w: 1.2, R0: 0.01, wa: 0.9, wb: 1.3, tr: 90,
   },
   crown: {
     name: 'Koruny jehličnanů', dHc: 18.6e6, rho: 0, ys: 0.03, yCO: 0.06, chiR: 0.25,

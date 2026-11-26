@@ -50,3 +50,43 @@ Formát: **D-xxx · datum · rozhodnutí** — proč, alternativy, důsledky, ji
 - Typický případ (pyrotechnický žert, průmyslové nehody v potrubí) je stechiometrická směs v PE sáčku.
   50 l směsi ≈ 15 g C₂H₂ → ≈ 0,7 MJ → ekvivalent ≈ 0,15 kg TNT. Jasný záblesk, málo kouře (téměř bez sazí při přebytku O₂).
   **Jistota:** ★★★ (účinnost přepočtu na TNT pro plynné detonace je nejistá, rozpětí 0,1–0,3 kg).
+
+### D-010 · 2026-11-26 · Před-expozice a lokální adaptace plamene
+- Světla jsou ve fyzikálních jednotkách (cd, lx): svíčka ~1 cd, táborák ~2 kcd, den ~65 klx slunce. HDR buffer je HalfFloat
+  (max 65 504) → záblesk 1 t TNT by přetekl. Řešení (Frostbite): všechna emise a světla se násobí expozicí už při stínování
+  (`shared.PRE`), finální průchod jen tónuje (ACES). Expozice se měří „okem“ (osvětlení u pozorovatele + jas oblohy), adaptace
+  nahoru 0,9 s / dolů 0,25 s → záblesk výbuchu na chvíli přepálí obraz (žádoucí).
+- Jas plamene: fyzikální ~10⁴ cd/m² (`FLAME_LUM` 12 000 při 1 500 K a ε = 1), ale omezený `klíč / expozice` (klíč 16) –
+  napodobení lokální adaptace oka / HDR fotografie, aby plamen nebyl jen bílá skvrna. Umělecké, ★2. Klíč je v UI.
+- Teplotní závislost jasu je komprimovaná (`BB_GAMMA` 0,3); skutečný poměr jasu 1 000 K : 1 500 K je ~1 : 5 000.
+
+### D-011 · 2026-11-26 · Barva sazového plamene = Planck při ~1,28 × T
+- Emisivita sazí ε(λ) ∝ λ^−1,39 (Hottel–Broughton) zvyšuje barevnou teplotu oproti skutečné: svíčka má saze ~1 450 K,
+  ale naměřená CCT ~1 850 K. `sootColor(T)` bere barvu z LUT při 1,28·T a jas při T. Pevné látky (uhlíky, jiskry, ohořelé
+  povrchy) zůstávají na čistém Planckovi. Světla ohně dostávají barvu z 1,28·T. ★★★★
+
+### D-012 · 2026-11-26 · Oprava Andersonovy elipsy na tvar FARSITE
+- Původní dosazení U v mph dávalo L/B ≈ 160 pro 9 m/s (nesmysl). FARSITE (Finney 1998) používá vítr ve středu plamene v m/s
+  a strop L/B ≤ 8. Vítr ve středu plamene = U10 × 0,22 (les) / 0,4 (křoví). Odhaleno testem `tools/test-physics.mjs`.
+
+### D-013 · 2026-11-26 · Jeden řazený systém pro plamen, kouř a ohnivé chuchvalce
+- Aditivní plamen kreslený zvlášť od kouře dává chybné pořadí (kouř za plamenem by ho zakryl). Všechny billboardy jsou v jednom
+  instancovaném systému s premultiplikovanou alfou (plamen ≈ čistá emise, kouř = albedo × světlo × α), řazeném odzadu (T1+).
+  Jeden draw call. Typ částice: 0 jazyk, 1 kouř, 2 žhnoucí kouř, 3 ohnivý chuchvalec (ohnivá koule, horní část velkých požárů).
+
+### D-014 · 2026-11-26 · Čas scénáře ≠ čas efektů
+- Požár auta trvá desítky minut; přehrávání ×20 by zrychlilo i plameny. Proto `timeScale` posouvá jen průběh scénáře (HRR, šíření,
+  ohořelost) a částice, pulzace a výbuchy běží v reálném čase. Časová osa v UI ukazuje HRR a umí skok (přepočet + předehřátí 2 s).
+
+### D-015 · 2026-11-26 · Kouř: optická tloušťka z fyziky, ředění ∝ s0/s
+- τ sloupce = σs · c_sazí · 2b (Heskestadův hmotnostní tok oblaku). V oblaku c ∝ 1/b² a tloušťka ∝ b → τ ∝ 1/b; částice proto
+  ředí τ ∝ s0/s (ne s0²/s², to by kouř zmizel moc rychle). Pneumatika: τ ≈ 5 (černý neprůhledný), táborák τ ≈ 0,4 (průsvitný). ★★★
+
+### D-016 · 2026-11-26 · Ohořelost jako rozšíření standardního PBR materiálu
+- `applyChar` přidá do MeshStandardMaterial frontu ohoření podle šumu a výšky, popel (šednutí) a žhnoucí trhliny (Planck 880–1 180 K).
+  Funguje i instancovaně (atribut `aChar`), takže 8 000 stromů má každý vlastní stav bez dalších draw callů.
+
+### D-017 · 2026-11-26 · Les: časy příchodu (Dijkstra, 16 sousedů) místo buněčného automatu
+- Deterministické, okamžitě přepočitatelné při změně větru (dosavadní hořící/vyhořelé buňky slouží jako zdroje), bez „čtverečkového“
+  tvaru. Hořící buňky dostávají zdroje z bazénu (T0 40 … T3 180) seřazené podle vzdálenosti od kamery. Přechod do korun, když Byramova
+  intenzita přesáhne 0,6 × I0 (Van Wagner, CBH 4 m, FMC 100 %). ★★

@@ -1,0 +1,127 @@
+{
+ "format": "firelab-preset/1",
+ "id": "diesel",
+ "name": "Rozlitá nafta 20 l",
+ "group": "Kapaliny",
+ "desc": "Tenká vrstva 1,5 mm na betonu: D ≈ 4,1 m, Q ≈ 13 MW, plamen ~6 m, hoří ~1 min. Plamen se po zapálení šíří po hladině.",
+ "time": "soumrak",
+ "timeScale": 1,
+ "duration": 90,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    10,
+    3.5,
+    12
+   ],
+   "target": [
+    0,
+    3,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    7,
+    1.7,
+    7
+   ],
+   "target": [
+    0,
+    2.2,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Palivo",
+   "v": "Nafta",
+   "src": "ΔHc 44.4 MJ/kg"
+  },
+  {
+   "k": "Tepelný výkon Q",
+   "v": "13.32 MW",
+   "src": "model scénáře"
+  },
+  {
+   "k": "Výška plamene L",
+   "v": "6.29 m",
+   "src": "Heskestad ★5"
+  },
+  {
+   "k": "Náklon plamene",
+   "v": "0°  (u* = 0.00)",
+   "src": "AGA ★4"
+  },
+  {
+   "k": "Teplota svítivé zóny",
+   "v": "1150 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "Pulzace plamene",
+   "v": "0.7 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "Optická tl. kouře τ",
+   "v": "3.94",
+   "src": "Mulholland σs ★3"
+  },
+  {
+   "k": "Ekvivalenční poměr Φ",
+   "v": "0.50  saze ×1.00",
+   "src": "Tewarson ★2"
+  },
+  {
+   "k": "Výtěžek sazí / CO",
+   "v": "0.059 / 0.012 kg/kg",
+   "src": "SFPE ★3"
+  },
+  {
+   "k": "Svítivost",
+   "v": "104 kcd",
+   "src": "odhad ★2"
+  },
+  {
+   "k": "Plocha louže",
+   "v": "13.3 m² (D 4.12 m)",
+   "src": "vrstva 1,5 mm ★3"
+  },
+  {
+   "k": "Doba hoření",
+   "v": "56 s",
+   "src": "m/ṁ ★3"
+  },
+  {
+   "k": "Odhořívání",
+   "v": "300 g/s",
+   "src": "Babrauskas ×0,5 tenká vrstva ★3"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "diesel",
+   "pos": [
+    0,
+    0.01,
+    0
+   ],
+   "D": 4.12,
+   "Q_W": 13317673,
+   "L_m": 6.289,
+   "T_K": 1150,
+   "puff_Hz": 0.74,
+   "smoke_tau": 3.937,
+   "smoke_rgb": [
+    0.247,
+    0.243,
+    0.239
+   ],
+   "light_cd": 103838
+  }
+ ]
+}

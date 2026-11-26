@@ -49,13 +49,15 @@ export class FireLights {
     this.active = [];
     for (let i = 0; i < n; i++) {
       const L = this.pool[i], q = keep[i];
-      if (!q) { L.intensity = 0; continue; }
-      L.position.set(q.x, q.y, q.z); L.intensity = q.I * PRE.value;
+      if (!q) { L.intensity = 0; L.userData.I = 0; continue; }
+      L.position.set(q.x, q.y, q.z); L.userData.I = q.I; L.intensity = q.I * PRE.value;
       const c = bbRGB(q.T * 1.28); L.color.setRGB(c[0], c[1], c[2]); // barevná teplota sazového plamene (viz sootColor)
       this.active.push({ on: true, x: q.x, y: q.y, z: q.z, I: q.I, r: q.r, c });
     }
     return this.active;
   }
+  /** Před-expozice těsně před kreslením (intenzita = I [cd] × expozice) */
+  applyPre(on = true) { for (const L of this.pool) L.intensity = on ? (L.userData.I || 0) * PRE.value : 0; }
   /** Odhad osvětlení v bodě (pro auto-expozici) [lx] */
   illuminanceAt(p) {
     let E = 0;

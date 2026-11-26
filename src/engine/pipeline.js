@@ -42,14 +42,14 @@ void main(){
 
 const BLOOM_UP = /* glsl */`
 precision highp float; in vec2 vUv; out vec4 o;
-uniform sampler2D tSrc; uniform vec2 texel;
+uniform sampler2D tSrc; uniform vec2 texel; uniform float weight;
 void main(){
   vec2 t = texel;
   vec3 c = texture(tSrc, vUv + vec2(-2.0*t.x, 0.0)).rgb + texture(tSrc, vUv + vec2(2.0*t.x, 0.0)).rgb
          + texture(tSrc, vUv + vec2(0.0, -2.0*t.y)).rgb + texture(tSrc, vUv + vec2(0.0, 2.0*t.y)).rgb;
   c += (texture(tSrc, vUv + vec2(-t.x, -t.y)).rgb + texture(tSrc, vUv + vec2(t.x, -t.y)).rgb
       + texture(tSrc, vUv + vec2(-t.x, t.y)).rgb + texture(tSrc, vUv + vec2(t.x, t.y)).rgb) * 2.0;
-  o = vec4(c / 12.0, 1.0);
+  o = vec4(c / 12.0 * weight, 1.0);
 }`;
 
 const FINAL = /* glsl */`
@@ -81,11 +81,11 @@ void main(){
 export class Pipeline {
   constructor(renderer, tier) {
     this.r = renderer;
-    this.exposure = 1; this.targetExposure = 1; this.autoExposure = true; this.bloomStrength = 0.6;
+    this.exposure = 1; this.targetExposure = 1; this.autoExposure = true; this.bloomStrength = 0.08;
     this.stats = { passes: 0 };
     this.depthCopy = fsPass(DEPTH_COPY, { tDepth: { value: null }, cNear: { value: 0.1 }, cFar: { value: 1000 } });
     this.down = fsPass(BLOOM_DOWN, { tSrc: { value: null }, texel: { value: new THREE.Vector2() }, threshold: { value: 1.0 }, first: { value: 1 } });
-    this.up = fsPass(BLOOM_UP, { tSrc: { value: null }, texel: { value: new THREE.Vector2() } });
+    this.up = fsPass(BLOOM_UP, { tSrc: { value: null }, texel: { value: new THREE.Vector2() }, weight: { value: 0.55 } });
     this.up.m.blending = THREE.AdditiveBlending; this.up.m.transparent = true;
     this.final = fsPass(FINAL, {
       tMain: { value: null }, tBloom: { value: null }, tHaze: { value: null },
@@ -159,7 +159,7 @@ export class Pipeline {
     // bloom
     if (this.bloomRTs.length) {
       let src = this.main.texture, sw = this.size.W, sh = this.size.H;
-      this.down.u.threshold.value = 1.2;
+      this.down.u.threshold.value = 2.5;
       for (let i = 0; i < this.bloomRTs.length; i++) {
         this.down.u.tSrc.value = src; this.down.u.texel.value.set(1 / sw, 1 / sh); this.down.u.first.value = i === 0 ? 1 : 0;
         r.setRenderTarget(this.bloomRTs[i]); r.render(this.down.scene, camera); passes++;
@@ -183,7 +183,8 @@ export class Pipeline {
     f.tBloom.value = this.bloomRTs.length ? this.bloomRTs[0].texture : null;
     f.useBloom.value = this.bloomRTs.length ? 1 : 0;
     f.tHaze.value = this.haze ? this.haze.texture : null; f.useHaze.value = this.haze ? 1 : 0;
-    f.exposure.value = this.exposure; f.bloomStrength.value = this.bloomStrength;
+    f.exposure.value = 1; // expozice je už v osvětlení a emisi (před-expozice, shared.PRE)
+    f.bloomStrength.value = this.bloomStrength;
     f.grain.value = t.grain ? 0.012 : 0; f.time.value = time;
     r.setRenderTarget(null); r.render(this.final.scene, camera); passes++;
     this.stats.passes = passes;
