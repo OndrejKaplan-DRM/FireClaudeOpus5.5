@@ -8,6 +8,11 @@ Autor zadání: Ondřej Kaplan. AI persona v tomto projektu: Kristína (ženský
 Vše je **vlastní práce** generovaná kódem: modely, textury, flipbooky i shadery.
 Cizí data se nepoužívají (povolené by byly jen CC0 šablony – zatím žádné nejsou potřeba).
 
+## Navázání a plán
+- Postup a zásady: `STRATEGIE.md`. Plán další iterace (projít každý objekt, texturu, fyziku i průběh): `AUDIT.md`.
+  Jak začít novou sešnu (repo, GitHub, artefakt, startovní prompt): `NAVAZANI.md`. Reference: `REFERENCE.md`.
+- Stav k 2026-11-27: iterace 1–5 hotové (poslední commit iterace 5: 53a4ec2, dataset 2c7fedb).
+
 ## Jak spustit
 ```bash
 npm install            # three 0.187 (stejná jako xEngine), esbuild, (playwright je v systému globálně)

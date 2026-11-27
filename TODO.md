@@ -2,6 +2,11 @@
 
 Stav k 2026-11-27 večer: **iterace 5 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
 
+## Další iterace (Ondřej 2026-11-27 17:46)
+Paletu FireEngine rozšiřovat a zobecňovat: projít každý objekt, texturu, fyziku i průběh a přiblížit je realitě.
+Plán a tabulky se stavem položek: **`AUDIT.md`**. Otevřené otázky na Ondřeje: zvuk do xEngine (FireLab / xEngine),
+mlha na oheň (přidat / nechat), poměr hlasitosti (filmový / realistický) – viz `integrations/xengine/NAVRHY.md`.
+
 ## Hotovo (iterace 5 – Ondřej: a + b + c + d, hřib a, sud b, komponenta a)
 - [x] (d) Výkon porostu: stín z levných náhrad ve vrstvě stínu, tři prstence LOD. Křoví T3 26 → 3,8 M △, les 6,4 → 2,9 M △. D-034.
 - [x] (a) Koruny borovic z karet větví s jehličím, plameny přilnuté ke kmeni. D-035.
