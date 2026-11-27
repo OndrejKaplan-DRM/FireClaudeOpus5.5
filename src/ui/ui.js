@@ -201,7 +201,7 @@ export class UI {
         p.append(h('h4', {}, 'Parametry scénáře'));
         for (const c of a.scn.controls) {
           if (c.type === 'check') p.append(h('label', { class: 'chk' }, h('input', { type: 'checkbox', ...(a.controlsVals[c.id] ? { checked: '' } : {}), onchange: (e) => { a.controlsVals[c.id] = e.target.checked; this.restart(); } }), c.label));
-          else if (c.type === 'select') p.append(h('div', { class: 'row' }, h('label', {}, c.label), h('select', { onchange: (e) => (a.controlsVals[c.id] = e.target.value) }, ...c.options.map((o) => h('option', { value: o, ...(o === a.controlsVals[c.id] ? { selected: '' } : {}) }, FUELS[o]?.name || o)))));
+          else if (c.type === 'select') p.append(h('div', { class: 'row' }, h('label', {}, c.label), h('select', { onchange: (e) => { a.controlsVals[c.id] = e.target.value; if (c.restart) this.restart(); } }, ...c.options.map((o) => h('option', { value: o, ...(o === a.controlsVals[c.id] ? { selected: '' } : {}) }, FUELS[o]?.name || o)))));
           else if (c.log) p.append(range(c.label, Math.log10(c.min), Math.log10(c.max), 0.01, Math.log10(a.controlsVals[c.id]), (v) => (a.controlsVals[c.id] = 10 ** v), (v) => (10 ** v).toPrecision(3)));
           else p.append(range(c.label, c.min, c.max, c.step || 0.01, a.controlsVals[c.id], (v) => (a.controlsVals[c.id] = v)));
         }

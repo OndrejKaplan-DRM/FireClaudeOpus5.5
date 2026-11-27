@@ -16,7 +16,8 @@
 2. `STRATEGIE.md` – postup a zásady.
 3. `TODO.md` – stav a známé slabiny.
 4. `AUDIT.md` – plán další iterace (projít každý objekt, texturu, fyziku i průběh).
-5. `DECISIONS.md` – proč je co tak (D-001 až D-038), hlavně D-020 (jas), D-028 (reference), D-034–D-038 (iterace 5).
+5. `DECISIONS.md` – proč je co tak (D-001 až D-046), hlavně D-020 (jas), D-028 (reference), D-039–D-046 (iterace 6).
+   `MODEL.md` – obecný model ohně (jeden popis, přestup tepla, vznícení, následky, kde se šetří).
 6. `REFERENCE.md` – referenční fotografie a jejich autoři.
 7. `integrations/xengine/README.md` – rozcestník pro xEngine.
 
@@ -25,6 +26,8 @@
 > Repo https://github.com/OndrejKaplan-DRM/FireClaudeOpus5.5 (main). Přidej si ho (`add_repo`, push), naklonuj a přečti
 > CLAUDE.md, STRATEGIE.md, TODO.md, AUDIT.md a DECISIONS.md. Předávka z 2026-11-27 je v projektu
 > `claude/FireLab_predavka_2026-11-27_cast1.md` … `_cast3.md`.
-> Úkol další iterace: paletu FireEngine rozšiřovat a zobecňovat – projdi podle AUDIT.md každý objekt, texturu, fyziku
-> i průběh, porovnej se skutečností (fotky, literatura) a přibliž je realitě ve všech ohledech. Pracuj samostatně,
-> rozhoduj sama, výsledek ukaž v prohlížeči FireLab (artefakt) a na konci mi dej 3–5 otázek a/b.
+> Stav: iterace 6 hotová (obecný model ohně – `MODEL.md`, 24 scénářů, paleta 42 fotek v `REFERENCE.md`).
+> Úkol další iterace: pokračuj podle AUDIT.md a „Známých slabin iterace 6“ v TODO.md – přepiš staré scénáře na `fireSpec`,
+> rozděl auto, dům a stoh na hořlavé části, doplň saze na zdivu, sklo a tavení, oprav prostřelený sud a zapalovač;
+> každou věc porovnej se skutečností (fotky, literatura). Pracuj samostatně, rozhoduj sama, výsledek ukaž v prohlížeči
+> FireLab (artefakt) a na konci mi dej 3–5 otázek a/b.

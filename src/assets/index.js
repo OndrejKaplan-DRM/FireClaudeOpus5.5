@@ -2,6 +2,7 @@
 import * as P from './props.js';
 import * as B from './big.js';
 import * as V from './vegetation.js';
+import * as P2 from './props2.js';
 
 export const ASSETS = [
   { id: 'candle', name: 'Svíčka v mosazném svícnu', build: P.candle, size: 0.14, cat: 'rekvizity' },
@@ -20,6 +21,11 @@ export const ASSETS = [
   { id: 'strawStack', name: 'Stoh slámy (velké balíky)', build: B.strawStack, size: 6, cat: 'velké' },
   { id: 'car', name: 'Osobní auto (sedan)', build: B.car, size: 5, cat: 'velké' },
   { id: 'house', name: 'Venkovský dům', build: B.house, size: 12, cat: 'velké' },
+  { id: 'lighter', name: 'Plynový zapalovač (křesací)', build: P2.lighter, size: 0.09, cat: 'rekvizity' },
+  { id: 'barrelOpen', name: 'Sud 200 l bez víka s naftou', build: P2.barrelOpen, size: 1.0, cat: 'kapaliny' },
+  { id: 'gasCylinder', name: 'Acetylenová láhev 50 l', build: P2.gasCylinder, size: 1.3, cat: 'výbušniny' },
+  { id: 'pallet', name: 'Europaleta', build: P2.pallet, size: 1.3, cat: 'rekvizity' },
+  { id: 'crate', name: 'Dřevěná bedna 0,6 m', build: P2.crate, size: 0.8, cat: 'rekvizity' },
   { id: 'pine', name: 'Borovice 14 m', build: V.pine, size: 15, cat: 'vegetace' },
   { id: 'bush', name: 'Suchý keř', build: V.bush, size: 1.6, cat: 'vegetace' },
 ];

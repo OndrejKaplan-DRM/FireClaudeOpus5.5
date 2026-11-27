@@ -54,6 +54,12 @@ Výška plamene `L` (Heskestad ★4, svíčka a louč měřené ★3), sálání
 | `car` | auto | 3 000 | 2,2 | 3,54 | 5,78 | 4,09 | 2,59 |
 | `room` | obsah místnosti | 1 500 | 2,0 | 2,34 | 3,97 | 2,81 | 1,78 |
 
+Předvolby z jednoho popisu (iterace 6, `fireFromSpec`): `lighter` (57 W, plamínek 25 mm), `dieselBarrel` (sud nafty bez víka:
+340 kW, plamen 1,85 m, hoří ~5 h), `pallets` (2 palety, vrchol ~0,9 MW, ~16 min), `strawBale` (balík slámy, vrchol 1,8 MW),
+`tire` (pneumatika, vrchol 0,3 MW, ~16 min). U těchto předvoleb je výkon křivka v čase; `fireNumbers` bere vrchol (`Qpeak`).
+Výbuch `acetyleneCylinder`: tlaková láhev v požáru (ohnivá koule ~13 m, ~1,8 kg TNT, hořící louže acetonu).
+Hořlavé předměty v datech: návrh F-10 v `NAVRHY.md` (`FIRE_COMPONENTS.flammable`, `checkFlammable`).
+
 Výbuchy (`EXPLOSION_PRESETS`): `barrel` (sud 25 kg benzínu: ohnivá koule ~17 m, slabá tlaková vlna, hořící louže),
 `grenade` (180 g Comp B ≈ 0,24 kg TNT), `acetylene` (15 l směsi s kyslíkem), `tnt` (1 000 kg; houbový mrak – pro level
 nevhodné, jen venkovní scéna).

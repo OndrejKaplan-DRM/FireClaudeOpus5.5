@@ -226,7 +226,7 @@ export function barrel({ lod = 2, paint = 'metalRed' }) {
   const g = lathe(resample(p, rows), rad);
   const n = noise3(7);
   if (lod >= 2) displace(g, (x, y, z) => 0.0015 * n.fbm(x * 10, y * 10, z * 10, 3)); // důlky
-  const { m, u } = charMat(paint, { scale: 4 });
+  const { m, u } = charMat(paint, { scale: 4, metal: true });
   u.uCharBase.value = 0; u.uCharH.value = H;
   const grp = new THREE.Group();
   grp.add(mesh(g, m, { name: 'drum' }));

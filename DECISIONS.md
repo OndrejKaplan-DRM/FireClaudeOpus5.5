@@ -261,3 +261,69 @@ Formát: **D-xxx · datum · rozhodnutí** — proč, alternativy, důsledky, ji
 - Komponenta `fire`/`explosive` do dat hned po zkoušce na jednom kusu: jedna pravda polí, kódů nálezů a čísel předvoleb
   v `integrations/xengine/xspace.js` (bez Three.js, import v Node pro validátor a generátor xEngine).
 - Svíčka: bělavé jádro zůstává (Ondřej: b).
+
+---
+## Iterace 6 (2026-11-27 večer) – rozšíření a zobecnění palety
+Ondřej 2026-11-27 18:12: *„Cíl je sestavit komplexní systémy … od přestupu tepla, generování horkého vzduchu … zapaluje
+hořlavé materiály. Oheň, který se šíří podle hořlavosti materiálu … chci každý asset zobecnit tak, abychom ho mohli
+škálovat … i dopady hoření (škoda, zničení materiálu, začouzení, očouzený plech …)“* + paleta 40 fotek + nové use casy
+(jiskra zapalovače, hořící sud s naftou, hořící kapalina unikající ze sudu, výbuch acetylenové bomby „jaký by skutečně byl“).
+
+### D-039 · 2026-11-27 · Denní jas plamene podle fotek
+- Na 22 denních fotkách palety má plamen zobrazený jas (lineárně) medián 0,39 a 9. decil 0,66; render měl 0,23 / 0,30
+  (tmavě hnědočervený plamen vedle osluněné země). Příčina: strop `FLAME_LUM` 20 000 cd/m² laděný na noc.
+- Strop se ve dne zvedá až 6,5× (`App.updateExposure`, plynule mezi expozicí 5·10⁻⁴ a 6·10⁻⁵). V noci a za soumraku se
+  neuplatní (ověřeno: noční scény beze změny). Sud nafty T3 po úpravě 0,41 / 0,50. `lumRef` (výbuchy) nedotčen.
+- **Umělecké ★2**: fyzikálně má černé těleso 1 400 K jen ~1 800 cd/m²; jas fotek odpovídá svítivým vírům 1 500–1 650 K.
+
+### D-040 · 2026-11-27 · Barva kouře podle složení částic (`sootBlack`)
+- Kouř kapalných uhlovodíků, aut a acetylenu je černý bez ohledu na výtěžek sazí (částice = skoro čistý uhlík, albedo ~0,05);
+  výtěžek určuje hustotu. `smokeColor` bere `fuel.sootBlack` (nafta 0,96, benzín 0,92, auto 0,92, acetylen 1). Dřevo a sláma
+  beze změny. ★3 (fotky: pneumatiky, auta, ropné požáry).
+
+### D-041 · 2026-11-27 · Jeden popis ohně a výbuchu (`src/physics/spec.js`)
+- `fireSpec({ kind, … })` pro louži, rozlití, vytékání, hromadu dřeva, předmět, trysku a knot → Q(t), D, L, doba, řádky pro UI.
+  `scaleFire`, `sourceOptions`. Nová paliva: butan, acetylen, aceton, líh. Staré scénáře se nepřepisovaly (regresní riziko);
+  nové scénáře a nové předvolby xEngine už z popisu vycházejí.
+- `explosionSpec({ kind: 'he' | 'fireball' | 'gasMix' | 'gasCylinder', … })`: mocninné zákony mezi dvěma kalibračními body
+  (granát 0,24 kg a 1 t TNT) – funkce prochází oběma předvolbami přesně (test), exponenty blízko ⅓ a ⅔.
+- Torricelli pro výtok otvorem a vyprazdňování nádoby ★5; rovnovážná plocha hořícího pramínku A = ṁ/m″ ★3.
+
+### D-042 · 2026-11-27 · Očouzený a vyhořelý plech (`applyChar({ metal: true })`)
+- Místo zčernání jako dřevo prochází lakovaný plech stavy podle nejvyšší dosažené teploty: puchýře 470–620 K, lak shořel
+  nad 620 K, okuje nad 800 K, rez po vychladnutí; saze drží jen na chladnějším plechu (černý lem kolem „čistého výpalu“);
+  žhnutí nad ~800 K. Barvy ze shluků barev na fotkách vyhořelých aut (paleta p21–p23).
+- Strana přivrácená k ohni je horká a čistá, odvrácená chladnější a jen lehce očouzená (`uHeatSrc`, `uObjC`, `uHeatSide`;
+  `Burnable` je nastavuje podle nejsilnějšího ohně). Bez toho byl sud vedle ohně celý černý i zezadu.
+- Sud a karoserie auta používají `metal: true`. Starší scénáře řídí jen `uChar/uGlow` – stav se z nich odvodí
+  (T_max = 293 + 720·uChar), takže dostaly nový vzhled bez úprav. Teploty ★3, rozložení šumem ★2.
+
+### D-043 · 2026-11-27 · Přestup tepla a vznícení (`physics/heat.js`, `physics/materials.js`, `fx/burnable.js`)
+- Tepelný tok v bodě: sálání ze tří bodů na povrchu plamene (strop zářivostí Mudan & Croce), kontakt s plamenem, horký
+  oblak; kalibrace na Babrauskasovo pravidlo druhého předmětu. `FXWorld.heatFlux(p)`, `smokeAt(p)`.
+- Vznícení dávkou (Flux–Time Product), 16 materiálů s q″crit, T_ig, kρc nebo ρcδ, HRRPUA, rychlostí šíření.
+- `Burnable`: hořlavý předmět se vznítí a hoří z vlastního `fireSpec`; nehořlavý plech má teplotu, saze a rez.
+  Před vznícením bílý dým pyrolýzy. Vše ve scénářovém čase, deterministicky.
+- První verze sálání (body na ose) dávala v blízkém poli 2–3× méně než pravidlo → nic se nevznítilo; opraveno posunem
+  bodů na přivrácený povrch plamene.
+
+### D-044 · 2026-11-27 · „Acetylenová bomba“ = tlaková láhev, ne sáček
+- V češtině je „bomba“ tlaková láhev. Dosavadní scénář (50 l sáček směsi C₂H₂ + O₂, detonace) zůstává pod názvem „Výbuch
+  směsi acetylen + kyslík (sáček)“. Nový scénář `acetyleneCyl`: láhev 50 l v hořící hranici palet, plášť se ohřívá
+  (soustředěná kapacita, 2× kvůli náplni ★2), při ~550 °C roztržení (★4 ztráta pevnosti oceli).
+- Následek podle literatury (Jankůj & Mynarz 2022, VŠB; HSE; BCGA): ohnivá koule ~10 m (model 13 m, CCPS ★4), úlomky stovky
+  metrů, zóna 200 m. TNT ekvivalent 1,8 kg je odhad ★2 (rozsah 0,2–4 kg: roztržení 0,17 kg + 2 % energie oblaku).
+- Scénář po roztržení přepne zrychlení času na 1 (`ctx.setTimeScale`).
+
+### D-045 · 2026-11-27 · Nové scénáře a rekvizity
+- Scénáře: `lighter` (jiskra → plamen), `dieselBarrel`, `leak` (prostřelený sud, palivo volitelné), `acetyleneCyl`, `chain`
+  (řetěz vznícení), `blastLab` (obecný výbuch). Celkem 24.
+- Rekvizity `src/assets/props2.js`: zapalovač, sud bez víka s hladinou, pramínek, rozteklý pruh, acetylenová láhev a její
+  úlomky, europaleta, bedna. Celkem 23 assetů.
+- Plamen ze sudu a z pruhu: nové volby zdroje `volTongues`, `shapeK`, `volSoot`.
+
+### D-046 · 2026-11-27 · xEngine: nové předvolby a návrh hořlavých předmětů
+- `presets.js`: `fireFromSpec`, `explosionFromSpec`; předvolby `lighter`, `dieselBarrel`, `pallets`, `strawBale`, `tire`,
+  `acetyleneCylinder`. `fire-system.js`: `heatFluxFull()` a `ignitionTimeAt()`; `heatFlux()` beze změny (kontrakt testů).
+- `xspace.js`: návrh komponenty `flammable` (F-10) a kontrola `checkFlammable`. Do xEngine nezapsáno; test integrace prošel
+  proti klonu xEngine `main` 1f2e623.

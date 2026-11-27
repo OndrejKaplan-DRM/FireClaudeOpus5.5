@@ -96,6 +96,39 @@ Otevřené otázky jsou na konci.
 - Objemový kouř jen T4/T5 FireLab → v xEngine se neprojeví (high = T2).
 - Sud: `barrelFilm` je výchozí převod `combat:exploded` se sudem.
 
+## F-10 (návrh, iterace 6): hořlavé předměty – oheň jako prvek světa
+- **Co to je:** předmět s komponentou `flammable` dostává od ohňů tepelný tok, sčítá dávku do vznícení podle materiálu a
+  pak hoří vlastním ohněm (výkon a doba z materiálu, hmotnosti a povrchu). Nehořlavé materiály (plech, sklo, zdivo) jen
+  mění vzhled (shořelý lak, saze, rez). Ve FireLab hotové: `src/fx/burnable.js`, scénář „Přestup tepla: řetěz vznícení“.
+- **Data (xSpace), návrh polí** – jedna pravda v `integrations/xengine/xspace.js` (`FIRE_COMPONENTS.flammable`, `checkFlammable`):
+  | Pole | Typ | Povinné | Význam |
+  |---|---|---|---|
+  | `flammable.material` | řetězec z FireLab `MATERIALS` | ano | `softwood`, `hardwood`, `woodWet`, `paper`, `straw`, `textile`, `puFoam`, `plastic`, `rubber`, `gasoline`, `diesel`, `steelPainted`, `steelThick`, `aluminium`, `glass`, `masonry` |
+  | `flammable.mass` | kg | u hořlavých | hmotnost hořlavé části |
+  | `flammable.area` | m² | u hořlavých | hořící povrch |
+  | `flammable.size` | m | u hořlavých | největší rozměr (doba rozhoření) |
+  | `flammable.ignited` | boolean | ne | hoří od načtení |
+- **Běh (sešna A):** v pevném kroku pro každý hořlavý předmět `q = fire.heatFluxFull(x, y, z).total`, dávka
+  `F = stepDose(F, q, dt, ignitionDose(material))`, při `F ≥ ftp` zapálit `fire.ignite(fireFromSpec({ kind: 'solid', … }), pos)`.
+  Funkce jsou čisté (`src/physics/heat.js`, `spec.js`), bez Three.js; determinismus drží pevný krok.
+- **Uložení hry:** snapshot musí nést dávku `F`, stav a čas vznícení každého předmětu (dnes nese jen hořící ohně) – úkol sešny A.
+- **Level design (sešna B):** `checkFlammable(c, { flux })` hlásí `FLAMMABLE_NEAR_FIRE`, když se předmět od sousedního ohně
+  vznítí do minuty (řetěz může být záměr); `fire.ignitionTimeAt(material, x, y, z)` pro nápovědu v editoru.
+- **Herní čísla (★3):** sláma chytne od ~8 kW/m² za sekundy, dřevo od 12 kW/m² za minuty, pneumatika od 17 kW/m²;
+  1 MW oheň dává 20 kW/m² asi 0,75 m od svého okraje. Prostřelený sud (otvor 9 mm) vytéká 0,12 l/s a hořící pramínek má 4,6 MW.
+- **Cena:** vzorce, jednotky mikrosekund na předmět a krok; víc hořících předmětů = víc zdrojů → hlídat rozpočet stupně
+  (low: slučovat ohně blíž než ~1,5 m do jednoho).
+
+## F-11 (FireLab, pro informaci): iterace 6
+- Nové předvolby ohně: `lighter`, `dieselBarrel`, `pallets`, `strawBale`, `tire`; výbuch `acetyleneCylinder` (tlaková láhev
+  v požáru: koule ~13 m, tlaková vlna ~1,8 kg TNT, ne detonace). Vlastní: `fireFromSpec(popis)`, `explosionFromSpec(popis)`.
+- `fire.heatFluxFull(x, y, z)` → `{ rad, conv, total, Tg, inFlame }` (blízké pole, kontakt s plamenem, horký oblak);
+  `fire.heatFlux` beze změny.
+- Plameny jsou **ve dne jasnější** (strop jasu podle fotek, D-039 FireLab) a kouř nafty, benzínu a aut je černý (D-040).
+  V xEngine se projeví podle expozice hostitele – po připojení zkontrolovat denní level.
+- Sud a karoserie mají stavy plechu (shořelý lak, saze, rez) – jen modely FireLab; prefaby xEngine by potřebovaly stejný
+  materiál (`applyChar({ metal: true })`), to je na domluvě se sešnou B.
+
 ## Otevřené otázky na Ondřeje
 1. Mlha levelu na kouř a plamen: **přidat do shaderů FireLab** (oheň v mlze slábne) / **nechat** (oheň „svítí přes mlhu“)?
 2. Zvuk: FireLab od iterace 5 zvuk má (procedurální, WebAudio). **Dodat ho do xEngine přes `fx.fire`** / **zvuk dělá xEngine

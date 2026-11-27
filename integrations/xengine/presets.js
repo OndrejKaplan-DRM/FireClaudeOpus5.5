@@ -3,6 +3,7 @@
 // Pozice se doplní při zapálení; všechny jednotky SI.
 import * as C from '../../src/physics/combustion.js';
 import { bleveFireball, heFireball, gasTNT } from '../../src/physics/blast.js';
+import { fireSpec, sourceOptions, explosionSpec } from '../../src/physics/spec.js';
 
 /** Ohně: { fuel, Q [W] nebo Q(t), D [m], ... }. `L` je výška plamene, když ji nechceme z Heskestada. */
 export const FIRE_PRESETS = {
@@ -47,3 +48,23 @@ export const EXPLOSION_PRESETS = {
     return { ex: { W, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, ring: true, wilson: 2.5 }, fires: [], dy: 0.6 };
   },
 };
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Iterace 6: předvolby z JEDNOHO POPISU ohně a výbuchu (src/physics/spec.js). Stejný popis používají scénáře FireLab.
+// Vlastní oheň nebo výbuch si hostitel udělá přes fireFromSpec / explosionFromSpec (měřítko: hmotnost, objem, průměr).
+/** Volby zdroje z popisu, např. fireFromSpec({ kind: 'pool', fuel: 'diesel', D: 0.56, volumeL: 170 }). */
+export const fireFromSpec = (spec, more = {}) => { const sp = fireSpec(spec); return { ...sourceOptions(sp, more), Qpeak: sp.Qpeak }; };
+/** Předvolba výbuchu z popisu, např. explosionFromSpec({ kind: 'he', explosive: 'tnt', mass: 5 }). */
+export const explosionFromSpec = (spec) => { const e = explosionSpec(spec); return { ex: e.ex, fires: e.fires, dy: e.dy }; };
+
+Object.assign(FIRE_PRESETS, {
+  lighter: (() => { const o = fireFromSpec({ kind: 'jet', fuel: 'butane', mdot: 1.25e-6 }); delete o.end; return o; })(),                 // 57 W, plamínek 25 mm
+  dieselBarrel: { ...fireFromSpec({ kind: 'pool', fuel: 'diesel', D: 0.56, volumeL: 170 }), shapeK: 1.6, taper: 0.7, neck: 0.25, puffAmp: 0.9, volTongues: 0, turbAmp: 0.8, volSoot: 0.6, mult: { smoke: 2.6 } }, // 340 kW, hoří ~5 h
+  pallets: (() => { const o = fireFromSpec({ kind: 'solid', material: 'softwood', mass: 44, area: 7, size: 1.2 }); return { ...o, footprint: { type: 'rect', w: 1.2, d: 0.8 } }; })(), // 2 palety, ~0,9 MW, ~16 min
+  strawBale: (() => { const o = fireFromSpec({ kind: 'solid', material: 'straw', mass: 250, area: 9, size: 1.6 }); return { ...o, footprint: { type: 'rect', w: 2.4, d: 1.2 } }; })(),
+  tire: fireFromSpec({ kind: 'solid', material: 'rubber', mass: 9, area: 1.2, size: 0.65, D: 0.65 }),
+});
+Object.assign(EXPLOSION_PRESETS, {
+  // acetylenová láhev 50 l v požáru: roztržení pláště + ohnivá koule ~13 m + úlomky (ne detonace). Viz scénář acetyleneCyl.
+  acetyleneCylinder: () => explosionFromSpec({ kind: 'gasCylinder' }),
+});

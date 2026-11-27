@@ -1,6 +1,18 @@
 # TODO — co se právě dělá
 
-Stav k 2026-11-27 večer: **iterace 5 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
+Stav k 2026-11-27 pozdě večer: **iterace 6 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
+
+## Hotovo (iterace 6 – rozšíření a zobecnění palety, Ondřej 2026-11-27 18:12)
+- [x] Paleta 42 fotek (Commons), měření denního jasu plamene, barev kouře, vyhořelých aut a zuhelnatělého dřeva. `REFERENCE.md`.
+- [x] Jeden popis ohně a výbuchu `physics/spec.js` (louže, rozlití, vytékání, hromada, předmět, tryska, knot; trhavina,
+      ohnivá koule, směs plynu, tlaková láhev). D-041.
+- [x] Přestup tepla, zapálení dávkou, 16 materiálů, hořlavé předměty `fx/burnable.js`. D-043.
+- [x] Očouzený a vyhořelý plech (stavy laku, saze, okuje, rez, žhnutí). D-042.
+- [x] Denní jas plamene (D-039), černý kouř uhlovodíků (D-040).
+- [x] Scénáře: zapalovač, hořící sud s naftou, prostřelený sud s hořícím pramínkem, acetylenová láhev v požáru, řetěz
+      vznícení, obecný výbuch. Rekvizity: zapalovač, sud bez víka, láhev a úlomky, paleta, bedna. D-044, D-045.
+- [x] xEngine: předvolby z popisu, `heatFluxFull`, `ignitionTimeAt`, návrh komponenty `flammable` (F-10). D-046.
+- [x] Dokumenty: `MODEL.md` (obecný model), `ANALYZA_2026-11-27.md` (5Why, konzilium, FAQ, mentální modely, ELI20).
 
 ## Další iterace (Ondřej 2026-11-27 17:46)
 Paletu FireEngine rozšiřovat a zobecňovat: projít každý objekt, texturu, fyziku i průběh a přiblížit je realitě.
@@ -54,7 +66,20 @@ mlha na oheň (přidat / nechat), poměr hlasitosti (filmový / realistický) �
 - [x] three 0.170 → 0.187 (stejná verze jako xEngine).
 - [x] Nástroje: `tools/look.mjs` (snímek s úpravou stavu), `tools/shot.mjs`, `tools/sweep.mjs` (mřížka scénář × parametr).
 
-## Známé slabiny (priorita shora)
+## Známé slabiny iterace 6 (priorita shora)
+1. **Staré scénáře nejsou přepsané na `fireSpec`** – čísla 18 scénářů a 10 předvoleb zůstávají na dvou místech.
+2. **Prostřelený sud**: nad plameny mramorovaný pás (tetelení přes kouř), pruh kapaliny neteče (pevná geometrie),
+   čelo plamene postupuje po úsecích skokem.
+3. **Řetěz vznícení**: jeden měřicí bod na předmět, žádné zastínění; hořící balík pod plamenem splývá; sesedání měřítkem.
+4. **Zapalovač**: špička plamene zrnitá, modrá pata slabá, jiskry delší než na fotce.
+5. **Hořící sud**: kouř bez valivých „květáků“ (částice), okraj sudu ve dne viditelně nežhne.
+6. **Acetylenová láhev**: čas do roztržení ★2, TNT ekvivalent ★2 (rozsah 0,2–4 kg), úlomky malé.
+7. **Denní strop jasu** je umělecký (★2) – ověřeno na sudu nafty a pneumatikách, ostatní denní scény (křoví, TNT, granát)
+   jen testem bez chyb a mřížkou T3, ne srovnáním s fotkou.
+8. Saze na zdivu a fasádě, sklo, tavení plastů a pryže chybí; hašení chybí.
+9. Uložení hry (snapshot xEngine) nenese dávku a stav hořlavých předmětů.
+
+## Známé slabiny starší (priorita shora)
 1. **Zrno na T1** zůstává (akumulace je T2+); cena akumulace na T2 nezměřena (odhad ~2 průchody přes obrazovku).
 2. **Velké louže (nafta)** jsou lepší, ale pořád trochu „kompaktní“; chybí velké odtržené jazyky v horní třetině a výraznější
    černý plášť. Kouř nad nimi je fyzikálně tmavý (v noci skoro neviditelný) – správně, ale méně efektní.

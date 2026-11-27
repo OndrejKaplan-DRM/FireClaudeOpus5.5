@@ -20,6 +20,7 @@ async function run() {
   const id = fire.ignite('campfire', [0, 0, 0]);
   E.sim(10);
   const q2 = fire.heatFlux(0, 1, 2), q5 = fire.heatFlux(0, 1, 5);
+  const qf = fire.heatFluxFull(0, 1, 2).total, inFlame = fire.heatFluxFull(0, 0.4, 0).inFlame, tStraw = fire.ignitionTimeAt('straw', 0.9, 0.4, 0), tWood = fire.ignitionTimeAt('softwood', 3, 0.4, 0);
   E.emit('combat:exploded', { pos: [4, 0, 0], radius: 5, damage: 60, push: 8, weapon: 'barrel' });
   E.sim(2);
   const qBarrel = fire.heatFlux(4, 1, 3);
@@ -27,11 +28,12 @@ async function run() {
   E.sim(5); const qLater = fire.heatFlux(0, 1, 2);
   E.restore(snap); E.sim(5); const qLater2 = fire.heatFlux(0, 1, 2);
   fire.extinguish(id);
-  return { q2, q5, qBarrel, qLater, qLater2, events, burning: fire.burning(id), headless: fire.headless, nSnap: snap.systems['fx.fire'].fires.length };
+  return { q2, q5, qf, inFlame, tStraw, tWood, qBarrel, qLater, qLater2, events, burning: fire.burning(id), headless: fire.headless, nSnap: snap.systems['fx.fire'].fires.length };
 }
 const a = await run(), b = await run();
 ok(a.headless, 'headless režim (bez plátna, jen simulace)');
 ok(a.q2 > 300 && a.q2 < 5000 && a.q5 < a.q2 / 3, `sálavý tok táboráku 2 m: ${a.q2.toFixed(0)} W/m², 5 m: ${a.q5.toFixed(0)} W/m² (~1/R²)`);
+ok(a.qf > a.q2 * 0.8 && a.qf < a.q2 * 3 && a.inFlame && a.tStraw < 60 && a.tWood === Infinity, `úplný tok 2 m: ${a.qf.toFixed(0)} W/m², v plameni kontakt, sláma 0,9 m chytne za ${a.tStraw.toFixed(0)} s, dřevo ve 3 m nikdy`);
 ok(a.qBarrel > a.q2, `hořící louže po výbuchu sudu zvýší tok (${a.qBarrel.toFixed(0)} W/m²)`);
 ok(a.events.join() === 'fire:ignited,fire:exploded,fire:ignited,fire:out', 'události: ' + a.events.join(', '));
 ok(a.nSnap === 2 && Math.abs(a.qLater - a.qLater2) < 1e-9, `uložení a nahrání: ${a.nSnap} ohně, tok po 5 s ${a.qLater.toFixed(1)} = ${a.qLater2.toFixed(1)}`);

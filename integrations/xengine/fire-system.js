@@ -27,6 +27,7 @@ import { setFxLayer } from '../../src/engine/pipeline.js';
 import { bbRGB } from '../../src/fx/lights.js';
 import { FIRE_PRESETS, EXPLOSION_PRESETS } from './presets.js';
 import * as C from '../../src/physics/combustion.js';
+import { fluxFromFire, timeToIgnition } from '../../src/physics/heat.js';
 
 /** Stupeň kvality xEngine (0 clean, 1 low = T460, 2 mid, 3 high) → stupeň FireLab a limity hostitele. */
 export const QUALITY_MAP = {
@@ -216,6 +217,28 @@ export function createFireSystem({ render, light = null, quality = 1, cellOf = n
       }
       return q;
     },
+    /**
+     * Úplný tepelný tok v bodě (iterace 6, physics/heat.js): sálání z povrchu plamene (blízké pole), kontakt s plamenem
+     * a horký oblak nad ohněm. Vrací { rad, conv, total [W/m²], Tg [K], inFlame }. Deterministické (bez náklonu větrem).
+     * `heatFlux` výše zůstává beze změny (bodový zdroj, kontrakt testů); pro vznícení předmětů a poškození v plameni ber tento.
+     */
+    heatFluxFull(x, y, z) {
+      let rad = 0, conv = 0, Tg = 293, inFlame = false; const p = [x, y, z];
+      for (const { src } of fires.values()) {
+        if (!src.enabled) continue;
+        const o = src.o, tl = simT - src.t0 - o.start;
+        if (tl < 0 || simT - src.t0 > o.end) continue;
+        const vent = o.ventLocal != null ? C.ventilation(o.ventLocal) : world().vent;
+        const Q = Math.max(0, src.Qat(tl)) * vent.chi; if (Q <= 1) continue;
+        const D = typeof o.D === 'function' ? o.D(tl) : src.D;
+        const L = o.L ? o.L(Q) : C.flameHeight(Q, D);
+        const f = fluxFromFire({ x: src.pos.x, y: src.pos.y, z: src.pos.z, Q, D, L, chiR: src.fuel.chiR ?? 0.3, sooty: src.fuel.ys > 0.03 }, p);
+        rad += f.rad; conv += f.conv; if (f.Tg > Tg) Tg = f.Tg; inFlame = inFlame || f.inFlame;
+      }
+      return { rad, conv, total: rad + conv, Tg, inFlame };
+    },
+    /** Doba do vznícení materiálu (FireLab MATERIALS) v bodě při současném toku [s]; Infinity = pod prahem. */
+    ignitionTimeAt(material, x, y, z) { return timeToIgnition(sys.heatFluxFull(x, y, z).total, material); },
     /** Hoří oheň s tímto id? */
     burning(id) { const f = fires.get(id); return !!(f && f.src.active); },
 

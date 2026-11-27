@@ -7,6 +7,9 @@ import { execSync } from 'node:child_process';
 import { blackbody } from '../src/physics/blackbody.js';
 import { blastSummary, bleveFireball, heFireball } from '../src/physics/blast.js';
 import * as C from '../src/physics/combustion.js';
+import { MATERIALS } from '../src/physics/materials.js';
+import { timeToIgnition, fluxFromFire, emissivePower, FLUX_EFFECTS } from '../src/physics/heat.js';
+import { fireSpec, explosionSpec } from '../src/physics/spec.js';
 
 const D = path.join(ROOT, 'dataset');
 const w = (rel, data) => { const f = path.join(D, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, data); return f; };
@@ -28,6 +31,22 @@ for (const [fuel, Q, Dm] of [['paraffin', 80, 0.012], ['woodResin', 4e3, 0.065],
   flames.push({ fuel, Q_W: Math.round(Q), D_m: +Dm.toFixed(3), L_heskestad_m: +C.flameHeight(Q, Dm).toFixed(3), puff_Hz: +C.puffingFrequency(Dm).toFixed(2), smoke_tau_at_1_2L: +C.smokeOpticalDepth(Q, Dm, C.flameHeight(Q, Dm) * 1.2, fuel, v).tau.toFixed(3), smoke_rgb: C.smokeColor(fuel, v).rgb.map((x) => +x.toFixed(3)), light_cd: +C.flameLuminousIntensity(Q).toFixed(1) });
 }
 w('physics/flames.json', JSON.stringify(flames, null, 1));
+// iterace 6: materiály, zapálení, jeden popis ohně a výbuchu (čisté funkce → tabulky pro jiný engine)
+w('physics/materials.json', JSON.stringify(MATERIALS, (k, v) => (v === Infinity ? 'Infinity' : v), 1));
+const FLUXES = [8e3, 10e3, 12.5e3, 15e3, 20e3, 25e3, 35e3, 50e3, 80e3, 150e3];
+w('physics/ignition_times_s.json', JSON.stringify({ flux_W_m2: FLUXES, note: 'doba do vznícení [s], null = pod kritickým tokem', materials: Object.fromEntries(Object.keys(MATERIALS).filter((m) => MATERIALS[m].mode !== 'inert').map((m) => [m, FLUXES.map((q) => { const t = timeToIgnition(q, m); return Number.isFinite(t) ? +t.toFixed(2) : null; })])), effects: FLUX_EFFECTS }, null, 1));
+const clean = (sp) => Object.fromEntries(Object.entries(sp).filter(([, v]) => typeof v !== 'function' && typeof v !== 'object').map(([k, v]) => [k, typeof v === 'number' ? +v.toPrecision(5) : v]));
+const SPECS = { lighter: { kind: 'jet', fuel: 'butane', mdot: 1.25e-6 }, candle: { kind: 'wick', fuel: 'paraffin', Q: 80 }, dieselBarrel: { kind: 'pool', fuel: 'diesel', D: 0.56, volumeL: 170 }, gasolineBarrel: { kind: 'pool', fuel: 'gasoline', D: 0.56, volumeL: 170 },
+  dieselSpill20l: { kind: 'spill', fuel: 'diesel', volumeL: 20 }, leakDiesel9mm: { kind: 'leak', fuel: 'diesel', holeMM: 9, head: 0.5 }, leakGasoline9mm: { kind: 'leak', fuel: 'gasoline', holeMM: 9, head: 0.5 },
+  smallFire1kg: { kind: 'pile', material: 'softwood', mass: 1, stick: 0.03 }, campfire20kg: { kind: 'pile', material: 'softwood', mass: 20, stick: 0.08 }, bonfire600kg: { kind: 'pile', material: 'softwood', mass: 600, stick: 0.1 },
+  pallets2: { kind: 'solid', material: 'softwood', mass: 44, area: 7, size: 1.2 }, strawBale: { kind: 'solid', material: 'straw', mass: 250, area: 9, size: 1.6 }, tire: { kind: 'solid', material: 'rubber', mass: 9, area: 1.2, size: 0.65, D: 0.65 }, crate: { kind: 'solid', material: 'softwood', mass: 9, area: 2.2, size: 0.6 } };
+w('physics/fire_specs.json', JSON.stringify(Object.fromEntries(Object.entries(SPECS).map(([k, sp]) => { const o = fireSpec(sp); return [k, { spec: sp, result: clean(o), rows: o.rows }]; })), null, 1));
+const EX = {}; for (const m of [0.05, 0.24, 1, 10, 100, 1000, 5000]) { const e = explosionSpec({ kind: 'he', explosive: 'tnt', mass: m }); EX['tnt_' + m + 'kg'] = { W: e.W, ...e.ex }; }
+for (const m of [5, 25, 100]) { const e = explosionSpec({ kind: 'fireball', mass: m }); EX['fireball_' + m + 'kg'] = { W: e.W, ...e.ex }; }
+{ const e = explosionSpec({ kind: 'gasCylinder' }); EX.acetyleneCylinder50l = { W: e.W, vFrag: e.vFrag, Eburst_J: e.Eburst, ...e.ex, rows: e.rows }; }
+w('physics/explosion_specs.json', JSON.stringify(EX, (k, v) => (typeof v === 'number' ? +v.toPrecision(5) : v), 1));
+{ const f = { x: 0, y: 0, z: 0, Q: 1e6, D: 1.1, L: C.flameHeight(1e6, 1.1), chiR: 0.3, sooty: false };
+  w('physics/heat_flux_1MW.json', JSON.stringify({ note: 'tepelný tok [kW/m²] ve výšce 0,5 m v dané vzdálenosti od okraje ohně 1 MW, D 1,1 m', table: [0.3, 0.6, 0.9, 1.2, 1.5, 2, 3, 5, 8].map((e) => ({ edge_m: e, kW_m2: +(fluxFromFire(f, [0.55 + e, 0.5, 0]).total / 1000).toFixed(2) })), emissive_power_kW_m2: [0.1, 0.5, 1, 2, 5, 10, 30].map((D) => ({ D_m: D, E: +(emissivePower(D) / 1000).toFixed(1) })) }, null, 1)); }
 
 // ---------------------------------------------------------------- prohlížeč
 const runTier = async (tier, fn) => { const s = await open({ q: `tier=${tier}&ui=0&scn=lab`, vp: { width: 960, height: 540 } }); try { return await fn(s.page); } finally { await s.browser.close(); } };
@@ -73,11 +92,12 @@ if (!skipPrev) for (const tier of [0, 2]) {
   await runTier(tier, async (page) => {
     const ids = await page.evaluate(() => window.__fire.SCENARIOS.map((s) => s.id));
     for (const id of ids) {
-      const sec = { barrel: 7.3, acetylene: 1.56, grenade: 1.56, tnt: 2.15 }[id] ?? 3;
+      const sec = { barrel: 7.3, acetylene: 1.56, grenade: 1.56, tnt: 2.15, lighter: 2.6, blastLab: 2.2, chain: 40, leak: 30, dieselBarrel: 20 }[id] ?? 3;
       const seek = { haystack: 300, tires: 200, car: 700, forest: 1500, brush: 400, house: 700, diesel: 20 }[id] ?? 0;
       const r = await page.evaluate(([id, sec, seek]) => {
         const f = window.__fire, a = f.app; a.loadScenario(id); if (seek) { a.t = seek; a.fx.scnTime = seek; }
-        f.ff(sec); f.settle();
+        if (id === 'acetyleneCyl') { for (let i = 0; i < 60 && !/roztr/.test(a.run.info()[0][1]); i++) f.ff(1, 1 / 30); f.ff(0.45); } else f.ff(sec);
+        f.settle();
         const s = a.scn;
         const preset = { format: 'firelab-preset/1', id: s.id, name: s.name, group: s.group, desc: s.desc, time: s.time, timeScale: s.timeScale || 1, duration: s.duration || null, cams: s.cams,
           physics: (a.run?.info?.() || []).map(([k, v, src]) => ({ k, v: String(v), src })),

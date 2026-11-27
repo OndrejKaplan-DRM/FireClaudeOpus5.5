@@ -85,6 +85,7 @@ export class App {
       add: (o) => { this.scene.add(o); this.objects.push(o); o.traverse((c) => { if (c.isMesh) { c.castShadow = c.castShadow && this.tier.shadows; c.receiveShadow = true; } }); return o; },
       addDisposable: (d) => this.disposables.push(d),
       message: (m) => this.onMessage(m),
+      setTimeScale: (k) => { this.timeScale = k; }, // scénář může za běhu změnit zrychlení (dlouhý ohřev → výbuch v reálném čase)
     };
   }
 
@@ -173,7 +174,11 @@ export class App {
     // lokální adaptace na plamen jen částečná (β = 0,4): velký požár v záběru stáhne i adaptaci oka (Hood & Finkelstein,
     // částečná adaptace ~ L^0,4 v mezopickém rozsahu ★3) → velké plameny oranžově žluté, ne bílé; svíčka beze změny
     const ex = Math.max(this.pipeline.exposure, 1e-9);
-    this.fx.flameLum = Math.min(FLAME_LUM, (this.flameKey / ex) * Math.min(1.3, Math.max(0.1, Math.pow(ex / 0.25, 0.4))));
+    // strop jasu: ve dne (malá expozice) až 6,5× FLAME_LUM – na denních fotkách jsou sazové plameny jasně oranžové až žluté
+    // i vedle osluněné země (svítivé víry 1 500–1 650 K ≈ 6–25 tis. cd/m²; se stropem 20 tis. při 1 500 K vycházel plamen
+    // ve dne tmavě hnědočervený). V noci a za soumraku se strop neuplatní (umělecké ★2 podle fotek, D-039).
+    const cap = FLAME_LUM * (1 + 5.5 * Math.min(1, Math.max(0, (Math.log10(1 / ex) - 3.3) / 0.9)));
+    this.fx.flameLum = Math.min(cap, (this.flameKey / ex) * Math.min(1.3, Math.max(0.1, Math.pow(ex / 0.25, 0.4))));
     this.fx.lumRef = Math.min(12000, 16 / ex);
     PRE.value = this.pipeline.exposure;
   }

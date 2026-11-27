@@ -5,7 +5,7 @@ var __export = (target, all) => {
 };
 
 // src/fx/world.js
-import * as THREE10 from "three";
+import * as THREE11 from "three";
 
 // src/fx/particles.js
 import * as THREE3 from "three";
@@ -110,7 +110,7 @@ function noiseTexture(N = 64, seed = 7) {
   };
   const G1 = grads(P), G2 = grads(P * 2);
   const fade = (t2) => t2 * t2 * t2 * (t2 * (t2 * 6 - 15) + 10);
-  function perlin(G, p, x, y, z) {
+  function perlin(G3, p, x, y, z) {
     const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
     const xf = x - xi, yf = y - yi, zf = z - zi;
     let v = 0;
@@ -118,7 +118,7 @@ function noiseTexture(N = 64, seed = 7) {
     for (let c2 = 0; c2 < 8; c2++) {
       const dx = c2 & 1, dy = c2 >> 1 & 1, dz = c2 >> 2 & 1;
       const gi = ((xi + dx) % p + p) % p + p * (((yi + dy) % p + p) % p + p * (((zi + dz) % p + p) % p));
-      const d = G[gi * 3] * (xf - dx) + G[gi * 3 + 1] * (yf - dy) + G[gi * 3 + 2] * (zf - dz);
+      const d = G3[gi * 3] * (xf - dx) + G3[gi * 3 + 1] * (yf - dy) + G3[gi * 3 + 2] * (zf - dz);
       v += d * (dx ? u : 1 - u) * (dy ? w : 1 - w) * (dz ? q : 1 - q);
     }
     return v;
@@ -992,7 +992,7 @@ var BillboardSystem = class extends BaseSystem {
       v.sort();
       for (let i = 0; i < n; i++) this.order[i] = v[i] & 1048575;
     } else for (let i = 0; i < n; i++) this.order[i] = i;
-    const PS = this.aPS.array, P = this.aP.array, C = this.aC.array, G = this.aG.array, V3 = this.aV.array;
+    const PS = this.aPS.array, P = this.aP.array, C = this.aC.array, G2 = this.aG.array, V5 = this.aV.array;
     for (let j = 0; j < n; j++) {
       const i = this.order[j], o = i * STRIDE;
       const age = d[o + F.age], life = d[o + F.life], a01 = age / life;
@@ -1008,28 +1008,28 @@ var BillboardSystem = class extends BaseSystem {
       P[j * 4 + 1] = d[o + F.rot];
       P[j * 4 + 2] = frame;
       P[j * 4 + 3] = type;
-      V3[j * 3] = d[o + F.vx];
-      V3[j * 3 + 1] = d[o + F.vy];
-      V3[j * 3 + 2] = d[o + F.vz];
+      V5[j * 3] = d[o + F.vx];
+      V5[j * 3 + 1] = d[o + F.vy];
+      V5[j * 3 + 2] = d[o + F.vz];
       if (type === PTYPE.FLAME) {
         C[j * 4] = d[o + F.cr];
         C[j * 4 + 1] = d[o + F.cg];
         C[j * 4 + 2] = d[o + F.cb];
         C[j * 4 + 3] = d[o + F.tau0];
-        G[j * 4] = 0;
-        G[j * 4 + 1] = 0;
-        G[j * 4 + 2] = 0;
-        G[j * 4 + 3] = d[o + F.T0] * (1 - 0.12 * a01);
+        G2[j * 4] = 0;
+        G2[j * 4 + 1] = 0;
+        G2[j * 4 + 2] = 0;
+        G2[j * 4 + 3] = d[o + F.T0] * (1 - 0.12 * a01);
         P[j * 4 + 1] = d[o + F.stretch];
       } else if (type === PTYPE.FIREPUFF) {
         C[j * 4] = d[o + F.cr];
         C[j * 4 + 1] = 0;
         C[j * 4 + 2] = 0;
         C[j * 4 + 3] = d[o + F.tau0];
-        G[j * 4] = 0;
-        G[j * 4 + 1] = 0;
-        G[j * 4 + 2] = 0;
-        G[j * 4 + 3] = d[o + F.T0] * (1 - 0.3 * a01);
+        G2[j * 4] = 0;
+        G2[j * 4 + 1] = 0;
+        G2[j * 4 + 2] = 0;
+        G2[j * 4 + 3] = d[o + F.T0] * (1 - 0.3 * a01);
       } else {
         const s0 = Math.max(d[o + F.s0], 1e-3);
         const tau = d[o + F.tau0] * s0 / s * (1 - Math.exp(-age / 0.3));
@@ -1048,10 +1048,10 @@ var BillboardSystem = class extends BaseSystem {
           gg += e * L.c[1];
           gb += e * L.c[2];
         }
-        G[j * 4] = gr;
-        G[j * 4 + 1] = gg;
-        G[j * 4 + 2] = gb;
-        G[j * 4 + 3] = 0;
+        G2[j * 4] = gr;
+        G2[j * 4 + 1] = gg;
+        G2[j * 4 + 2] = gb;
+        G2[j * 4 + 3] = 0;
       }
     }
     this.geo.instanceCount = n;
@@ -1171,7 +1171,7 @@ var SparkSystem = class extends BaseSystem {
   }
   update(dt, air, camera) {
     this.integrate(dt, air);
-    const d = this.d, n = this.n, PS = this.aPS.array, V3 = this.aV.array, T = this.aT.array;
+    const d = this.d, n = this.n, PS = this.aPS.array, V5 = this.aV.array, T = this.aT.array;
     const kT = 1 - Math.exp(-dt / 0.4);
     for (let i = 0; i < n; i++) {
       const o = i * STRIDE, age = d[o + F.age], a01 = age / d[o + F.life], sd = d[o + F.seed];
@@ -1240,10 +1240,10 @@ var SparkSystem = class extends BaseSystem {
       PS[i * 4 + 1] = d[o + 1];
       PS[i * 4 + 2] = d[o + 2];
       PS[i * 4 + 3] = sz;
-      V3[i * 4] = d[o + F.vx];
-      V3[i * 4 + 1] = d[o + F.vy];
-      V3[i * 4 + 2] = d[o + F.vz];
-      V3[i * 4 + 3] = d[o + F.type] === 2 ? 1 + sd * 0.99 : 0;
+      V5[i * 4] = d[o + F.vx];
+      V5[i * 4 + 1] = d[o + F.vy];
+      V5[i * 4 + 2] = d[o + F.vz];
+      V5[i * 4 + 3] = d[o + F.type] === 2 ? 1 + sd * 0.99 : 0;
       T[i] = Tk;
     }
     this.geo.instanceCount = n;
@@ -2427,6 +2427,7 @@ var FUELS = {
     conf: 3
   },
   diesel: {
+    sootBlack: 0.96,
     fv: 2,
     Tlum: 1380,
     name: "Nafta",
@@ -2445,6 +2446,7 @@ var FUELS = {
     conf: 4
   },
   gasoline: {
+    sootBlack: 0.92,
     fv: 1.5,
     Tlum: 1400,
     name: "Benz\xEDn",
@@ -2479,6 +2481,7 @@ var FUELS = {
     conf: 3
   },
   vehicle: {
+    sootBlack: 0.92,
     fv: 1.8,
     Tlum: 1360,
     name: "Osobn\xED auto (plasty, pry\u017E, palivo)",
@@ -2571,6 +2574,76 @@ var FUELS = {
     wb: 1.4,
     tr: 40
   },
+  // --- doplněno v iteraci 6 (zobecnění palety): plyny a rozpouštědla. Výtěžky sazí Tewarson (SFPE), louže Babrauskas.
+  butane: {
+    fv: 3,
+    name: "Butan (zapalova\u010D)",
+    dHc: 457e5,
+    rho: 580,
+    ys: 0.029,
+    yCO: 7e-3,
+    chiR: 0.28,
+    Tflame: 1400,
+    water: 0,
+    tar: 0,
+    embers: 0,
+    sparks: 0,
+    conf: 4
+  },
+  acetylene: {
+    // acetylen na vzduchu: nejsazovější běžný plyn (ys ≈ 0,096), oslnivě žlutý plamen a vlající černé vločky sazí
+    sootBlack: 1,
+    fv: 6,
+    Tlum: 1500,
+    name: "Acetylen (na vzduchu)",
+    dHc: 482e5,
+    rho: 1.1,
+    ys: 0.096,
+    yCO: 0.04,
+    chiR: 0.4,
+    Tflame: 1350,
+    water: 0,
+    tar: 0.1,
+    embers: 0,
+    sparks: 0,
+    conf: 4
+  },
+  acetone: {
+    fv: 0.8,
+    Tlum: 1350,
+    name: "Aceton",
+    dHc: 258e5,
+    mInf: 0.041,
+    kBeta: 1.9,
+    rho: 790,
+    ys: 0.014,
+    yCO: 3e-3,
+    chiR: 0.27,
+    Tflame: 1250,
+    water: 0,
+    tar: 0,
+    embers: 0,
+    sparks: 0,
+    conf: 4
+  },
+  ethanol: {
+    // líh: téměř nesvítivý modrý plamen (ys ≈ 0,008), ve dne skoro neviditelný
+    fv: 0.15,
+    name: "L\xEDh (etanol)",
+    dHc: 268e5,
+    mInf: 0.015,
+    kBeta: 100,
+    rho: 790,
+    ys: 8e-3,
+    yCO: 1e-3,
+    chiR: 0.2,
+    Tflame: 1500,
+    water: 0,
+    tar: 0,
+    embers: 0,
+    sparks: 0,
+    conf: 4
+  },
   steelSpark: {
     fv: 0,
     name: "Ocelov\xE1 jiskra (brou\u0161en\xED)",
@@ -2633,12 +2706,12 @@ function poolFire(fuel, D) {
 }
 function spillFire(fuel, volumeL, depthMM = 1.5) {
   const f = FUELS[fuel];
-  const V3 = volumeL / 1e3, A = V3 / (depthMM / 1e3);
+  const V5 = volumeL / 1e3, A = V5 / (depthMM / 1e3);
   const D = Math.sqrt(4 * A / Math.PI);
   const p = poolFire(f, D);
   const thin = 0.5;
   const mdot = p.mdot * thin, Q = mdot * f.dHc;
-  const mass = V3 * f.rho;
+  const mass = V5 * f.rho;
   return { A, D, mdot, Q, L: flameHeight(Q, D), duration: mass / mdot, mass };
 }
 function ventilation(o2) {
@@ -2669,7 +2742,7 @@ function smokeOpticalDepth(Q, D, z, fuel, vent) {
 }
 function smokeColor(fuel, vent) {
   const f = FUELS[fuel];
-  const soot = Math.min(1, f.ys * vent.sootMul * 9);
+  const soot = Math.max(Math.min(1, f.ys * vent.sootMul * 9), f.sootBlack ?? 0);
   const white = [0.82, 0.83, 0.85], tar = [0.36, 0.29, 0.2], black = [0.05, 0.047, 0.045];
   const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
   let c2 = mix([0.5, 0.5, 0.5], white, f.water);
@@ -2792,6 +2865,698 @@ function blastSummary(W, distances = [1, 2, 5, 10, 20, 50, 100, 200]) {
   });
 }
 
+// src/fx/burnable.js
+import * as THREE10 from "three";
+
+// src/physics/materials.js
+var MATERIALS = {
+  softwood: {
+    name: "M\u011Bkk\xE9 d\u0159evo such\xE9 (smrk, borovice)",
+    fuel: "woodDry",
+    mode: "thick",
+    Tig: 633,
+    qCrit: 12e3,
+    krc: 25e4,
+    hrrpua: 13e4,
+    spread: 2e-3,
+    burnFrac: 0.8,
+    charRate: 65e-5 / 60,
+    cool: 90,
+    look: "char",
+    residue: "d\u0159ev\u011Bn\xE9 uhl\xED \u2192 \u0161ed\xFD popel",
+    conf: 4
+  },
+  hardwood: {
+    name: "Tvrd\xE9 d\u0159evo such\xE9 (buk, dub)",
+    fuel: "woodDry",
+    mode: "thick",
+    Tig: 620,
+    qCrit: 11e3,
+    krc: 45e4,
+    hrrpua: 15e4,
+    spread: 15e-4,
+    burnFrac: 0.8,
+    charRate: 5e-4 / 60,
+    cool: 120,
+    look: "char",
+    residue: "d\u0159ev\u011Bn\xE9 uhl\xED \u2192 \u0161ed\xFD popel",
+    conf: 4
+  },
+  woodWet: {
+    name: "D\u0159evo vlhk\xE9 (30 % vody)",
+    fuel: "woodDry",
+    mode: "thick",
+    Tig: 653,
+    qCrit: 15e3,
+    krc: 6e5,
+    hrrpua: 9e4,
+    spread: 1e-3,
+    burnFrac: 0.7,
+    charRate: 5e-4 / 60,
+    cool: 90,
+    look: "char",
+    residue: "uhl\xED, hodn\u011B p\xE1ry a b\xEDl\xE9ho d\xFDmu",
+    conf: 3
+  },
+  paper: {
+    name: "Pap\xEDr, karton",
+    fuel: "woodDry",
+    mode: "thin",
+    Tig: 533,
+    qCrit: 1e4,
+    rcd: 700 * 1340 * 5e-4,
+    hrrpua: 18e4,
+    spread: 0.01,
+    burnFrac: 0.92,
+    cool: 12,
+    look: "fluff",
+    residue: "\u010Dern\xE9 vlo\u010Dky \u2192 b\xEDl\xFD popel",
+    conf: 3
+  },
+  straw: {
+    name: "Sl\xE1ma, seno, such\xE1 tr\xE1va",
+    fuel: "straw",
+    mode: "thin",
+    Tig: 573,
+    qCrit: 8e3,
+    rcd: 400 * 1500 * 3e-4,
+    hrrpua: 2e5,
+    spread: 0.05,
+    burnFrac: 0.9,
+    cool: 7,
+    look: "fluff",
+    residue: "\u010Dern\xE9 strni\u0161t\u011B, b\xEDl\xFD popel, doutnaj\xEDc\xED j\xE1dro",
+    conf: 3
+  },
+  textile: {
+    name: "L\xE1tka (bavlna), \u010Daloun\u011Bn\xED bez p\u011Bny",
+    fuel: "woodDry",
+    mode: "thin",
+    Tig: 573,
+    qCrit: 1e4,
+    rcd: 300 * 1300 * 6e-4,
+    hrrpua: 15e4,
+    spread: 8e-3,
+    burnFrac: 0.9,
+    cool: 10,
+    look: "fluff",
+    residue: "zuhelnat\u011Bl\xE9 c\xE1ry",
+    conf: 2
+  },
+  puFoam: {
+    name: "PU p\u011Bna (seda\u010Dky, matrace)",
+    fuel: "houseContents",
+    mode: "thick",
+    Tig: 573,
+    qCrit: 7e3,
+    krc: 35e3,
+    hrrpua: 4e5,
+    spread: 8e-3,
+    burnFrac: 0.95,
+    cool: 20,
+    look: "melt",
+    residue: "ho\u0159\xEDc\xED kapky, \u010Dern\xFD \u0161kvarek",
+    conf: 3
+  },
+  plastic: {
+    name: "Plast (PP, ABS \u2013 n\xE1razn\xEDky, interi\xE9r)",
+    fuel: "vehicle",
+    mode: "thick",
+    Tig: 673,
+    qCrit: 15e3,
+    krc: 7e5,
+    hrrpua: 5e5,
+    spread: 2e-3,
+    burnFrac: 0.95,
+    cool: 90,
+    look: "melt",
+    residue: "ho\u0159\xEDc\xED lou\u017Ee taveniny, \u010Dern\xFD \u0161kvarek",
+    conf: 3
+  },
+  rubber: {
+    name: "Pry\u017E (pneumatika)",
+    fuel: "rubber",
+    mode: "thick",
+    Tig: 683,
+    qCrit: 17e3,
+    krc: 6e5,
+    hrrpua: 25e4,
+    spread: 8e-4,
+    burnFrac: 0.7,
+    cool: 150,
+    look: "melt",
+    residue: "ocelov\xFD kord, saze, pyrol\xFDzn\xED olej",
+    conf: 2
+  },
+  gasoline: {
+    name: "Benz\xEDn (kapalina)",
+    fuel: "gasoline",
+    mode: "liquid",
+    flash: 230,
+    Tig: 230,
+    qCrit: 0,
+    rcd: 0,
+    hrrpua: 0.055 * 437e5,
+    spread: 1.7,
+    burnFrac: 1,
+    cool: 5,
+    look: "liquid",
+    residue: "sp\xE1lenina na podkladu",
+    conf: 5
+  },
+  diesel: {
+    name: "Nafta (kapalina)",
+    fuel: "diesel",
+    mode: "liquid",
+    flash: 328,
+    Tig: 328,
+    qCrit: 3e3,
+    rcd: 840 * 1900 * 2e-3,
+    hrrpua: 0.045 * 444e5,
+    spread: 0.05,
+    burnFrac: 1,
+    cool: 60,
+    look: "liquid",
+    residue: "mastn\xE1 \u010Dern\xE1 skvrna, saze",
+    conf: 4
+  },
+  steelPainted: {
+    name: "Lakovan\xFD ocelov\xFD plech (karoserie, sud)",
+    fuel: null,
+    mode: "inert",
+    Tig: Infinity,
+    qCrit: Infinity,
+    rcd: 7850 * 490 * 8e-4,
+    paintOff: 620,
+    glow: 800,
+    cool: 60,
+    look: "metal",
+    residue: "hol\xFD \u0161ed\xFD plech s okujemi, za p\xE1r dn\xED rez",
+    conf: 4
+  },
+  steelThick: {
+    name: "Tlust\xE1 ocel (tlakov\xE1 l\xE1hev, nosn\xEDk)",
+    fuel: null,
+    mode: "inert",
+    Tig: Infinity,
+    qCrit: Infinity,
+    rcd: 7850 * 490 * 5e-3,
+    paintOff: 620,
+    glow: 800,
+    weak: 823,
+    cool: 400,
+    look: "metal",
+    residue: "okuje, p\u0159i 550 \xB0C polovi\u010Dn\xED pevnost",
+    conf: 4
+  },
+  aluminium: {
+    name: "Hlin\xEDk (disky kol, blok motoru)",
+    fuel: null,
+    mode: "inert",
+    Tig: Infinity,
+    qCrit: Infinity,
+    rcd: 2700 * 900 * 4e-3,
+    melt: 933,
+    cool: 200,
+    look: "metal",
+    residue: "ztuhl\xE9 st\u0159\xEDbrn\xE9 lou\u017Ee a kapky",
+    conf: 5
+  },
+  glass: {
+    name: "Okenn\xED sklo 4 mm",
+    fuel: null,
+    mode: "inert",
+    Tig: Infinity,
+    qCrit: Infinity,
+    crackQ: 5e3,
+    falloutQ: 2e4,
+    look: "glass",
+    residue: "popraskan\xE9, vypadl\xE9, st\u0159epy; nad 700 \xB0C m\u011Bkne",
+    conf: 2
+  },
+  masonry: {
+    name: "Zdivo, beton, om\xEDtka",
+    fuel: null,
+    mode: "inert",
+    Tig: Infinity,
+    qCrit: Infinity,
+    rcd: Infinity,
+    look: "mineral",
+    residue: "saze nad otvory, \u201E\u010Dist\xFD v\xFDpal\u201C u ohniska, odpr\xFDskan\xE1 om\xEDtka",
+    conf: 3
+  }
+};
+var material = (m) => typeof m === "string" ? MATERIALS[m] : m;
+
+// src/physics/heat.js
+var SIGMA = 5670374e-14;
+function emissivePower(D, sooty = true) {
+  if (!sooty) return 1e5;
+  const k = Math.exp(-0.12 * D);
+  return (140 * k + 20 * (1 - k)) * 1e3;
+}
+var pointSourceFlux = (Q, chiR, R) => chiR * Q / (4 * Math.PI * Math.max(R * R, 1e-6));
+var contactFlux = (D) => 6e4 + 9e4 * (1 - Math.exp(-0.3 * D));
+function fluxFromFire(fire, p) {
+  const { Q, D, L } = fire;
+  if (!(Q > 0)) return { rad: 0, conv: 0, total: 0, Tg: AMB.T, inFlame: false };
+  const chiR = fire.chiR ?? 0.3, th = fire.theta || 0, s = Math.sin(th), c2 = Math.cos(th);
+  const ax = s * (fire.wx || 0), ay = c2, az = s * (fire.wz || 0);
+  const dx = p[0] - fire.x, dy = p[1] - fire.y, dz = p[2] - fire.z;
+  const along = dx * ax + dy * ay + dz * az;
+  const px = dx - ax * along, py = dy - ay * along, pz = dz - az * along;
+  const r = Math.hypot(px, py, pz);
+  const k = Math.min(1, Math.max(0, along / Math.max(L, 1e-3)));
+  const rf = D / 2 * (1 - 0.6 * k) + 0.02 * L;
+  const inFlame = along >= -0.05 * D && along <= L && r <= rf;
+  let rad = 0;
+  for (const f of [1 / 6, 1 / 2, 5 / 6]) {
+    const h2 = f * L, ex = dx - ax * h2, ey = dy - ay * h2, ez = dz - az * h2;
+    const eh = Math.hypot(ex, ez), sh = Math.max(eh - D / 2 * (1 - 0.6 * f), Math.min(eh, 0.05 * D + 0.01));
+    rad += pointSourceFlux(Q / 3, chiR, Math.hypot(sh, ey));
+  }
+  rad = Math.min(rad, emissivePower(D, fire.sooty ?? true));
+  let conv = 0, Tg = AMB.T;
+  if (along > 0) {
+    const pa = plumeAxis(Q, D, along, chiR);
+    const dT = pa.dT * Math.exp(-(r * r) / Math.max(pa.b * pa.b, 1e-4));
+    Tg = AMB.T + dT;
+    conv = 20 * dT;
+  }
+  if (inFlame) {
+    const qc = contactFlux(D);
+    return { rad: qc * 0.7, conv: qc * 0.3, total: qc, Tg: 1200, inFlame };
+  }
+  return { rad, conv, total: rad + conv, Tg, inFlame };
+}
+function fluxAt(fires, p) {
+  let rad = 0, conv = 0, Tg = AMB.T, inFlame = false;
+  for (const f of fires) {
+    const q = fluxFromFire(f, p);
+    rad += q.rad;
+    conv += q.conv;
+    if (q.Tg > Tg) Tg = q.Tg;
+    inFlame = inFlame || q.inFlame;
+  }
+  return { rad, conv, total: rad + conv, Tg, inFlame };
+}
+function timeToIgnition(q, mat, T0 = AMB.T) {
+  const m = material(mat);
+  if (!m || m.mode === "inert") return Infinity;
+  if (m.mode === "liquid" && T0 >= m.flash) return 0;
+  const net = q - m.qCrit;
+  if (net <= 0) return Infinity;
+  const dT = m.Tig - T0;
+  if (m.mode === "thick") return Math.PI / 4 * m.krc * dT * dT / (net * net);
+  return m.rcd * dT / net;
+}
+function ignitionDose(mat, T0 = AMB.T) {
+  const m = material(mat);
+  if (!m || m.mode === "inert") return { n: 1, ftp: Infinity, qCrit: Infinity, tau: 60 };
+  const dT = Math.max(m.Tig - T0, 0);
+  if (m.mode === "thick") return { n: 2, ftp: Math.PI / 4 * m.krc * dT * dT, qCrit: m.qCrit, tau: m.cool };
+  return { n: 1, ftp: m.rcd * dT, qCrit: m.qCrit, tau: m.cool };
+}
+function stepDose(F2, q, dt, dose) {
+  const net = Math.max(0, q - dose.qCrit);
+  const gain = dose.n === 2 ? net * net : net;
+  return net > 0 ? F2 + gain * dt : F2 * Math.exp(-dt / dose.tau);
+}
+function objectFire(mat, { mass, area, size }) {
+  const m = material(mat), f = FUELS[m.fuel];
+  const Qpeak = m.hrrpua * area;
+  const tg = Math.max(2, (size ?? Math.sqrt(area)) / (m.spread * 4));
+  const E = mass * m.burnFrac * f.dHc;
+  const tau = Math.max(5, 0.25 * (E / Qpeak));
+  const tPlateau = Math.max(0, E / Qpeak - tg / 3 - tau);
+  return { Qpeak, alpha: Qpeak / (tg * tg), tPlateau, tau, E, tg, duration: tg + tPlateau + 3 * tau, fuel: m.fuel };
+}
+var charDepth = (t, mat = "softwood") => (material(mat).charRate || 0) * t;
+function stepSheetTemp(T, q, dt, mat = "steelPainted", eps = 0.85, h2 = 15) {
+  const m = material(mat), T0 = AMB.T;
+  const dTdt = (eps * q - 2 * eps * SIGMA * (T ** 4 - T0 ** 4) - 2 * h2 * (T - T0)) / m.rcd;
+  const n = Math.max(1, Math.ceil(Math.abs(dTdt) * dt / 40));
+  let t = T;
+  const hstep = dt / n;
+  for (let i = 0; i < n; i++) t += (eps * q - 2 * eps * SIGMA * (t ** 4 - T0 ** 4) - 2 * h2 * (t - T0)) / m.rcd * hstep;
+  return Math.max(T0, t);
+}
+function sheetEquilibrium(q, eps = 0.85, h2 = 15) {
+  let lo = AMB.T, hi = 2e3;
+  for (let i = 0; i < 40; i++) {
+    const T = (lo + hi) / 2;
+    const bal = eps * q - 2 * eps * SIGMA * (T ** 4 - AMB.T ** 4) - 2 * h2 * (T - AMB.T);
+    if (bal > 0) lo = T;
+    else hi = T;
+  }
+  return (lo + hi) / 2;
+}
+function sheetLook(Tmax) {
+  const s = (a, b, x) => Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return { blister: s(470, 620, Tmax) * (1 - s(620, 700, Tmax)), paintOff: s(600, 700, Tmax), scale: s(780, 950, Tmax), sootHolds: 1 - s(600, 700, Tmax) };
+}
+function sootRate(tauPerM, Tg, Ts) {
+  if (Ts > 650) return -0.05 * Math.min(1, (Ts - 650) / 150);
+  return 0.02 * tauPerM * Math.max(0, Tg - Ts) / Math.max(Tg, 1);
+}
+function glassState(q, mat = "glass") {
+  const m = material(mat);
+  return q >= m.falloutQ ? "vypadl\xE9" : q >= m.crackQ ? "popraskan\xE9" : "cel\xE9";
+}
+var FLUX_EFFECTS = [
+  [1e3, "letn\xED slunce"],
+  [2500, "bolest k\u016F\u017Ee do ~30 s; mez pro hasi\u010De bez ochrany"],
+  [5e3, "bolest do 10 s, puch\xFD\u0159e do 30 s; sklo prask\xE1"],
+  [8e3, "vzplane sl\xE1ma a such\xE1 tr\xE1va"],
+  [12500, "vzplane d\u0159evo s pilotn\xEDm plamenem; tav\xED se plasty"],
+  [2e4, "podlaha p\u0159i flashoveru; vypad\xE1v\xE1 sklo"],
+  [35e3, "d\u0159evo vzplane samo bez plam\xEDnku za des\xEDtky sekund"],
+  [8e4, "kontakt s plamenem"],
+  [15e4, "pohlcen\xED velk\xFDm po\u017E\xE1rem kapalin"]
+];
+function fluxEffect(q) {
+  let t = "\u2014";
+  for (const [v, s] of FLUX_EFFECTS) if (q >= v) t = s;
+  return t;
+}
+
+// src/physics/spec.js
+var G = 9.81;
+function torricelli(holeD, head, Cd = 0.62) {
+  return Cd * (Math.PI * holeD * holeD) / 4 * Math.sqrt(2 * G * Math.max(head, 0));
+}
+function drainHead(t, h0, holeD, tankArea, Cd = 0.62) {
+  const k = Cd * (Math.PI * holeD * holeD) / 4 * Math.sqrt(2 * G) / (2 * tankArea);
+  const s = Math.sqrt(h0) - k * t;
+  return s > 0 ? s * s : 0;
+}
+function drainTime(h0, holeD, tankArea, Cd = 0.62) {
+  return Math.sqrt(h0) / (Cd * (Math.PI * holeD * holeD) / 4 * Math.sqrt(2 * G) / (2 * tankArea));
+}
+var lineFlameHeight = (Qper_m) => 0.035 * Math.pow(Qper_m / 1e3, 2 / 3);
+var laminarFlameHeight = (Q, fuel = "butane") => (fuel === "paraffin" ? 0.045 / 80 : 0.025 / 57) * Q;
+function leakFire(fuel, flowLps, { thin = 0.5, width = null } = {}) {
+  const f = FUELS[fuel], mdot = flowLps / 1e3 * f.rho;
+  let D = 1, A = 1;
+  for (let i = 0; i < 30; i++) {
+    const m2 = thin * f.mInf * (1 - Math.exp(-f.kBeta * D));
+    A = mdot / m2;
+    D = Math.sqrt(4 * A / Math.PI);
+  }
+  const Q = mdot * f.dHc;
+  const w = width ?? Math.min(1.2, 0.25 + 0.9 * Math.sqrt(flowLps));
+  const len = A / w;
+  return { mdot, A, D, Q, L: flameHeight(Q, D), stream: { w, len, L: lineFlameHeight(Q / len) } };
+}
+function pileFire(mat, mass, stick = 0.08, exposed = 0.5) {
+  const m = material(mat), f = FUELS[m.fuel];
+  const As = 4 * mass / ((f.rho || 450) * stick);
+  const Qpeak = m.hrrpua * As * exposed;
+  const E = mass * m.burnFrac * f.dHc;
+  return { As, Qpeak, E, duration: E / Qpeak, charTime: stick / 2 / m.charRate };
+}
+function fireSpec(s) {
+  const out = { kind: s.kind, extra: {}, rows: [] };
+  const row = (a, b, c2) => out.rows.push([a, b, c2]);
+  switch (s.kind) {
+    case "pool": {
+      const f2 = FUELS[s.fuel], D = s.D ?? Math.sqrt(4 * s.area / Math.PI), p = poolFire(s.fuel, D);
+      const mass = s.volumeL != null ? s.volumeL / 1e3 * f2.rho : (s.depth ?? 0.01) * p.A * f2.rho;
+      Object.assign(out, { fuel: s.fuel, Q: p.Q, Qpeak: p.Q, D, L: p.L, mass, mdot: p.mdot, duration: mass / p.mdot });
+      row("Odho\u0159\xEDv\xE1n\xED", (p.m2 * 1e3).toFixed(1) + " g/m\xB2s", "Babrauskas \u26054");
+      row("Pokles hladiny", (p.m2 / f2.rho * 6e4).toFixed(1) + " mm/min", "m\u2033/\u03C1 \u26054");
+      break;
+    }
+    case "spill": {
+      const sp = spillFire(s.fuel, s.volumeL, s.depthMM ?? 1.5);
+      Object.assign(out, { fuel: s.fuel, Q: sp.Q, Qpeak: sp.Q, D: sp.D, L: sp.L, mass: sp.mass, mdot: sp.mdot, duration: sp.duration });
+      row("Plocha", sp.A.toFixed(1) + " m\xB2", "vrstva " + (s.depthMM ?? 1.5) + " mm \u26053");
+      break;
+    }
+    case "leak": {
+      const f2 = FUELS[s.fuel];
+      const flow0 = s.flowLps ?? torricelli((s.holeMM ?? 9) / 1e3, s.head ?? 0.5) * 1e3;
+      const lf = leakFire(s.fuel, flow0, s);
+      const tankA = s.tankArea ?? 0.258, h0 = s.head ?? 0.5, hd = (s.holeMM ?? 9) / 1e3;
+      const dur = s.flowLps != null ? (s.volumeL ?? 100) / s.flowLps : drainTime(h0, hd, tankA);
+      const flow = (t) => s.flowLps != null ? t < dur ? flow0 : 0 : torricelli(hd, drainHead(t, h0, hd, tankA)) * 1e3;
+      Object.assign(out, { fuel: s.fuel, Q: (t) => flow(t) / 1e3 * f2.rho * f2.dHc, Qpeak: lf.Q, D: lf.D, L: lf.L, mdot: lf.mdot, mass: (s.flowLps != null ? (s.volumeL ?? 100) / 1e3 : tankA * h0) * f2.rho, duration: dur, flow, stream: lf.stream, A: lf.A });
+      row("V\xFDtok", flow0.toFixed(2) + " l/s", s.flowLps != null ? "zad\xE1no" : `Torricelli, otvor ${(hd * 1e3).toFixed(0)} mm \u26055`);
+      row("Ho\u0159\xEDc\xED plocha (rovnov\xE1ha)", lf.A.toFixed(1) + " m\xB2", "\u1E41 = m\u2033\xB7A \u26053");
+      row("Vyte\u010De za", (dur / 60).toFixed(0) + " min", "\u26054");
+      break;
+    }
+    case "pile": {
+      const m = material(s.material), p = pileFire(s.material, s.mass, s.stick ?? 0.08, s.exposed ?? 0.5);
+      const D = s.D ?? Math.max(0.2, 0.95 * Math.cbrt(s.mass / 20));
+      const tg = s.tGrow ?? 60 + 240 * Math.cbrt(s.mass / 20), tau = 0.25 * p.duration, cur = { alpha: p.Qpeak / (tg * tg), Qpeak: p.Qpeak, tPlateau: Math.max(0, p.duration - tg / 3 - tau), tau };
+      Object.assign(out, { fuel: m.fuel, Q: (t) => hrrCurve(t, cur), Qpeak: p.Qpeak, D, L: flameHeight(p.Qpeak, D), mass: s.mass, duration: hrrCurveEnd(cur), curve: cur });
+      row("Ho\u0159\xEDc\xED povrch polen", p.As.toFixed(1) + " m\xB2 \xD7 " + (s.exposed ?? 0.5), "A = 4m/\u03C1b \u26053");
+      row("Proho\u0159en\xED polena", (p.charTime / 60).toFixed(0) + " min", "EN 1995-1-2 \u26055");
+      break;
+    }
+    case "solid": {
+      const of = objectFire(s.material, s), cur = { alpha: of.alpha, Qpeak: of.Qpeak, tPlateau: of.tPlateau, tau: of.tau };
+      const D = s.D ?? Math.sqrt(4 * (s.footprintArea ?? s.area / 3) / Math.PI);
+      Object.assign(out, { fuel: of.fuel, Q: (t) => hrrCurve(t, cur), Qpeak: of.Qpeak, D, L: flameHeight(of.Qpeak, D), mass: s.mass, duration: of.duration, curve: cur });
+      row("V\xFDkon z povrchu", (material(s.material).hrrpua / 1e3).toFixed(0) + " kW/m\xB2", "SFPE \u26053");
+      row("Rozho\u0159en\xED", of.tg.toFixed(0) + " s", "rozm\u011Br / rychlost \u0161\xED\u0159en\xED \u26052");
+      break;
+    }
+    case "jet": {
+      const f2 = FUELS[s.fuel], Q = s.Q ?? s.mdot * f2.dHc, L = laminarFlameHeight(Q, s.fuel);
+      Object.assign(out, { fuel: s.fuel, Q, Qpeak: Q, D: s.D ?? 6e-3, L, mdot: Q / f2.dHc, mass: s.mass ?? 45e-4, duration: (s.mass ?? 45e-4) / (Q / f2.dHc) });
+      out.extra = { L: (q) => laminarFlameHeight(q, s.fuel), T: 1500, blue: 4, taper: 0.55, baseWide: -0.15, neck: 0.5, puffAmp: 0.05, turbAmp: 0.02, wobble: 0.03, tongues: 3, lightH: 0.4, mult: { smoke: 0, embers: 0, sparks: 0, haze: 0.4 } };
+      row("Spot\u0159eba", (out.mdot * 1e6).toFixed(2) + " mg/s", "Q/\u0394Hc \u26054");
+      break;
+    }
+    case "wick": {
+      const f2 = FUELS[s.fuel], Q = s.Q ?? 80, L = laminarFlameHeight(Q, "paraffin");
+      Object.assign(out, { fuel: s.fuel, Q, Qpeak: Q, D: s.D ?? 0.016, L, mdot: Q / f2.dHc, mass: s.mass ?? 0.05, duration: (s.mass ?? 0.05) / (Q / f2.dHc) });
+      out.extra = { L: (q) => laminarFlameHeight(q, "paraffin"), T: 1450, blue: 1, taper: 0.9, baseWide: -0.1, neck: 0.55, puffAmp: 0.12, turbAmp: 0.03, wobble: 0.04, tongues: 3, lightH: 0.4, mult: { smoke: 0.4, embers: 0, sparks: 0, haze: 0.5 } };
+      break;
+    }
+    default:
+      throw new Error("fireSpec: nezn\xE1m\xFD druh " + s.kind);
+  }
+  const f = FUELS[out.fuel];
+  out.rows.unshift(
+    ["Druh ohn\u011B", { pool: "lou\u017Ee v n\xE1dob\u011B", spill: "rozlit\xE1 kapalina", leak: "vyt\xE9kaj\xEDc\xED kapalina", pile: "hromada d\u0159eva", solid: "ho\u0159\xEDc\xED p\u0159edm\u011Bt", jet: "plamen z trysky", wick: "plamen knotu" }[s.kind], "fireSpec"],
+    ["Hmotnost paliva", out.mass >= 1 ? out.mass.toFixed(1) + " kg" : (out.mass * 1e3).toFixed(1) + " g", ""],
+    ["Doba ho\u0159en\xED", out.duration >= 120 ? (out.duration / 60).toFixed(0) + " min" : out.duration.toFixed(0) + " s", "m\xB7\u0394Hc / Q"]
+  );
+  out.chiR = f.chiR;
+  return out;
+}
+function scaleFire(sp, k) {
+  const Q0 = sp.Q, D = sp.D * Math.sqrt(k), Qpeak = sp.Qpeak * k;
+  return { ...sp, Q: typeof Q0 === "function" ? (t) => Q0(t) * k : Q0 * k, Qpeak, D, L: sp.extra?.L ? sp.extra.L(Qpeak) : flameHeight(Qpeak, D), mass: sp.mass * k };
+}
+function sourceOptions(sp, more = {}) {
+  return { fuel: sp.fuel, Q: sp.Q, D: sp.D, ...Number.isFinite(sp.duration) ? { end: sp.duration } : {}, ...sp.extra, ...more };
+}
+var A_HE = 0.18 * 1.33;
+var B_HE = 1e3;
+var pw = (W, v1, v2, W1 = A_HE, W2 = B_HE) => v1 * Math.pow(W / W1, Math.log(v2 / v1) / Math.log(W2 / W1));
+var mixc = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+var craterRadius = (W) => 0.4 * Math.cbrt(W);
+function explosionSpec(s) {
+  const rows = [];
+  if (s.kind === "he") {
+    const e = EXPLOSIVES[s.explosive ?? "tnt"], W = s.mass * e.eqP, fb = heFireball(W), k = Math.log(W / A_HE) / Math.log(B_HE / A_HE), kc = Math.min(1, Math.max(0, k));
+    const big = W >= 100;
+    const ex = {
+      W,
+      flash: pw(W, 2e6, 6e8),
+      scorch: pw(W, 1.4, 26),
+      dust: true,
+      dustAlbedo: mixc([0.32, 0.27, 0.2], [0.36, 0.3, 0.22], kc),
+      crater: W >= 5 ? 1 : 0,
+      fireball: { D: fb.D, t: fb.t, T: 2600 - 200 * kc, soot: 1, ...W > 20 ? { rise: 30 * Math.cbrt(W / 1e3) } : {} },
+      smoke: { n: Math.round(pw(W, 140, 1400)), life: pw(W, 7, 50), albedo: mixc([0.11, 0.1, 0.095], [0.09, 0.085, 0.08], kc), tau: pw(W, 1.6, 3), buoy: pw(W, 0.7, 14), buoyAcc: pw(W, 0.25, 5), ...big ? { dur: 4 * Math.cbrt(W / 1e3) } : {} },
+      // střepiny pláště (malé, rychlé, žhavé) × vyvržená zemina (velké, pomalé)
+      debris: s.cased ? { n: Math.round(pw(W, 160, 600)), speed: 300, size: 6e-3 * Math.cbrt(W / A_HE), hot: 0.9, up: 0.25, T: 1100 } : { n: Math.round(pw(W, 90, 700)), speed: pw(W, 35, 140), size: pw(W, 0.02, 0.35), hot: 0.25, up: 0.55, T: 1300 },
+      sparks: { n: Math.round(pw(W, 220, 900)), speed: pw(W, 70, 120) },
+      ...big ? { life: pw(W, 12, 70), mushroom: true } : {},
+      ...W >= 300 ? { ring: true, wilson: 2.5 } : {}
+    };
+    rows.push(["N\xE1lo\u017E", `${s.mass} kg ${e.name}`, ""], ["TNT ekvivalent", W.toFixed(2) + " kg", "\u26054"], ["Ohniv\xE1 koule", fb.D.toFixed(1) + " m / " + (fb.t * 1e3).toFixed(0) + " ms", "objem zplodin \u26052"], ["Kr\xE1ter", craterRadius(W).toFixed(2) + " m", "TM 5-855 \u26053"]);
+    return { W, ex, fires: [], dy: Math.min(0.6, 0.05 + 0.05 * Math.cbrt(W)), rows };
+  }
+  if (s.kind === "fireball") {
+    const M = s.mass, fb = bleveFireball(M), q = M / 25, film = !!s.film;
+    const ex = {
+      W: film ? 4 * q : 0.05 * q,
+      flash: 2e6 * Math.pow(q, 2 / 3),
+      scorch: 6 * Math.cbrt(q),
+      dust: film,
+      fireball: { D: fb.D * (film ? 1.2 : 1), t: fb.t, T: 1650, rise: fb.H, soot: 0.6 },
+      smoke: { n: Math.round(500 * Math.pow(q, 0.28)), life: 16 * Math.pow(q, 0.2), albedo: [0.07, 0.065, 0.06], tau: 2.5, buoy: 6 * Math.pow(q, 1 / 6), buoyAcc: 2 * Math.pow(q, 1 / 6) },
+      debris: { n: film ? 120 : 14, speed: film ? 40 : 18, size: 0.12, hot: 0.5, up: 0.6, T: 1200 },
+      sparks: { n: Math.round(300 * Math.cbrt(q)), speed: 12 }
+    };
+    const pool = { fuel: s.fuel ?? "gasoline", Q: (t) => 6e6 * Math.pow(q, 2 / 3) * Math.max(0, 1 - t / (26 * Math.cbrt(q))), D: 3.5 * Math.cbrt(q), start: 0.4, end: 26 * Math.cbrt(q) };
+    rows.push(["Zapojen\xE9 palivo", M + " kg", "p\u0159edpoklad \u26052"], ["Ohniv\xE1 koule D", fb.D.toFixed(1) + " m", "CCPS \u26054"], ["Trv\xE1n\xED", fb.t.toFixed(2) + " s", "CCPS \u26054"]);
+    return { W: ex.W, ex, fires: [pool], dy: 0.4, rows };
+  }
+  if (s.kind === "gasMix") {
+    const W = gasTNT(s.mass, s.gas ?? "acetyleneO2"), fb = heFireball(W);
+    const ex = { W, flash: 3e6 * Math.pow(s.mass / 0.015, 2 / 3), scorch: 0.9 * Math.cbrt(s.mass / 0.015), dust: true, dustAlbedo: [0.3, 0.3, 0.25], fireball: { D: fb.D, t: fb.t, T: 3e3, soot: 0 }, smoke: { n: 60, life: 4, albedo: [0.75, 0.75, 0.77], tau: 0.25, buoy: 1.5 }, debris: { n: 24, speed: 30, size: 0.03, hot: 0.2, up: 0.5 }, sparks: { n: 80, speed: 25 } };
+    rows.push(["TNT ekvivalent", (W * 1e3).toFixed(0) + " g", "\xFA\u010Dinnost 45 % \u26052"]);
+    return { W, ex, fires: [], dy: 0.4, rows };
+  }
+  if (s.kind === "gasCylinder") {
+    const gasMass = s.gasMass ?? 7, solv = s.solventMass ?? 14, shell = s.shellMass ?? 65, V5 = s.V ?? 0.05, P = s.burstP ?? 8e6;
+    const Eburst = P * V5 * 0.4 / (1.23 - 1);
+    const Wburst = Eburst / TNT_J_PER_KG, Wdefl = 0.02 * gasMass * FUELS.acetylene.dHc / TNT_J_PER_KG;
+    const W = Wburst + Wdefl, M = gasMass + 0.3 * solv, fb = bleveFireball(M);
+    const vFrag = Math.sqrt(2 * 0.3 * Eburst / shell);
+    const ex = {
+      W,
+      flash: 5e6,
+      scorch: 5,
+      dust: true,
+      dustAlbedo: [0.3, 0.27, 0.22],
+      fireball: { D: fb.D, t: fb.t, T: 1800, rise: fb.H * 0.8, soot: 0.9 },
+      smoke: { n: 420, life: 15, albedo: [0.045, 0.042, 0.04], tau: 3.4, buoy: 5, buoyAcc: 1.8 },
+      debris: { n: 46, speed: vFrag * 0.6, size: 0.09, hot: 0.6, up: 0.5, T: 1200 },
+      sparks: { n: 420, speed: 28 }
+    };
+    const fires = [{ fuel: "acetone", Q: (t) => 16e5 * Math.max(0, 1 - t / 40), D: 2.2, start: 0.5, end: 40 }];
+    rows.push(
+      ["N\xE1pl\u0148", `${gasMass} kg C\u2082H\u2082 v ${solv} kg acetonu`, "l\xE1hev 50 l \u26054"],
+      ["Energie roztr\u017Een\xED", (Eburst / 1e6).toFixed(2) + " MJ", "Brode \u26052"],
+      ["TNT ekvivalent", W.toFixed(1) + " kg (rozsah 0,2\u20134)", "roztr\u017Een\xED + deflagrace \u26052"],
+      ["Ohniv\xE1 koule", fb.D.toFixed(1) + " m / " + fb.t.toFixed(2) + " s", "CCPS \u26054; pokusy ~10 m"],
+      ["\xDAlomky pl\xE1\u0161t\u011B", vFrag.toFixed(0) + " m/s, dolet stovky m", "z\xF3na 200 m (HSE) \u26054"]
+    );
+    return { W, ex, fires, dy: 0.5, rows, vFrag, Eburst, fb };
+  }
+  throw new Error("explosionSpec: nezn\xE1m\xFD druh " + s.kind);
+}
+
+// src/fx/burnable.js
+var Burnable = class {
+  /**
+   * o = { pos: Vector3 (pata předmětu), material, mass [kg], area [m² hořícího povrchu], size [m], height [m] (kde se měří tok),
+   *       char (uniformy applyChar), source (další volby FireSource), ignited (hoří od začátku), label,
+   *       spec (hotový fireSpec místo odvození z materiálu), onIgnite(b), onBurnout(b), probe: [dx,dy,dz] (posun měřicího bodu) }
+   */
+  constructor(world, o) {
+    this.w = world;
+    this.o = o;
+    this.mat = material(o.material);
+    this.pos = o.pos.clone ? o.pos.clone() : new THREE10.Vector3(...o.pos);
+    const pr = o.probe || [0, o.height ?? (o.size ?? 0.5) * 0.5, 0];
+    this.p = [this.pos.x + pr[0], this.pos.y + pr[1], this.pos.z + pr[2]];
+    this.dose = ignitionDose(this.mat);
+    this.F = 0;
+    this.state = "cold";
+    this.q = 0;
+    this.Tg = AMB.T;
+    this.tIgn = null;
+    this.burned = 0;
+    this.src = null;
+    this.Ts = AMB.T;
+    this.Tmax = AMB.T;
+    this.soot = 0;
+    this.rust = 0;
+    this.label = o.label || this.mat.name;
+    this.last = world.scnTime;
+    this.rnd = mulberry32((o.seed ?? 77) * 31 + 7);
+    if (o.ignited) this.ignite();
+  }
+  get inert() {
+    return this.mat.mode === "inert";
+  }
+  /** Podíl dávky do vznícení 0..1 (pro UI a „čmoudění“ před vzplanutím). */
+  get heat() {
+    return Number.isFinite(this.dose.ftp) ? Math.min(1, this.F / this.dose.ftp) : 0;
+  }
+  ignite() {
+    if (this.state === "burning" || this.state === "burnt" || this.inert) return;
+    const o = this.o, w = this.w;
+    this.spec = o.spec || fireSpec({ kind: "solid", material: o.material, mass: o.mass, area: o.area, size: o.size, D: o.D });
+    this.src = w.addSource({ pos: this.pos.clone().add(new THREE10.Vector3(0, o.fireY ?? 0.02, 0)), seed: o.seed ?? 77, volume: true, ...sourceOptions(this.spec), ...o.source || {} });
+    this.src.owner = this;
+    this.state = "burning";
+    this.tIgn = w.scnTime;
+    if (w.audioEvents && w.audioEvents.length < 64) w.audioEvents.push({ type: "pop", pos: this.pos.clone() });
+    o.onIgnite?.(this);
+  }
+  update() {
+    const w = this.w, dt = Math.max(0, w.scnTime - this.last);
+    this.last = w.scnTime;
+    if (dt <= 0 || dt > 600) return;
+    const f = w.heatFlux(this.p, this.src);
+    this.q = f.total;
+    this.Tg = f.Tg;
+    const u = this.o.char;
+    if (this.inert) {
+      if (Number.isFinite(this.mat.rcd)) this.Ts = stepSheetTemp(this.Ts, this.q, dt, this.mat);
+      this.Tmax = Math.max(this.Tmax, this.Ts);
+      const tauM = w.smokeAt ? w.smokeAt(this.p) : 0;
+      this.soot = Math.min(1, Math.max(0, this.soot + sootRate(tauM, f.Tg, this.Ts) * dt));
+      if (this.Tmax > 700 && this.Ts < 400) this.rust = Math.min(1, this.rust + dt / (this.o.rustTime ?? 600));
+      if (u && u.uTmax) {
+        u.uTmax.value = this.Tmax;
+        u.uTnow.value = this.Ts;
+        u.uSoot.value = this.soot;
+        u.uRust.value = this.rust;
+        let best = null, bq = 0;
+        for (const s of w.fireList(this.src)) {
+          const d2 = (s.x - this.pos.x) ** 2 + (s.z - this.pos.z) ** 2 + 0.05, k = s.Q / d2;
+          if (k > bq) {
+            bq = k;
+            best = s;
+          }
+        }
+        if (best && u.uHeatSrc) {
+          u.uHeatSrc.value.set(best.x, best.y + best.L * 0.3, best.z);
+          u.uObjC.value.set(this.pos.x, this.pos.y + (this.o.size ?? 0.9) * 0.5, this.pos.z);
+          u.uHeatSide.value = Math.max(u.uHeatSide.value * 0.98, f.inFlame ? 0.3 : 1);
+        }
+      }
+      this.state = this.Ts > 800 ? "\u017Ehne" : this.Tmax > 620 ? "lak sho\u0159el" : this.Tmax > 470 ? "lak puch\xFD\u0159uje" : this.q > 1e3 ? "oh\u0159\xEDv\xE1 se" : "cold";
+      return;
+    }
+    if (this.state === "cold" || this.state === "heating") {
+      this.F = stepDose(this.F, this.q, dt, this.dose);
+      this.state = this.F > 0.02 * this.dose.ftp ? "heating" : "cold";
+      if (this.state === "heating" && this.heat > 0.3 && w.layers.smoke && w.bb) {
+        this._sm = (this._sm || 0) + w.dtReal * 14 * this.heat * (w.tier.smokeMul ?? 1);
+        while (this._sm >= 1) {
+          this._sm -= 1;
+          const s = this.o.size ?? 0.5, r = this.rnd;
+          w.bb.spawnSmoke({ x: this.p[0] + (r() - 0.5) * s, y: this.p[1] + (r() - 0.3) * s * 0.5, z: this.p[2] + (r() - 0.5) * s, vy: 0.4 + 0.5 * r(), life: 1.6 + 1.5 * r(), s0: 0.05 * s + 0.03, s1: 0.5 * s + 0.2, tau: 0.25 * this.heat, albedo: [0.8, 0.8, 0.82], drag: 0.5 });
+        }
+      }
+      if (u) {
+        u.uChar.value = Math.max(u.uChar.value, 0.18 * this.heat);
+      }
+      if (this.F >= this.dose.ftp) this.ignite();
+      return;
+    }
+    if (this.state === "burning") {
+      const sp = this.spec, tl = w.scnTime - this.tIgn;
+      this.burned = Math.min(1, tl / Math.max(sp.duration, 1));
+      if (u) {
+        u.uChar.value = Math.max(u.uChar.value, Math.min(1, 0.2 + 1.1 * Math.sqrt(this.burned)));
+        u.uGlow.value = Math.min(1, tl / 20) * (this.burned < 0.85 ? 1 : 0.5);
+      }
+      if (tl >= sp.duration) {
+        this.state = "burnt";
+        if (this.src) this.src.enabled = false;
+        if (u) {
+          u.uChar.value = 1;
+          u.uGlow.value = 0.25;
+        }
+        this.o.onBurnout?.(this);
+      }
+    }
+  }
+};
+
 // src/fx/world.js
 var gauss = (r) => Math.sqrt(-2 * Math.log(Math.max(r(), 1e-9))) * Math.cos(6.2831853 * r());
 var FLAME_LUM = 2e4;
@@ -2806,6 +3571,8 @@ var FXWorld = class {
     this.sources = [];
     this.explosions = [];
     this.decals = [];
+    this.burnables = [];
+    this.dtReal = 0;
     this.audioEvents = [];
     this.gustNoise = fbm1(77);
     this.o2 = 1;
@@ -2890,6 +3657,7 @@ var FXWorld = class {
     for (const e of this.explosions) e.dispose?.();
     this.sources = [];
     this.explosions = [];
+    this.burnables = [];
     this.bb.clear();
     this.sp.clear();
     this.hz?.clear();
@@ -2914,6 +3682,45 @@ var FXWorld = class {
     const d = new Scorch(this.scene, opts);
     this.decals.push(d);
     return d;
+  }
+  /** Hořlavý nebo ohřívaný předmět (vznícení tepelným tokem, vlastní hoření, ohoření, saze na plechu). */
+  addBurnable(opts) {
+    const b = new Burnable(this, opts);
+    this.burnables.push(b);
+    return b;
+  }
+  /** Popis hořících zdrojů pro výpočet tepelného toku (physics/heat.js). */
+  fireList(skip = null) {
+    const out = [], cw = Math.cos(this.air.dir), sw = Math.sin(this.air.dir);
+    for (const s of this.sources) {
+      if (s === skip || !s.active || !s.ph || s.ph.Q <= 1) continue;
+      out.push({ x: s.pos.x, y: s.pos.y, z: s.pos.z, Q: s.ph.Q, D: s.D, L: s.ph.L, chiR: s.fuel.chiR, theta: s.ph.tilt.theta, wx: cw, wz: sw, sooty: s.fuel.ys > 0.03, tau: s.ph.tau, b: s.ph.b });
+    }
+    return out;
+  }
+  /** Tepelný tok [W/m²] v bodě p = [x, y, z] od všech ohňů (sálání + kontakt s plamenem + horký oblak). */
+  heatFlux(p, skip = null) {
+    let rad = 0, conv = 0, Tg = 293, inFlame = false;
+    for (const f of this.fireList(skip)) {
+      const q = fluxFromFire(f, p);
+      rad += q.rad;
+      conv += q.conv;
+      if (q.Tg > Tg) Tg = q.Tg;
+      inFlame = inFlame || q.inFlame;
+    }
+    return { rad, conv, total: rad + conv, Tg, inFlame };
+  }
+  /** Optická hustota kouře [1/m] v bodě (oblak nad zdrojem, Gaussův profil, ředění s výškou) – pro usazování sazí. ★2 */
+  smokeAt(p) {
+    let k = 0;
+    for (const f of this.fireList()) {
+      const s = Math.sin(f.theta), c2 = Math.cos(f.theta), dx = p[0] - f.x, dy = p[1] - f.y, dz = p[2] - f.z;
+      const al = dx * s * f.wx + dy * c2 + dz * s * f.wz;
+      if (al <= 0) continue;
+      const r2 = dx * dx + dy * dy + dz * dz - al * al, bl = 0.12 * al + f.D * 0.5;
+      k += f.tau / Math.max(2 * f.b, 0.2) * Math.exp(-r2 / (bl * bl)) * Math.min(1, Math.pow(f.L / al, 1.2) + 0.25);
+    }
+    return k;
   }
   update(dt, camera) {
     this.time += dt;
@@ -2952,6 +3759,8 @@ var FXWorld = class {
     }
     for (const s of this.sources) s.update(dt, this.time);
     this.sources = this.sources.filter((s) => !s.dead);
+    this.dtReal = dt;
+    for (const b of this.burnables) b.update();
     let bi = 0;
     this.balls.forEach((v) => v.mesh.visible = false);
     for (const e of this.explosions) e.update(dt, this.time, e.wantsBall() && bi < this.balls.length ? this.balls[bi++] : null, camera);
@@ -3009,7 +3818,7 @@ var FireSource = class {
     this.w = world;
     this.o = { volume: true, blue: 0, start: 0, end: Infinity, footprint: { type: "disk" }, mult: {}, ...o };
     this.o.mult = { flame: 1, smoke: 1, embers: 1, sparks: 1, haze: 1, light: 1, ...o.mult };
-    this.pos = o.pos.clone ? o.pos.clone() : new THREE10.Vector3(...o.pos);
+    this.pos = o.pos.clone ? o.pos.clone() : new THREE11.Vector3(...o.pos);
     this.rnd = mulberry32(o.seed ?? 1);
     this.fl = fbm1((o.seed ?? 1) * 13 + 5);
     this.acc = { flame: 0, smoke: 0, ember: 0, spark: 0, haze: 0 };
@@ -3179,7 +3988,7 @@ var FireSource = class {
       u.uShape.value.y = this.o.taper ?? 0.85;
       u.uShape.value.z = this.o.baseWide ?? 0.25;
       u.uShape.value.w = this.o.neck ?? 0.2;
-      u.uSoot.value = Math.min(1, f.ys * ph.vent.sootMul * 18);
+      u.uSoot.value = Math.min(1, f.ys * ph.vent.sootMul * 18) * (this.o.volSoot ?? 1);
       u.uBlue.value = this.o.blue;
       u.uLift.value = ph.vent.lift;
     }
@@ -3257,7 +4066,7 @@ var FireSource = class {
       const wr = 1.9 * Math.pow(ph.Q / 1e3, 0.2) * 0.6;
       const lean2 = H * Math.min(2.5, (ph.U || 0) / Math.max(wr, 0.5)) * 0.5;
       sv.mesh.visible = true;
-      sv.place(new THREE10.Vector3(this.pos.x, this.pos.y + L * 0.7, this.pos.z), H, b0, lean2, w.air.dir);
+      sv.place(new THREE11.Vector3(this.pos.x, this.pos.y + L * 0.7, this.pos.z), H, b0, lean2, w.air.dir);
       const u = sv.u, bu = w.bb.mat.uniforms;
       u.uAlb.value.setRGB(ph.smoke.rgb[0], ph.smoke.rgb[1], ph.smoke.rgb[2]);
       u.uAmb.value.copy(bu.uAmb.value);
@@ -3349,7 +4158,7 @@ var FireSource = class {
         if (this.acc.pop >= 1 && r() < 0.5) {
           this.acc.pop = 0;
           const [px, py, pz] = this.footprintPoint();
-          if (w.audioEvents && w.audioEvents.length < 64) w.audioEvents.push({ type: "pop", pos: new THREE10.Vector3(px, py, pz) });
+          if (w.audioEvents && w.audioEvents.length < 64) w.audioEvents.push({ type: "pop", pos: new THREE11.Vector3(px, py, pz) });
           const cnt = Math.round((6 + 18 * r()) * Math.min(1.5, eMul) * w.budgetScale.spark);
           const ay = 0.6 + 0.4 * r(), az = r() * 6.283;
           for (let k = 0; k < cnt; k++) {
@@ -3445,18 +4254,18 @@ var FireSource = class {
   }
 };
 function makeWilsonDome() {
-  const u = { ...sharedUniforms(), uA: { value: 0 }, uCov: { value: 0.35 }, uTime: { value: 0 }, uAmb: { value: new THREE10.Color() }, uSun: { value: new THREE10.Color() } };
-  const mat = new THREE10.ShaderMaterial({
-    glslVersion: THREE10.GLSL3,
+  const u = { ...sharedUniforms(), uA: { value: 0 }, uCov: { value: 0.35 }, uTime: { value: 0 }, uAmb: { value: new THREE11.Color() }, uSun: { value: new THREE11.Color() } };
+  const mat = new THREE11.ShaderMaterial({
+    glslVersion: THREE11.GLSL3,
     transparent: true,
     depthWrite: false,
-    side: THREE10.DoubleSide,
+    side: THREE11.DoubleSide,
     uniforms: u,
-    blending: THREE10.CustomBlending,
-    blendSrc: THREE10.OneFactor,
-    blendDst: THREE10.OneMinusSrcAlphaFactor,
-    blendSrcAlpha: THREE10.OneFactor,
-    blendDstAlpha: THREE10.OneMinusSrcAlphaFactor,
+    blending: THREE11.CustomBlending,
+    blendSrc: THREE11.OneFactor,
+    blendDst: THREE11.OneMinusSrcAlphaFactor,
+    blendSrcAlpha: THREE11.OneFactor,
+    blendDstAlpha: THREE11.OneMinusSrcAlphaFactor,
     vertexShader: `out vec3 vW; out vec3 vN; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }`,
     fragmentShader: `precision highp float; precision highp sampler3D;
 ${GLSL_COMMON}
@@ -3474,7 +4283,7 @@ void main(){
   o = fxOut(vec4(c * a, a));
 }`
   });
-  const mesh2 = new THREE10.Mesh(new THREE10.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+  const mesh2 = new THREE11.Mesh(new THREE11.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
   mesh2.layers.set(LAYER_FX);
   mesh2.renderOrder = 4;
   mesh2.frustumCulled = false;
@@ -3485,7 +4294,7 @@ var Explosion = class {
     this.w = world;
     this.o = o;
     this.t = 0;
-    this.pos = o.pos.clone ? o.pos.clone() : new THREE10.Vector3(...o.pos);
+    this.pos = o.pos.clone ? o.pos.clone() : new THREE11.Vector3(...o.pos);
     this.rnd = mulberry32(o.seed ?? 5);
     this.table = o.W > 0 ? shockTable(o.W, Math.max(60, Math.cbrt(o.W) * 60)) : null;
     this.started = false;
@@ -4014,10 +4823,25 @@ var FireAudio = class {
 };
 
 // src/fx/char.js
-import * as THREE11 from "three";
-function applyChar(mat, { instanced = false, scale = 2, bias = "y", alligator = null, coal = false, hole = false } = {}) {
+import * as THREE12 from "three";
+function applyChar(mat, { instanced = false, scale = 2, bias = "y", alligator = null, coal = false, hole = false, metal = false } = {}) {
   const sh = sharedUniforms();
-  mat.userData.char = { uChar: { value: 0 }, uGlow: { value: 0 }, uCharScale: { value: scale }, uCharBase: { value: 0 }, uCharH: { value: 1 }, uHole: { value: new THREE11.Vector4(0, 0, 0, 0) } };
+  mat.userData.char = {
+    uChar: { value: 0 },
+    uGlow: { value: 0 },
+    uCharScale: { value: scale },
+    uCharBase: { value: 0 },
+    uCharH: { value: 1 },
+    uHole: { value: new THREE12.Vector4(0, 0, 0, 0) },
+    uTmax: { value: 0 },
+    uTnow: { value: 293 },
+    uSoot: { value: -1 },
+    uRust: { value: 0 },
+    uHeatFall: { value: 0.55 },
+    uHeatSrc: { value: new THREE12.Vector3() },
+    uObjC: { value: new THREE12.Vector3() },
+    uHeatSide: { value: 0 }
+  };
   const U = mat.userData.char;
   mat.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, sh, U);
@@ -4037,7 +4861,10 @@ ${instanced ? "in vec2 aChar;" : ""}`).replace("#include <worldpos_vertex>", `#i
 in vec3 vCharP; in vec2 vCharA; in vec2 vCharUv;
 uniform float uChar, uGlow, uCharScale, uCharBase, uCharH;
 uniform vec4 uHole;
+uniform float uTmax, uTnow, uSoot, uRust, uHeatFall, uHeatSide;
+uniform vec3 uHeatSrc, uObjC;
 ${GLSL_COMMON}
+${metal ? "#define METAL 1" : ""}
 ${alligator ? `#define ALLIG vec2(${alligator[0].toFixed(2)}, ${alligator[1].toFixed(2)})` : ""}
 ${coal ? "#define COAL 1" : ""}
 ${hole ? "#define HOLE 1" : ""}`).replace("#include <map_fragment>", `#include <map_fragment>
@@ -4068,9 +4895,47 @@ ${hole ? "#define HOLE 1" : ""}`).replace("#include <map_fragment>", `#include <
     diffuseColor.rgb *= 1.0 - 0.6 * al * charM; // tmav\xE9 r\xFDhy i bez \u017Ehnut\xED
   }
 #endif
+  float metalGlowT = 0.0;
+#ifdef METAL
+  float charRough;
+  {
+    float tMax = uTmax > 1.0 ? uTmax : 293.0 + 720.0 * chv;
+    float tNow = uTmax > 1.0 ? uTnow : 293.0 + 640.0 * glv * chv;
+    float soot = uSoot >= 0.0 ? uSoot : chv * 0.85;
+    float mn = fbm3(vCharP * uCharScale * 0.5 + 7.0);
+    float mn2 = n3(vCharP * uCharScale * 0.9 + 1.7);                          // velk\xE9 skvrny (fotky vrak\u016F: plochy v decimetrech)
+    float fall = clamp(1.0 - uHeatFall * hgt + (mn - 0.5) * 0.4, 0.0, 1.0);   // teplota kles\xE1 od hork\xE9ho konce, hranice zvln\u011Bn\xE1 \u0161umem
+    // strana p\u0159ivr\xE1cen\xE1 k ohni je hork\xE1 a \u010Dist\xE1, odvr\xE1cen\xE1 chladn\u011Bj\u0161\xED a jen lehce o\u010Douzen\xE1 (s\xE1l\xE1n\xED nevid\xED \u201Eza roh\u201C)
+    if (uHeatSide > 0.0) {
+      float facing = clamp(0.5 + 0.5 * dot(normalize(vCharP - uObjC), normalize(uHeatSrc - uObjC)), 0.0, 1.0);
+      fall *= mix(1.0, 0.25 + 0.75 * facing * facing, uHeatSide);
+      soot *= mix(1.0, 0.2 + 0.8 * smoothstep(0.15, 0.75, facing), uHeatSide);
+    }
+    float Tl = 293.0 + (tMax - 293.0) * fall;
+    float blister = smoothstep(470.0, 620.0, Tl);
+    float off = smoothstep(600.0, 700.0, Tl);
+    float scl = smoothstep(780.0, 950.0, Tl);
+    float bub = smoothstep(0.55, 0.78, n3(vCharP * uCharScale * 6.0));
+    vec3 paint = diffuseColor.rgb;
+    paint = mix(paint, paint * 0.35 + vec3(0.07, 0.045, 0.03), blister);                       // lak hn\u011Bdne
+    paint = mix(paint, vec3(0.4, 0.34, 0.28), blister * bub * 0.55);                          // puch\xFD\u0159e
+    vec3 bare = mix(vec3(0.27, 0.23, 0.14), vec3(0.6, 0.56, 0.42), smoothstep(0.4, 0.75, mn));       // barvy zm\u011B\u0159en\xE9 na fotk\xE1ch vyho\u0159el\xFDch aut (paleta p21\u2013p23)  // hol\xE1 ocel \u2194 b\u011Blo\u0161ed\xFD pop\xEDlek laku
+    bare = mix(bare, vec3(0.12, 0.13, 0.16), scl * smoothstep(0.3, 0.6, mn2));                // okuje (modro\u0161ed\xE9)
+    vec3 rust = mix(vec3(0.5, 0.32, 0.17), vec3(0.24, 0.11, 0.04), smoothstep(0.2, 0.8, mn2));                      // rez: barvy z fotek vyho\u0159el\xFDch aut
+    bare = mix(bare, rust, max(uRust, 0.3 + 0.25 * scl) * smoothstep(0.38, 0.62, mn * 0.5 + mn2 * 0.6 + 0.2 * (1.0 - hgt) - 0.1));   // i \u010Derstv\u011B vy\u017E\xEDhan\xFD plech je hn\u011Bd\u011B skvrnit\xFD (oxidy); dole a u ohniska v\xEDc
+    diffuseColor.rgb = mix(paint, bare, off);
+    float streak = fbm3(vec3(vCharP.x * uCharScale * 1.2, vCharP.y * uCharScale * 0.15, vCharP.z * uCharScale * 1.2));
+    float sootM = clamp(soot * (1.0 - off) * smoothstep(0.2, 0.7, streak + 0.5 * blister + 0.35 * (1.0 - hgt)) * 1.4, 0.0, 1.0);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.018, 0.017, 0.016), sootM * 0.94);
+    charRough = max(max(blister * 0.6, off * 0.75), sootM);
+    metalGlowT = 293.0 + (tNow - 293.0) * fall * (0.85 + 0.3 * mn2);
+    charM = 0.0; crack = 0.0;
+  }
+#else
   vec3 charCol = mix(vec3(0.025, 0.022, 0.02), vec3(0.11, 0.1, 0.095), smoothstep(0.75, 1.0, chv) * cn); // popel \u0161edne
   diffuseColor.rgb = mix(diffuseColor.rgb, charCol, charM);
   float charRough = charM;
+#endif
   float holeRim = 0.0;
 #ifdef HOLE
   if (uHole.z > 0.0 && vCharP.y > uHole.w) { // jen nad v\xFD\u0161kou w (strop a st\u0159echa, ne okna a podlaha)
@@ -4098,9 +4963,12 @@ ${hole ? "#define HOLE 1" : ""}`).replace("#include <map_fragment>", `#include <
 #ifdef HOLE
     totalEmissiveRadiance += bbColor(950.0 + 250.0 * crackN * breath) * holeRim * holeRim * uFlameK * 0.3;
 #endif
+#ifdef METAL
+    totalEmissiveRadiance += bbColor(clamp(metalGlowT, 700.0, 1400.0)) * smoothstep(790.0, 900.0, metalGlowT) * uFlameK * 0.22; // \u017Ehnouc\xED plech
+#endif
   }`);
   };
-  mat.customProgramCacheKey = () => "char" + (instanced ? "I" : "") + (alligator ? "A" + alligator.join("x") : "") + (coal ? "C" : "") + (hole ? "H" : "");
+  mat.customProgramCacheKey = () => "char" + (instanced ? "I" : "") + (alligator ? "A" + alligator.join("x") : "") + (coal ? "C" : "") + (hole ? "H" : "") + (metal ? "M" : "");
   return U;
 }
 
@@ -4313,10 +5181,10 @@ function guessTier(renderer) {
 }
 
 // src/engine/env.js
-import * as THREE13 from "three";
+import * as THREE14 from "three";
 
 // src/assets/textures.js
-import * as THREE12 from "three";
+import * as THREE13 from "three";
 var cache = /* @__PURE__ */ new Map();
 function makeNoise2(seed, P) {
   const r = mulberry32(seed), v = new Float32Array(P * P);
@@ -4355,9 +5223,9 @@ function canvasTex(size, fn, { srgb = true, repeat = true } = {}) {
     d[i + 3] = 255;
   }
   g2.putImageData(img, 0, 0);
-  const t = new THREE12.CanvasTexture(c2);
-  if (srgb) t.colorSpace = THREE12.SRGBColorSpace;
-  if (repeat) t.wrapS = t.wrapT = THREE12.RepeatWrapping;
+  const t = new THREE13.CanvasTexture(c2);
+  if (srgb) t.colorSpace = THREE13.SRGBColorSpace;
+  if (repeat) t.wrapS = t.wrapT = THREE13.RepeatWrapping;
   t.anisotropy = 4;
   t.userData.canvas = c2;
   return t;
@@ -4563,7 +5431,7 @@ function groundTexture(kind) {
 }
 function makeMaterial(name, extra = {}) {
   const s = texSet(name);
-  return new THREE12.MeshStandardMaterial({
+  return new THREE13.MeshStandardMaterial({
     map: s.map,
     normalMap: s.normalMap || null,
     roughness: s.roughness ?? 0.8,
@@ -4601,14 +5469,14 @@ void main(){
 var Environment = class {
   constructor(scene) {
     this.scene = scene;
-    this.skyMat = new THREE13.ShaderMaterial({
+    this.skyMat = new THREE14.ShaderMaterial({
       vertexShader: "varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }",
       fragmentShader: SKY_FS,
-      side: THREE13.BackSide,
+      side: THREE14.BackSide,
       depthWrite: false,
-      uniforms: { c0: { value: new THREE13.Color() }, c1: { value: new THREE13.Color() }, sunDir: { value: new THREE13.Vector3(0.55, 0.6, 0.7) }, stars: { value: 0 } }
+      uniforms: { c0: { value: new THREE14.Color() }, c1: { value: new THREE14.Color() }, sunDir: { value: new THREE14.Vector3(0.55, 0.6, 0.7) }, stars: { value: 0 } }
     });
-    this.sky = new THREE13.Mesh(new THREE13.SphereGeometry(1, 32, 16), this.skyMat);
+    this.sky = new THREE14.Mesh(new THREE14.SphereGeometry(1, 32, 16), this.skyMat);
     this.sky.frustumCulled = false;
     this.sky.renderOrder = -10;
     this.sky.onBeforeRender = (r, s, cam) => {
@@ -4617,18 +5485,18 @@ var Environment = class {
       this.sky.updateMatrixWorld();
     };
     scene.add(this.sky);
-    this.hemi = new THREE13.HemisphereLight(10135752, 5917242, 0.1);
+    this.hemi = new THREE14.HemisphereLight(10135752, 5917242, 0.1);
     scene.add(this.hemi);
-    this.sun = new THREE13.DirectionalLight(16773341, 0.1);
+    this.sun = new THREE14.DirectionalLight(16773341, 0.1);
     this.sun.position.set(55, 60, 70);
     scene.add(this.sun);
-    this.moon = new THREE13.DirectionalLight(9414360, 0);
+    this.moon = new THREE14.DirectionalLight(9414360, 0);
     this.moon.position.set(40, 60, 30);
     scene.add(this.moon);
-    this.fog = new THREE13.FogExp2(0, 4e-3);
+    this.fog = new THREE14.FogExp2(0, 4e-3);
     scene.fog = this.fog;
-    this.groundMat = new THREE13.MeshStandardMaterial({ map: groundTexture("dirt"), roughness: 0.95, metalness: 0 });
-    this.ground = new THREE13.Mesh(new THREE13.PlaneGeometry(1, 1, 1, 1), this.groundMat);
+    this.groundMat = new THREE14.MeshStandardMaterial({ map: groundTexture("dirt"), roughness: 0.95, metalness: 0 });
+    this.ground = new THREE14.Mesh(new THREE14.PlaneGeometry(1, 1, 1, 1), this.groundMat);
     this.ground.rotation.x = -Math.PI / 2;
     this.ground.receiveShadow = true;
     this.ground.name = "ground";
@@ -4669,10 +5537,10 @@ var Environment = class {
 };
 
 // src/assets/props.js
-import * as THREE15 from "three";
+import * as THREE16 from "three";
 
 // src/assets/geo.js
-import * as THREE14 from "three";
+import * as THREE15 from "three";
 import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 var segs = (lod, l0, ...more) => [l0, ...more][Math.min(lod, more.length)];
 function noise3(seed = 1) {
@@ -4719,19 +5587,19 @@ function displace(geo, fn) {
   return geo;
 }
 function lathe(profile, seg, phi = Math.PI * 2) {
-  return new THREE14.LatheGeometry(profile.map(([r, y]) => new THREE14.Vector2(r, y)), seg, 0, phi);
+  return new THREE15.LatheGeometry(profile.map(([r, y]) => new THREE15.Vector2(r, y)), seg, 0, phi);
 }
 function tube(a, b, r0, r1, radial = 8, hseg = 1, open = false) {
   const len = a.distanceTo(b);
-  const g2 = new THREE14.CylinderGeometry(r1, r0, len, radial, hseg, open);
+  const g2 = new THREE15.CylinderGeometry(r1, r0, len, radial, hseg, open);
   g2.translate(0, len / 2, 0);
-  const q = new THREE14.Quaternion().setFromUnitVectors(new THREE14.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+  const q = new THREE15.Quaternion().setFromUnitVectors(new THREE15.Vector3(0, 1, 0), b.clone().sub(a).normalize());
   g2.applyQuaternion(q);
   g2.translate(a.x, a.y, a.z);
   return g2;
 }
 function mesh(geo, mat, { cast = true, recv = true, name = "" } = {}) {
-  const m = new THREE14.Mesh(geo, mat);
+  const m = new THREE15.Mesh(geo, mat);
   m.castShadow = cast;
   m.receiveShadow = recv;
   m.name = name;
@@ -4743,12 +5611,12 @@ function mergeByMaterial(parts, name = "") {
     if (!byMat.has(m)) byMat.set(m, []);
     byMat.get(m).push(g2.index ? g2.toNonIndexed() : g2);
   }
-  const grp = new THREE14.Group();
+  const grp = new THREE15.Group();
   grp.name = name;
   for (const [m, gs] of byMat) {
     gs.forEach((g2) => {
       for (const k of Object.keys(g2.attributes)) if (!["position", "normal", "uv"].includes(k)) g2.deleteAttribute(k);
-      if (!g2.attributes.uv) g2.setAttribute("uv", new THREE14.Float32BufferAttribute(new Float32Array(g2.attributes.position.count * 2), 2));
+      if (!g2.attributes.uv) g2.setAttribute("uv", new THREE15.Float32BufferAttribute(new Float32Array(g2.attributes.position.count * 2), 2));
     });
     const merged = mergeGeometries(gs, false);
     grp.add(mesh(merged, m, { name: name + ":" + (m.name || "mat") }));
@@ -4756,7 +5624,7 @@ function mergeByMaterial(parts, name = "") {
   return grp;
 }
 function blob(radius, detail, seed, rough = 0.25, stretch = [1, 1, 1]) {
-  const g2 = new THREE14.IcosahedronGeometry(radius, detail);
+  const g2 = new THREE15.IcosahedronGeometry(radius, detail);
   const n = noise3(seed);
   const p = g2.attributes.position;
   for (let i = 0; i < p.count; i++) {
@@ -4797,7 +5665,7 @@ function candle({ lod = 2 }) {
   if (lod >= 2) displace(g2, (x, y, z) => (y > H * 0.55 ? 9e-4 * Math.max(0, n.fbm(Math.atan2(z, x) * 3, y * 120, 0, 3)) * ((y - H * 0.55) / (H * 0.45)) : 0) + 15e-5 * n(x * 900, y * 900, z * 900));
   const wax = makeMaterial("wax", { roughness: 0.4 });
   wax.name = "wax";
-  wax.emissive = new THREE15.Color(1, 0.5, 0.18);
+  wax.emissive = new THREE16.Color(1, 0.5, 0.18);
   wax.emissiveIntensity = 0;
   {
     const c2 = document.createElement("canvas");
@@ -4812,14 +5680,14 @@ function candle({ lod = 2 }) {
     gr.addColorStop(1, "#fff");
     g3.fillStyle = gr;
     g3.fillRect(0, 0, 4, 64);
-    wax.emissiveMap = new THREE15.CanvasTexture(c2);
-    wax.emissiveMap.colorSpace = THREE15.SRGBColorSpace;
+    wax.emissiveMap = new THREE16.CanvasTexture(c2);
+    wax.emissiveMap.colorSpace = THREE16.SRGBColorSpace;
   }
-  const wick = tube(new THREE15.Vector3(0, H - 5e-3, 0), new THREE15.Vector3(12e-4, H + 9e-3, 4e-4), 6e-4, 4e-4, segs(lod, 4, 6, 8, 16, 32), segs(lod, 1, 2, 4, 8, 16));
-  const wickM = new THREE15.MeshStandardMaterial({ color: 460293, roughness: 0.9, name: "wick" });
+  const wick = tube(new THREE16.Vector3(0, H - 5e-3, 0), new THREE16.Vector3(12e-4, H + 9e-3, 4e-4), 6e-4, 4e-4, segs(lod, 4, 6, 8, 16, 32), segs(lod, 1, 2, 4, 8, 16));
+  const wickM = new THREE16.MeshStandardMaterial({ color: 460293, roughness: 0.9, name: "wick" });
   const plate = lathe(resample([[0, 0], [0.04, 0], [0.042, 4e-3], [0.04, 6e-3], [R * 1.25, 6e-3], [R * 1.25, 0.018], [R * 1.1, 0.018], [R * 1.1, 8e-3], [0, 8e-3]], segs(lod, 6, 12, 30, 90, 280)), rad);
-  const brass = new THREE15.MeshStandardMaterial({ color: 11570519, metalness: 0.9, roughness: 0.35, name: "brass" });
-  const grp = new THREE15.Group();
+  const brass = new THREE16.MeshStandardMaterial({ color: 11570519, metalness: 0.9, roughness: 0.35, name: "brass" });
+  const grp = new THREE16.Group();
   const cm = mesh(g2, wax, { name: "wax" });
   cm.position.y = 8e-3;
   grp.add(cm);
@@ -4827,7 +5695,7 @@ function candle({ lod = 2 }) {
   wm.position.y = 8e-3;
   grp.add(wm);
   grp.add(mesh(plate, brass, { name: "holder" }));
-  grp.userData = { flameAt: new THREE15.Vector3(12e-4, H + 8e-3 + 9e-3, 4e-4), wax };
+  grp.userData = { flameAt: new THREE16.Vector3(12e-4, H + 8e-3 + 9e-3, 4e-4), wax };
   return grp;
 }
 function torch({ lod = 2 }) {
@@ -4843,18 +5711,18 @@ function torch({ lod = 2 }) {
   const { m, u } = charMat("bark", { scale: 30 });
   u.uCharBase.value = 0.5;
   u.uCharH.value = -0.3;
-  const grp = new THREE15.Group();
+  const grp = new THREE16.Group();
   const t = mesh(g2, m, { name: "torch" });
   t.rotation.z = 0.12;
   grp.add(t);
-  const iron = new THREE15.MeshStandardMaterial({ color: 2236704, metalness: 0.8, roughness: 0.6, name: "iron" });
-  const spike = tube(new THREE15.Vector3(0, -0.25, 0), new THREE15.Vector3(-0.03, 0.42, 0), 6e-3, 6e-3, segs(lod, 4, 6, 10, 24, 64), 1);
+  const iron = new THREE16.MeshStandardMaterial({ color: 2236704, metalness: 0.8, roughness: 0.6, name: "iron" });
+  const spike = tube(new THREE16.Vector3(0, -0.25, 0), new THREE16.Vector3(-0.03, 0.42, 0), 6e-3, 6e-3, segs(lod, 4, 6, 10, 24, 64), 1);
   grp.add(mesh(spike, iron, { name: "spike" }));
-  const ring = new THREE15.TorusGeometry(0.019, 4e-3, segs(lod, 3, 6, 10, 24, 60), segs(lod, 8, 16, 32, 96, 300));
+  const ring = new THREE16.TorusGeometry(0.019, 4e-3, segs(lod, 3, 6, 10, 24, 60), segs(lod, 8, 16, 32, 96, 300));
   ring.rotateX(Math.PI / 2);
   ring.translate(-0.035, 0.42, 0);
   grp.add(mesh(ring, iron, { name: "ring" }));
-  const tip = new THREE15.Vector3(0, 0.72, 0).applyEuler(new THREE15.Euler(0, 0, 0.12));
+  const tip = new THREE16.Vector3(0, 0.72, 0).applyEuler(new THREE16.Euler(0, 0, 0.12));
   grp.userData = { flameAt: tip, char: u };
   return grp;
 }
@@ -4863,7 +5731,7 @@ function campfire({ lod = 2, size = "medium", seed = 11 }) {
   const S = { small: 0.45, medium: 1, large: 1.6 }[size] || 1;
   const nStones = { small: 7, medium: 12, large: 16 }[size];
   const nLogs = { small: 4, medium: 6, large: 9 }[size];
-  const grp = new THREE15.Group();
+  const grp = new THREE16.Group();
   const stone = makeMaterial("stone");
   stone.name = "stone";
   const parts = [];
@@ -4883,25 +5751,25 @@ function campfire({ lod = 2, size = "medium", seed = 11 }) {
   const logs = [];
   for (let i = 0; i < nLogs; i++) {
     const a = i / nLogs * Math.PI * 2 + r() * 0.3;
-    const base = new THREE15.Vector3(Math.cos(a) * 0.38 * S, 0.02, Math.sin(a) * 0.38 * S);
-    const top = new THREE15.Vector3(Math.cos(a + 0.4) * 0.05 * S, 0.62 * S * (0.85 + r() * 0.3), Math.sin(a + 0.4) * 0.05 * S);
+    const base = new THREE16.Vector3(Math.cos(a) * 0.38 * S, 0.02, Math.sin(a) * 0.38 * S);
+    const top = new THREE16.Vector3(Math.cos(a + 0.4) * 0.05 * S, 0.62 * S * (0.85 + r() * 0.3), Math.sin(a + 0.4) * 0.05 * S);
     const rr = 0.045 * S * (0.8 + r() * 0.5);
     const g2 = tube(base, top, rr, rr * 0.8, segs(lod, 5, 8, 16, 48, 160), segs(lod, 1, 4, 16, 64, 220));
     displace(g2, (x, y, z) => 4e-3 * S * n.fbm(x * 30, y * 30, z * 30, 3));
     logs.push(g2);
   }
   if (size !== "small") for (let i = 0; i < 3; i++) {
-    const a = r() * 6.28, b = new THREE15.Vector3(Math.cos(a) * 0.5 * S, 0.05 * S, Math.sin(a) * 0.5 * S), c2 = new THREE15.Vector3(-Math.cos(a) * 0.1 * S, 0.12 * S, -Math.sin(a) * 0.1 * S);
+    const a = r() * 6.28, b = new THREE16.Vector3(Math.cos(a) * 0.5 * S, 0.05 * S, Math.sin(a) * 0.5 * S), c2 = new THREE16.Vector3(-Math.cos(a) * 0.1 * S, 0.12 * S, -Math.sin(a) * 0.1 * S);
     const g2 = tube(b, c2, 0.05 * S, 0.05 * S, segs(lod, 5, 8, 16, 48, 160), segs(lod, 1, 4, 12, 48, 180));
     displace(g2, (x, y, z) => 4e-3 * S * n.fbm(x * 30, y * 30, z * 30, 3));
     logs.push(g2);
   }
   grp.add(mergeByMaterial(logs.map((g2) => [g2, bark]), "logs"));
-  const ash = new THREE15.CircleGeometry(0.5 * S, segs(lod, 8, 24, 64, 200, 500), 0, Math.PI * 2);
+  const ash = new THREE16.CircleGeometry(0.5 * S, segs(lod, 8, 24, 64, 200, 500), 0, Math.PI * 2);
   ash.rotateX(-Math.PI / 2);
   if (lod >= 2) {
   }
-  const ashM = new THREE15.MeshStandardMaterial({ color: 3815478, roughness: 1, name: "ash" });
+  const ashM = new THREE16.MeshStandardMaterial({ color: 3815478, roughness: 1, name: "ash" });
   const au = applyChar(ashM, { scale: 25 });
   au.uChar.value = 0.9;
   au.uGlow.value = 0.6;
@@ -4910,7 +5778,7 @@ function campfire({ lod = 2, size = "medium", seed = 11 }) {
   grp.add(am);
   const coals = coalBed({ lod, R: 0.42 * S, S, seed: seed + 17 });
   if (coals) grp.add(coals);
-  grp.userData = { char: u, ashChar: au, coals, flameAt: new THREE15.Vector3(0, 0.05, 0), D: 0.75 * S };
+  grp.userData = { char: u, ashChar: au, coals, flameAt: new THREE16.Vector3(0, 0.05, 0), D: 0.75 * S };
   return grp;
 }
 function coalBed({ lod = 2, R = 0.42, S = 1, seed = 5, n = null }) {
@@ -4918,15 +5786,15 @@ function coalBed({ lod = 2, R = 0.42, S = 1, seed = 5, n = null }) {
   if (!N) return null;
   const r = mulberry32(seed);
   const g2 = blob(0.5, [0, 0, 1, 2, 3][Math.min(lod, 4)], seed, 0.45, [1.3, 0.55, 1]);
-  const aChar = new THREE15.InstancedBufferAttribute(new Float32Array(N * 2), 2);
+  const aChar = new THREE16.InstancedBufferAttribute(new Float32Array(N * 2), 2);
   g2.setAttribute("aChar", aChar);
-  const m = new THREE15.MeshStandardMaterial({ color: 1315344, roughness: 0.95, name: "coal" });
+  const m = new THREE16.MeshStandardMaterial({ color: 1315344, roughness: 0.95, name: "coal" });
   applyChar(m, { instanced: true, scale: 30, coal: true });
-  const im = new THREE15.InstancedMesh(g2, m, N);
+  const im = new THREE16.InstancedMesh(g2, m, N);
   im.name = "coals";
   im.castShadow = false;
   im.receiveShadow = true;
-  const M = new THREE15.Matrix4(), q = new THREE15.Quaternion(), e = new THREE15.Euler(), p = new THREE15.Vector3(), sc = new THREE15.Vector3();
+  const M = new THREE16.Matrix4(), q = new THREE16.Quaternion(), e = new THREE16.Euler(), p = new THREE16.Vector3(), sc = new THREE16.Vector3();
   for (let i = 0; i < N; i++) {
     const a = r() * Math.PI * 2, rr = R * Math.pow(r(), 0.75);
     const sz = 0.03 * S * Math.exp((r() - 0.5) * 1.1);
@@ -4968,7 +5836,7 @@ function tireGeometry(lod) {
   return g2;
 }
 function tire({ lod = 2, rim = true }) {
-  const grp = new THREE15.Group();
+  const grp = new THREE16.Group();
   const { m, u } = charMat("rubber", { scale: 20 });
   u.uCharBase.value = 0;
   u.uCharH.value = 0.6;
@@ -4989,7 +5857,7 @@ function tire({ lod = 2, rim = true }) {
   return grp;
 }
 function tirePile({ lod = 2, n = 5, seed = 3 }) {
-  const r = mulberry32(seed), grp = new THREE15.Group();
+  const r = mulberry32(seed), grp = new THREE16.Group();
   const { m, u } = charMat("rubber", { scale: 20 });
   u.uCharH.value = 1.2;
   const g2 = tireGeometry(lod);
@@ -5011,13 +5879,13 @@ function barrel({ lod = 2, paint = "metalRed" }) {
   const g2 = lathe(resample(p, rows), rad);
   const n = noise3(7);
   if (lod >= 2) displace(g2, (x, y, z) => 15e-4 * n.fbm(x * 10, y * 10, z * 10, 3));
-  const { m, u } = charMat(paint, { scale: 4 });
+  const { m, u } = charMat(paint, { scale: 4, metal: true });
   u.uCharBase.value = 0;
   u.uCharH.value = H;
-  const grp = new THREE15.Group();
+  const grp = new THREE16.Group();
   grp.add(mesh(g2, m, { name: "drum" }));
   for (const [x, rr] of [[0.18, 0.03], [-0.17, 0.018]]) {
-    const b = new THREE15.CylinderGeometry(rr, rr, 0.012, segs(lod, 6, 10, 20, 48, 120));
+    const b = new THREE16.CylinderGeometry(rr, rr, 0.012, segs(lod, 6, 10, 20, 48, 120));
     b.translate(x, H - 0, 0);
     grp.add(mesh(b, m, { name: "bung" }));
   }
@@ -5025,8 +5893,8 @@ function barrel({ lod = 2, paint = "metalRed" }) {
   return grp;
 }
 function grenade({ lod = 2 }) {
-  const grp = new THREE15.Group();
-  const body = new THREE15.SphereGeometry(0.032, segs(lod, 8, 16, 48, 200, 640), segs(lod, 6, 12, 36, 150, 480));
+  const grp = new THREE16.Group();
+  const body = new THREE16.SphereGeometry(0.032, segs(lod, 8, 16, 48, 200, 640), segs(lod, 6, 12, 36, 150, 480));
   const olive = makeMaterial("metalOlive");
   olive.name = "body";
   grp.add(mesh(body, olive, { name: "body" }));
@@ -5034,7 +5902,7 @@ function grenade({ lod = 2 }) {
   steel.name = "fuze";
   const fz = lathe(resample([[0, 0.028], [0.012, 0.028], [0.012, 0.05], [8e-3, 0.055], [0, 0.055]], segs(lod, 4, 8, 16, 48, 160)), segs(lod, 6, 12, 32, 120, 400));
   grp.add(mesh(fz, steel, { name: "fuze" }));
-  const lever = new THREE15.BoxGeometry(8e-3, 0.07, 2e-3, 1, segs(lod, 1, 4, 12, 40, 120), 1);
+  const lever = new THREE16.BoxGeometry(8e-3, 0.07, 2e-3, 1, segs(lod, 1, 4, 12, 40, 120), 1);
   const lp = lever.attributes.position;
   for (let i = 0; i < lp.count; i++) {
     const y = lp.getY(i);
@@ -5043,7 +5911,7 @@ function grenade({ lod = 2 }) {
   lever.computeVertexNormals();
   lever.translate(0, 0.015, 0);
   grp.add(mesh(lever, steel, { name: "lever" }));
-  const ring = new THREE15.TorusGeometry(0.012, 12e-4, segs(lod, 3, 6, 10, 24, 48), segs(lod, 8, 16, 32, 96, 300));
+  const ring = new THREE16.TorusGeometry(0.012, 12e-4, segs(lod, 3, 6, 10, 24, 48), segs(lod, 8, 16, 32, 96, 300));
   ring.translate(0.022, 0.05, 0);
   grp.add(mesh(ring, steel, { name: "pin" }));
   grp.userData = { H: 0.087 };
@@ -5062,9 +5930,9 @@ function labelTexture(lines) {
   g2.font = "bold 54px monospace";
   g2.textAlign = "center";
   lines.forEach((l, i) => g2.fillText(l, 256 + 512 * (i % 2), 70 + 150 * Math.floor(i / 2) + (i > 1 ? 20 : 0)));
-  const t = new THREE15.CanvasTexture(c2);
-  t.colorSpace = THREE15.SRGBColorSpace;
-  t.wrapS = THREE15.RepeatWrapping;
+  const t = new THREE16.CanvasTexture(c2);
+  t.colorSpace = THREE16.SRGBColorSpace;
+  t.wrapS = THREE16.RepeatWrapping;
   return t;
 }
 function tntDrum({ lod = 2 }) {
@@ -5073,19 +5941,19 @@ function tntDrum({ lod = 2 }) {
   for (const hy of [0.33, 0.66]) p.push([R, hy - 0.03], [R + 0.015, hy - 0.012], [R + 0.015, hy + 0.012], [R, hy + 0.03]);
   p.push([R, H - 0.03], [R + 0.012, H - 0.015], [R, H], [R - 0.02, H - 0.01], [0, H - 0.01]);
   const g2 = lathe(resample(p, segs(lod, 8, 24, 80, 220, 400)), segs(lod, 10, 28, 96, 420, 1200));
-  const mat = new THREE15.MeshStandardMaterial({ map: labelTexture(["TNT", "1000 kg", "V\xDDBU\u0160NINA 1.1D", "UN 0209"]), roughness: 0.55, metalness: 0.4, name: "tnt" });
-  const grp = new THREE15.Group();
+  const mat = new THREE16.MeshStandardMaterial({ map: labelTexture(["TNT", "1000 kg", "V\xDDBU\u0160NINA 1.1D", "UN 0209"]), roughness: 0.55, metalness: 0.4, name: "tnt" });
+  const grp = new THREE16.Group();
   grp.add(mesh(g2, mat, { name: "drum" }));
   const wood = makeMaterial("woodPlank");
   wood.name = "pallet";
   const parts = [];
   for (let i = 0; i < 5; i++) {
-    const b = new THREE15.BoxGeometry(1.2, 0.022, 0.14);
+    const b = new THREE16.BoxGeometry(1.2, 0.022, 0.14);
     b.translate(0, 0.133, -0.5 + i * 0.25);
     parts.push([b, wood]);
   }
   for (let i = 0; i < 3; i++) {
-    const b = new THREE15.BoxGeometry(0.1, 0.1, 1.2);
+    const b = new THREE16.BoxGeometry(0.1, 0.1, 1.2);
     b.translate(-0.55 + i * 0.55, 0.05 + 0.022, 0);
     parts.push([b, wood]);
   }
@@ -5096,7 +5964,7 @@ function tntDrum({ lod = 2 }) {
   return grp;
 }
 function acetyleneBag({ lod = 2 }) {
-  const grp = new THREE15.Group();
+  const grp = new THREE16.Group();
   const prof = [];
   for (let i = 0; i <= 30; i++) {
     const t = i / 30, y = t * 0.62;
@@ -5107,15 +5975,15 @@ function acetyleneBag({ lod = 2 }) {
   const g2 = lathe(resample(prof, segs(lod, 6, 16, 48, 180, 600)), segs(lod, 8, 20, 64, 240, 800));
   const n = noise3(13);
   displace(g2, (x, y, z) => 8e-3 * n.fbm(x * 8, y * 8, z * 8, 3));
-  const pe = new THREE15.MeshStandardMaterial({ color: 14674156, roughness: 0.25, metalness: 0, transparent: true, opacity: 0.38, depthWrite: false, name: "pe" });
+  const pe = new THREE16.MeshStandardMaterial({ color: 14674156, roughness: 0.25, metalness: 0, transparent: true, opacity: 0.38, depthWrite: false, name: "pe" });
   const bag = mesh(g2, pe, { name: "bag", cast: false });
   bag.position.y = 0.05;
   grp.add(bag);
   const wood = makeMaterial("woodPlank");
   wood.name = "stake";
-  grp.add(mesh(tube(new THREE15.Vector3(0.35, -0.2, 0), new THREE15.Vector3(0.35, 0.5, 0), 0.015, 0.012, segs(lod, 4, 6, 12, 32, 96), 1), wood, { name: "stake" }));
-  const cord = new THREE15.MeshStandardMaterial({ color: 7035450, roughness: 0.9, name: "cord" });
-  grp.add(mesh(tube(new THREE15.Vector3(0, 0.75, 0), new THREE15.Vector3(0.35, 0.45, 0), 2e-3, 2e-3, 4, segs(lod, 1, 4, 8, 16, 32)), cord, { name: "cord" }));
+  grp.add(mesh(tube(new THREE16.Vector3(0.35, -0.2, 0), new THREE16.Vector3(0.35, 0.5, 0), 0.015, 0.012, segs(lod, 4, 6, 12, 32, 96), 1), wood, { name: "stake" }));
+  const cord = new THREE16.MeshStandardMaterial({ color: 7035450, roughness: 0.9, name: "cord" });
+  grp.add(mesh(tube(new THREE16.Vector3(0, 0.75, 0), new THREE16.Vector3(0.35, 0.45, 0), 2e-3, 2e-3, 4, segs(lod, 1, 4, 8, 16, 32)), cord, { name: "cord" }));
   const cyl = lathe(resample([[0, 0], [0.1, 0], [0.11, 0.02], [0.11, 0.85], [0.08, 0.95], [0.035, 0.98], [0.035, 1.05], [0, 1.05]], segs(lod, 6, 16, 40, 120, 300)), segs(lod, 8, 20, 64, 200, 600));
   const am = makeMaterial("acetylene");
   am.name = "cylinder";
@@ -5126,10 +5994,10 @@ function acetyleneBag({ lod = 2 }) {
   return grp;
 }
 function grinderRig({ lod = 2 }) {
-  const grp = new THREE15.Group();
+  const grp = new THREE16.Group();
   const steel = makeMaterial("steel");
   steel.name = "beam";
-  const sh = new THREE15.Shape();
+  const sh = new THREE16.Shape();
   const b = 0.082, h2 = 0.16, tw = 5e-3, tf = 74e-4;
   sh.moveTo(-b / 2, 0);
   sh.lineTo(b / 2, 0);
@@ -5144,29 +6012,29 @@ function grinderRig({ lod = 2 }) {
   sh.lineTo(-tw / 2, tf);
   sh.lineTo(-b / 2, tf);
   sh.closePath();
-  const beam = new THREE15.ExtrudeGeometry(sh, { depth: 1.2, steps: segs(lod, 1, 4, 24, 200, 900), bevelEnabled: false });
+  const beam = new THREE16.ExtrudeGeometry(sh, { depth: 1.2, steps: segs(lod, 1, 4, 24, 200, 900), bevelEnabled: false });
   beam.translate(0, 0.45, -0.6);
   grp.add(mesh(beam, steel, { name: "beam" }));
   const wood = makeMaterial("woodPlank");
   wood.name = "trestle";
   for (const z of [-0.45, 0.45]) {
-    const t = new THREE15.BoxGeometry(0.5, 0.45, 0.08, 1, segs(lod, 1, 2, 4, 16, 40), 1);
+    const t = new THREE16.BoxGeometry(0.5, 0.45, 0.08, 1, segs(lod, 1, 2, 4, 16, 40), 1);
     t.translate(0, 0.225, z);
     grp.add(mesh(t, wood, { name: "trestle" }));
   }
-  const body = new THREE15.Group();
-  const dark = new THREE15.MeshStandardMaterial({ color: 1849950, roughness: 0.6, name: "grinder" });
-  const blk = new THREE15.MeshStandardMaterial({ color: 1381653, roughness: 0.7, name: "grip" });
-  body.add(mesh(new THREE15.CylinderGeometry(0.03, 0.033, 0.28, segs(lod, 6, 12, 32, 96, 300), segs(lod, 1, 2, 8, 32, 96)).rotateZ(Math.PI / 2).translate(-0.14, 0, 0), dark, { name: "motor" }));
-  body.add(mesh(new THREE15.BoxGeometry(0.07, 0.06, 0.07, 1, 1, 1).translate(0.02, 0, 0), dark, { name: "head" }));
-  const disc = new THREE15.CylinderGeometry(0.0625, 0.0625, 25e-4, segs(lod, 10, 24, 64, 240, 800), 1);
+  const body = new THREE16.Group();
+  const dark = new THREE16.MeshStandardMaterial({ color: 1849950, roughness: 0.6, name: "grinder" });
+  const blk = new THREE16.MeshStandardMaterial({ color: 1381653, roughness: 0.7, name: "grip" });
+  body.add(mesh(new THREE16.CylinderGeometry(0.03, 0.033, 0.28, segs(lod, 6, 12, 32, 96, 300), segs(lod, 1, 2, 8, 32, 96)).rotateZ(Math.PI / 2).translate(-0.14, 0, 0), dark, { name: "motor" }));
+  body.add(mesh(new THREE16.BoxGeometry(0.07, 0.06, 0.07, 1, 1, 1).translate(0.02, 0, 0), dark, { name: "head" }));
+  const disc = new THREE16.CylinderGeometry(0.0625, 0.0625, 25e-4, segs(lod, 10, 24, 64, 240, 800), 1);
   disc.translate(0.03, -0.045, 0);
-  body.add(mesh(disc, new THREE15.MeshStandardMaterial({ color: 6052437, roughness: 0.9, name: "disc" }), { name: "disc" }));
-  body.add(mesh(new THREE15.CylinderGeometry(0.012, 0.012, 0.1, 8).translate(0.02, 0.06, 0), blk, { name: "handle" }));
+  body.add(mesh(disc, new THREE16.MeshStandardMaterial({ color: 6052437, roughness: 0.9, name: "disc" }), { name: "disc" }));
+  body.add(mesh(new THREE16.CylinderGeometry(0.012, 0.012, 0.1, 8).translate(0.02, 0.06, 0), blk, { name: "handle" }));
   body.rotation.set(0.25, 0.4, -0.35);
   body.position.set(-0.02, 0.45 + 0.16 + 0.07, 0.05);
   grp.add(body);
-  grp.userData = { sparkAt: new THREE15.Vector3(0, 0.45 + 0.16, 0.05), sparkDir: new THREE15.Vector3(-0.8, 0.25, 0.55).normalize() };
+  grp.userData = { sparkAt: new THREE16.Vector3(0, 0.45 + 0.16, 0.05), sparkDir: new THREE16.Vector3(-0.8, 0.25, 0.55).normalize() };
   return grp;
 }
 function puddle({ lod = 2, R = 2, seed = 21 }) {
@@ -5186,12 +6054,12 @@ function puddle({ lod = 2, R = 2, seed = 21 }) {
     const a = 1 + (j - 1) * around + i, b = 1 + (j - 1) * around + (i + 1) % around, c2 = a + around, d = b + around;
     idx.push(a, b, d, a, d, c2);
   }
-  const g2 = new THREE15.BufferGeometry();
-  g2.setAttribute("position", new THREE15.Float32BufferAttribute(pos, 3));
-  g2.setAttribute("uv", new THREE15.Float32BufferAttribute(uv, 2));
+  const g2 = new THREE16.BufferGeometry();
+  g2.setAttribute("position", new THREE16.Float32BufferAttribute(pos, 3));
+  g2.setAttribute("uv", new THREE16.Float32BufferAttribute(uv, 2));
   g2.setIndex(idx);
   g2.computeVertexNormals();
-  const m = new THREE15.MeshStandardMaterial({ color: 723464, roughness: 0.04, metalness: 0, name: "diesel" });
+  const m = new THREE16.MeshStandardMaterial({ color: 723464, roughness: 0.04, metalness: 0, name: "diesel" });
   m.onBeforeCompile = (s) => {
     s.fragmentShader = s.fragmentShader.replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
       { float fr = pow(1.0 - abs(dot(normalize(vViewPosition), normal)), 3.0);
@@ -5201,9 +6069,9 @@ function puddle({ lod = 2, R = 2, seed = 21 }) {
   };
   const pm = mesh(g2, m, { name: "puddle", cast: false });
   pm.position.y = 4e-3;
-  const grp = new THREE15.Group();
+  const grp = new THREE16.Group();
   grp.add(pm);
-  const can = new THREE15.BoxGeometry(0.34, 0.47, 0.16, 1, segs(lod, 1, 2, 6, 24, 80), 1);
+  const can = new THREE16.BoxGeometry(0.34, 0.47, 0.16, 1, segs(lod, 1, 2, 6, 24, 80), 1);
   can.rotateZ(Math.PI / 2 - 0.1);
   can.translate(R * 0.95, 0.09, 0.3);
   const cm = makeMaterial("metalRed");
@@ -5214,7 +6082,7 @@ function puddle({ lod = 2, R = 2, seed = 21 }) {
 }
 
 // src/assets/big.js
-import * as THREE16 from "three";
+import * as THREE17 from "three";
 function strawStack({ lod = 2, nx = 4, ny = 3, nz = 3, seed = 31 }) {
   const r = mulberry32(seed), n = noise3(seed);
   const bx = 2.4, by = 0.9, bz = 1.2;
@@ -5225,14 +6093,14 @@ function strawStack({ lod = 2, nx = 4, ny = 3, nz = 3, seed = 31 }) {
   u.uCharH.value = ny * by;
   const parts = [];
   if (lod === 0) {
-    const g2 = new THREE16.BoxGeometry(nx * bx * 0.5 + 0.2, ny * by, nz * bz, 2, 2, 2);
+    const g2 = new THREE17.BoxGeometry(nx * bx * 0.5 + 0.2, ny * by, nz * bz, 2, 2, 2);
     g2.translate(0, ny * by / 2, 0);
     parts.push([g2, m]);
   } else {
     const [sx, sy, sz] = [segs(lod, 1, 2, 8, 24, 80), segs(lod, 1, 1, 4, 10, 30), segs(lod, 1, 1, 4, 12, 40)];
     for (let k = 0; k < ny; k++) for (let j = 0; j < nz; j++) for (let i = 0; i < nx / 2; i++) {
       if (k === ny - 1 && (j === 0 || j === nz - 1) && r() < 0.5) continue;
-      const g2 = new THREE16.BoxGeometry(bx, by, bz, sx, sy, sz);
+      const g2 = new THREE17.BoxGeometry(bx, by, bz, sx, sy, sz);
       const p = g2.attributes.position;
       const ox = (i - (nx / 2 - 1) / 2) * bx + (r() - 0.5) * 0.06, oy = by / 2 + k * by, oz = (j - (nz - 1) / 2) * bz + (r() - 0.5) * 0.06;
       for (let q = 0; q < p.count; q++) {
@@ -5278,7 +6146,7 @@ function car({ lod = 2, color = "carPaint" }) {
   };
   const wheelX = [-1.35, 1.35], wheelR = 0.36;
   const pos = [], col = [], idx = [], uv = [];
-  const paint = new THREE16.Color(1, 1, 1), glass = new THREE16.Color(0.04, 0.05, 0.06), trim = new THREE16.Color(0.08, 0.08, 0.08);
+  const paint = new THREE17.Color(1, 1, 1), glass = new THREE17.Color(0.04, 0.05, 0.06), trim = new THREE17.Color(0.08, 0.08, 0.08);
   for (let i = 0; i <= nu; i++) {
     const x = -L / 2 + L * i / nu;
     const y0 = bot(x), y1 = top(x);
@@ -5309,18 +6177,18 @@ function car({ lod = 2, color = "carPaint" }) {
     const a = i * (nv + 1) + j, b = a + 1, c2 = a + nv + 1, d = c2 + 1;
     idx.push(a, c2, b, b, c2, d);
   }
-  const g2 = new THREE16.BufferGeometry();
-  g2.setAttribute("position", new THREE16.Float32BufferAttribute(pos, 3));
-  g2.setAttribute("color", new THREE16.Float32BufferAttribute(col, 3));
-  g2.setAttribute("uv", new THREE16.Float32BufferAttribute(uv, 2));
+  const g2 = new THREE17.BufferGeometry();
+  g2.setAttribute("position", new THREE17.Float32BufferAttribute(pos, 3));
+  g2.setAttribute("color", new THREE17.Float32BufferAttribute(col, 3));
+  g2.setAttribute("uv", new THREE17.Float32BufferAttribute(uv, 2));
   g2.setIndex(idx);
   g2.computeVertexNormals();
   const bm = makeMaterial(color, { vertexColors: true, roughness: 0.35, metalness: 0.35 });
   bm.name = "body";
-  const u = applyChar(bm, { scale: 2 });
+  const u = applyChar(bm, { scale: 2, metal: true });
   u.uCharBase.value = 0.3;
   u.uCharH.value = 1.2;
-  const grp = new THREE16.Group();
+  const grp = new THREE17.Group();
   grp.add(mesh(g2, bm, { name: "body" }));
   const tg = tireGeometry(Math.max(0, lod - 1));
   const rm = makeMaterial("rubber");
@@ -5329,7 +6197,7 @@ function car({ lod = 2, color = "carPaint" }) {
   tu.uCharH.value = 0.7;
   const steel = makeMaterial("steel");
   steel.name = "rim";
-  const rimG = new THREE16.CylinderGeometry(0.2, 0.2, 0.19, segs(lod, 6, 12, 32, 96, 300));
+  const rimG = new THREE17.CylinderGeometry(0.2, 0.2, 0.19, segs(lod, 6, 12, 32, 96, 300));
   for (const wx of wheelX) for (const wz of [-0.78, 0.78]) {
     const t = mesh(tg, rm, { name: "tire" });
     t.rotation.x = Math.PI / 2;
@@ -5341,13 +6209,13 @@ function car({ lod = 2, color = "carPaint" }) {
     rr.position.set(wx, wheelR, wz);
     grp.add(rr);
   }
-  const lightM = new THREE16.MeshStandardMaterial({ color: 14540253, emissive: 3353120, roughness: 0.2, name: "lamp" });
-  const tailM = new THREE16.MeshStandardMaterial({ color: 5572616, emissive: 2097152, roughness: 0.3, name: "tail" });
+  const lightM = new THREE17.MeshStandardMaterial({ color: 14540253, emissive: 3353120, roughness: 0.2, name: "lamp" });
+  const tailM = new THREE17.MeshStandardMaterial({ color: 5572616, emissive: 2097152, roughness: 0.3, name: "tail" });
   for (const z of [-0.6, 0.6]) {
-    const h2 = new THREE16.BoxGeometry(0.05, 0.1, 0.32);
+    const h2 = new THREE17.BoxGeometry(0.05, 0.1, 0.32);
     h2.translate(L / 2 - 0.02, 0.8, z);
     grp.add(mesh(h2, lightM, { name: "lamp" }));
-    const t = new THREE16.BoxGeometry(0.05, 0.1, 0.3);
+    const t = new THREE17.BoxGeometry(0.05, 0.1, 0.3);
     t.translate(-L / 2 + 0.03, 0.86, z);
     grp.add(mesh(t, tailM, { name: "tail" }));
   }
@@ -5357,7 +6225,7 @@ function car({ lod = 2, color = "carPaint" }) {
 function house({ lod = 2, seed = 41 }) {
   const r = mulberry32(seed);
   const W = 9, D = 7, Hw = 2.9, pitch = 0.62, ov = 0.45, th = 0.3;
-  const grp = new THREE16.Group();
+  const grp = new THREE17.Group();
   const plaster = makeMaterial("plaster");
   plaster.name = "plaster";
   const pu = applyChar(plaster, { scale: 3 });
@@ -5373,7 +6241,7 @@ function house({ lod = 2, seed = 41 }) {
   const wu = applyChar(wood, { scale: 6, hole: true });
   const brick = makeMaterial("brick");
   brick.name = "brick";
-  const glassM = new THREE16.MeshStandardMaterial({ color: 725012, roughness: 0.05, metalness: 0.5, transparent: true, opacity: 0.55, name: "glass" });
+  const glassM = new THREE17.MeshStandardMaterial({ color: 725012, roughness: 0.05, metalness: 0.5, transparent: true, opacity: 0.55, name: "glass" });
   const wins = [
     { wall: "S", u: -2.8, w: 1.2, h: 1.3, y: 0.9 },
     { wall: "S", u: 2.8, w: 1.2, h: 1.3, y: 0.9 },
@@ -5399,7 +6267,7 @@ function house({ lod = 2, seed = 41 }) {
     if (cur < len / 2) pieces.push([cur, len / 2, 0, Hw]);
     for (const [a, b, y0, y1] of pieces) {
       if (b - a < 1e-3 || y1 - y0 < 1e-3) continue;
-      const g2 = new THREE16.BoxGeometry(b - a, y1 - y0, th, Math.max(1, Math.round((b - a) * subdiv)), Math.max(1, Math.round((y1 - y0) * subdiv)), 1);
+      const g2 = new THREE17.BoxGeometry(b - a, y1 - y0, th, Math.max(1, Math.round((b - a) * subdiv)), Math.max(1, Math.round((y1 - y0) * subdiv)), 1);
       g2.translate((a + b) / 2, (y0 + y1) / 2, 0);
       place(g2);
       parts.push([g2, plaster]);
@@ -5410,23 +6278,23 @@ function house({ lod = 2, seed = 41 }) {
         const fr = [[o.w + fw * 2, fw, 0, o.y + o.h + fw / 2], [fw, o.h, -o.w / 2 - fw / 2, o.y + o.h / 2], [fw, o.h, o.w / 2 + fw / 2, o.y + o.h / 2]];
         if (!o.door) fr.push([o.w + fw * 2, fw, 0, o.y - fw / 2]);
         for (const [w, h2, du, y] of fr) {
-          const g2 = new THREE16.BoxGeometry(w, h2, th * 0.55);
+          const g2 = new THREE17.BoxGeometry(w, h2, th * 0.55);
           g2.translate(o.u + du, y, th * 0.25);
           place(g2);
           parts.push([g2, wood]);
         }
         if (!o.door && lod >= 2) {
-          const g2 = new THREE16.BoxGeometry(0.05, o.h, 0.06);
+          const g2 = new THREE17.BoxGeometry(0.05, o.h, 0.06);
           g2.translate(o.u, o.y + o.h / 2, 0.05);
           place(g2);
           parts.push([g2, wood]);
-          const g22 = new THREE16.BoxGeometry(o.w, 0.05, 0.06);
+          const g22 = new THREE17.BoxGeometry(o.w, 0.05, 0.06);
           g22.translate(o.u, o.y + o.h * 0.6, 0.05);
           place(g22);
           parts.push([g22, wood]);
         }
       }
-      const pane = new THREE16.BoxGeometry(o.w, o.h, 0.01);
+      const pane = new THREE17.BoxGeometry(o.w, o.h, 0.01);
       pane.translate(o.u, o.y + o.h / 2, 0.02);
       place(pane);
       parts.push([pane, o.door ? wood : glassM]);
@@ -5446,41 +6314,41 @@ function house({ lod = 2, seed = 41 }) {
     g2.translate(-W / 2 + th / 2, 0, 0);
   });
   for (const [w, d, x, z] of [[W + 0.06, 0.04, 0, D / 2 + 0.01], [W + 0.06, 0.04, 0, -D / 2 - 0.01], [0.04, D, W / 2 + 0.01, 0], [0.04, D, -W / 2 - 0.01, 0]]) {
-    const g2 = new THREE16.BoxGeometry(w, 0.45, d);
+    const g2 = new THREE17.BoxGeometry(w, 0.45, d);
     g2.translate(x, 0.225, z);
     parts.push([g2, brick]);
   }
   const rh = D / 2 * Math.tan(pitch);
   for (const sx of [1, -1]) {
-    const sh = new THREE16.Shape();
+    const sh = new THREE17.Shape();
     sh.moveTo(-D / 2, 0);
     sh.lineTo(D / 2, 0);
     sh.lineTo(0, rh);
     sh.closePath();
-    const g2 = new THREE16.ExtrudeGeometry(sh, { depth: th, bevelEnabled: false });
+    const g2 = new THREE17.ExtrudeGeometry(sh, { depth: th, bevelEnabled: false });
     g2.rotateY(Math.PI / 2);
     g2.translate(sx * (W / 2) - (sx > 0 ? th : 0), Hw, 0);
     parts.push([g2, plaster]);
   }
   {
-    const g2 = new THREE16.BoxGeometry(W - 2 * th, 0.1, D - 2 * th);
+    const g2 = new THREE17.BoxGeometry(W - 2 * th, 0.1, D - 2 * th);
     g2.translate(0, 0.05, 0);
     parts.push([g2, wood]);
   }
   {
-    const g2 = new THREE16.BoxGeometry(0.15, Hw, D - 2 * th);
+    const g2 = new THREE17.BoxGeometry(0.15, Hw, D - 2 * th);
     g2.translate(0.8, Hw / 2, 0);
     parts.push([g2, plaster]);
   }
   {
-    const g2 = new THREE16.BoxGeometry(W - 2 * th, 0.15, D - 2 * th);
+    const g2 = new THREE17.BoxGeometry(W - 2 * th, 0.15, D - 2 * th);
     g2.translate(0, Hw - 0.07, 0);
     parts.push([g2, wood]);
   }
   const slopeL = (D / 2 + ov) / Math.cos(pitch);
   if (lod < 3) {
     for (const sz of [1, -1]) {
-      const g2 = new THREE16.BoxGeometry(W + 2 * ov, 0.12, slopeL, Math.max(1, subdiv * 3), 1, Math.max(1, subdiv * 2));
+      const g2 = new THREE17.BoxGeometry(W + 2 * ov, 0.12, slopeL, Math.max(1, subdiv * 3), 1, Math.max(1, subdiv * 2));
       g2.translate(0, 0, sz * slopeL / 2);
       g2.rotateX(sz * pitch);
       g2.translate(0, Hw + rh + 0.06 - 0, 0);
@@ -5489,7 +6357,7 @@ function house({ lod = 2, seed = 41 }) {
   } else {
     const tw = 0.18, tl = 0.38, step = 0.15;
     const tseg = segs(lod, 1, 1, 1, 1, 4);
-    const tile = new THREE16.CylinderGeometry(tw * 0.55, tw * 0.55, tl, 4 * tseg, 2 * tseg, true, 0, Math.PI);
+    const tile = new THREE17.CylinderGeometry(tw * 0.55, tw * 0.55, tl, 4 * tseg, 2 * tseg, true, 0, Math.PI);
     tile.rotateX(Math.PI / 2);
     tile.scale(1, 0.25, 1);
     const cols = Math.ceil((W + 2 * ov) / tw), rows = Math.ceil(slopeL / step);
@@ -5504,7 +6372,7 @@ function house({ lod = 2, seed = 41 }) {
     }
     parts.push(...tgs);
     for (const sz of [1, -1]) {
-      const g2 = new THREE16.BoxGeometry(W + 2 * ov, 0.06, slopeL);
+      const g2 = new THREE17.BoxGeometry(W + 2 * ov, 0.06, slopeL);
       g2.translate(0, 0, sz * slopeL / 2);
       g2.rotateX(sz * pitch);
       g2.translate(0, Hw + rh, 0);
@@ -5512,7 +6380,7 @@ function house({ lod = 2, seed = 41 }) {
     }
   }
   {
-    const g2 = new THREE16.BoxGeometry(0.6, 1.8, 0.6, 1, Math.max(1, subdiv * 2), 1);
+    const g2 = new THREE17.BoxGeometry(0.6, 1.8, 0.6, 1, Math.max(1, subdiv * 2), 1);
     g2.translate(-2.2, Hw + rh, -0.8);
     parts.push([g2, brick]);
   }
@@ -5534,7 +6402,7 @@ function house({ lod = 2, seed = 41 }) {
 }
 
 // src/assets/vegetation.js
-import * as THREE17 from "three";
+import * as THREE18 from "three";
 function strip(g2) {
   const c2 = g2.index ? g2.toNonIndexed() : g2;
   for (const k of Object.keys(c2.attributes)) if (!["position", "normal", "uv"].includes(k)) c2.deleteAttribute(k);
@@ -5571,13 +6439,13 @@ function needleCardTexture() {
       g2.stroke();
     }
   }
-  _needleTex = new THREE17.CanvasTexture(cv);
-  _needleTex.colorSpace = THREE17.SRGBColorSpace;
+  _needleTex = new THREE18.CanvasTexture(cv);
+  _needleTex.colorSpace = THREE18.SRGBColorSpace;
   _needleTex.anisotropy = 4;
   return _needleTex;
 }
 function needleCardMaterial() {
-  const m = new THREE17.MeshStandardMaterial({ map: needleCardTexture(), alphaTest: 0.45, side: THREE17.DoubleSide, roughness: 0.85 });
+  const m = new THREE18.MeshStandardMaterial({ map: needleCardTexture(), alphaTest: 0.45, side: THREE18.DoubleSide, roughness: 0.85 });
   m.name = "needle-cards";
   return m;
 }
@@ -5591,8 +6459,8 @@ function pineGeometry(lod, seed = 1) {
   const radial = segs(lod, 4, 7, 14, 40, 120), hs = segs(lod, 1, 3, 10, 30, 90);
   const cards = lod >= 2;
   const trunk = tube(
-    new THREE17.Vector3(0, -0.02, 0),
-    new THREE17.Vector3(0, 0.98, 0),
+    new THREE18.Vector3(0, -0.02, 0),
+    new THREE18.Vector3(0, 0.98, 0),
     0.016,
     3e-3,
     cards ? segs(lod, 4, 6, 8, 10, 16) : Math.max(4, radial >> 1),
@@ -5604,7 +6472,7 @@ function pineGeometry(lod, seed = 1) {
     for (let i = 0; i < layers; i++) {
       const t = i / (layers - 1 || 1);
       const y0 = 0.25 + t * 0.62, h2 = 0.32 - t * 0.12, rad = 0.2 * (1 - t * 0.75) + 0.03;
-      const g2 = new THREE17.ConeGeometry(rad, h2, radial, Math.max(1, hs >> 1), true);
+      const g2 = new THREE18.ConeGeometry(rad, h2, radial, Math.max(1, hs >> 1), true);
       g2.translate(0, y0 + h2 / 2, 0);
       const p = g2.attributes.position;
       for (let q = 0; q < p.count; q++) {
@@ -5628,7 +6496,7 @@ function pineGeometry(lod, seed = 1) {
     }
     idx.push(o, o + 1, o + 2, o, o + 2, o + 3);
   };
-  const up = new THREE17.Vector3(0, 1, 0), tmp = new THREE17.Vector3();
+  const up = new THREE18.Vector3(0, 1, 0), tmp = new THREE18.Vector3();
   const branches = [];
   for (let i = 0; i < whorls; i++) {
     const t = i / (whorls - 1), y = 0.4 + t * 0.55;
@@ -5636,16 +6504,16 @@ function pineGeometry(lod, seed = 1) {
     const a0 = r() * 6.28;
     for (let j = 0; j < perW; j++) {
       const a = a0 + j / perW * 6.283 + (r() - 0.5) * 0.5;
-      const d = new THREE17.Vector3(Math.cos(a), -0.12 + 0.45 * t + (r() - 0.5) * 0.2, Math.sin(a)).normalize();
-      const p0 = new THREE17.Vector3(0, y, 0), p1 = p0.clone().addScaledVector(d, Lb);
+      const d = new THREE18.Vector3(Math.cos(a), -0.12 + 0.45 * t + (r() - 0.5) * 0.2, Math.sin(a)).normalize();
+      const p0 = new THREE18.Vector3(0, y, 0), p1 = p0.clone().addScaledVector(d, Lb);
       p1.y -= 0.03 * Lb / 0.2 * (1 - t);
       branches.push(barkStripUV(strip(tube(p0, p1, 45e-4 * (1 - 0.6 * t) + 15e-4, 1e-3, 4, 1))));
-      const dir = p1.clone().sub(p0).normalize(), side = tmp.crossVectors(dir, up).normalize().clone(), side2 = new THREE17.Vector3().crossVectors(side, dir).normalize();
-      const nrm = new THREE17.Vector3(dir.x, 0.8, dir.z).normalize();
+      const dir = p1.clone().sub(p0).normalize(), side = tmp.crossVectors(dir, up).normalize().clone(), side2 = new THREE18.Vector3().crossVectors(side, dir).normalize();
+      const nrm = new THREE18.Vector3(dir.x, 0.8, dir.z).normalize();
       for (let k = 0; k < clumps; k++) {
         const f = 0.25 + 0.75 * (k / Math.max(1, clumps - 1)), b = p0.clone().lerp(p1, f * 0.85);
         const lc = Lb * (0.38 + 0.15 * r()), wc = lc * (0.6 + 0.2 * r());
-        const tip = b.clone().addScaledVector(dir, lc).add(new THREE17.Vector3((r() - 0.5) * 0.02, 0.02 * r(), (r() - 0.5) * 0.02));
+        const tip = b.clone().addScaledVector(dir, lc).add(new THREE18.Vector3((r() - 0.5) * 0.02, 0.02 * r(), (r() - 0.5) * 0.02));
         for (const sv of [side, side2]) {
           const h2 = sv.clone().multiplyScalar(wc * 0.5);
           quad(b.clone().sub(h2), b.clone().add(h2), tip.clone().sub(h2), tip.clone().add(h2), nrm);
@@ -5654,19 +6522,19 @@ function pineGeometry(lod, seed = 1) {
     }
   }
   for (let k = 0; k < 3; k++) {
-    const a = k / 3 * 3.14, sv = new THREE17.Vector3(Math.cos(a), 0, Math.sin(a)).multiplyScalar(0.035);
-    const b = new THREE17.Vector3(0, 0.9, 0), tp = new THREE17.Vector3(0, 1.01, 0);
+    const a = k / 3 * 3.14, sv = new THREE18.Vector3(Math.cos(a), 0, Math.sin(a)).multiplyScalar(0.035);
+    const b = new THREE18.Vector3(0, 0.9, 0), tp = new THREE18.Vector3(0, 1.01, 0);
     quad(b.clone().sub(sv), b.clone().add(sv), tp.clone().sub(sv), tp.clone().add(sv), up);
   }
-  const cg = new THREE17.BufferGeometry();
-  cg.setAttribute("position", new THREE17.Float32BufferAttribute(pos, 3));
-  cg.setAttribute("normal", new THREE17.Float32BufferAttribute(nor, 3));
-  cg.setAttribute("uv", new THREE17.Float32BufferAttribute(uvs, 2));
+  const cg = new THREE18.BufferGeometry();
+  cg.setAttribute("position", new THREE18.Float32BufferAttribute(pos, 3));
+  cg.setAttribute("normal", new THREE18.Float32BufferAttribute(nor, 3));
+  cg.setAttribute("uv", new THREE18.Float32BufferAttribute(uvs, 2));
   cg.setIndex(idx);
   const crown = mergeGeometries([...branches, strip(cg)], false);
   for (let i = 0; i < 4; i++) {
     const a = r() * 6.28, y = 0.15 + r() * 0.22, L = 0.05 + 0.05 * r();
-    crowns.push(strip(tube(new THREE17.Vector3(0, y, 0), new THREE17.Vector3(Math.cos(a) * L, y + 0.01 - 0.02 * r(), Math.sin(a) * L), 22e-4, 6e-4, 5, 1)));
+    crowns.push(strip(tube(new THREE18.Vector3(0, y, 0), new THREE18.Vector3(Math.cos(a) * L, y + 0.01 - 0.02 * r(), Math.sin(a) * L), 22e-4, 6e-4, 5, 1)));
   }
   return { trunk: mergeGeometries([strip(trunk), ...crowns], false), crown, cards: true };
 }
@@ -5675,7 +6543,7 @@ function bushGeometry(lod, seed = 2) {
   const det = segs(lod, 0, 1, 3, 5, 7);
   const blobs = [];
   for (let i = 0; i < 4; i++) {
-    const g2 = new THREE17.IcosahedronGeometry(0.32 + r() * 0.12, det);
+    const g2 = new THREE18.IcosahedronGeometry(0.32 + r() * 0.12, det);
     const p = g2.attributes.position;
     for (let q = 0; q < p.count; q++) {
       const x = p.getX(q), y = p.getY(q), z = p.getZ(q);
@@ -5689,7 +6557,7 @@ function bushGeometry(lod, seed = 2) {
   const stems = [];
   for (let i = 0; i < (lod >= 2 ? 7 : 2); i++) {
     const a = r() * 6.28;
-    stems.push(strip(tube(new THREE17.Vector3(0, 0, 0), new THREE17.Vector3(Math.cos(a) * 0.3, 0.45 + r() * 0.2, Math.sin(a) * 0.3), 0.012, 4e-3, 4, 1)));
+    stems.push(strip(tube(new THREE18.Vector3(0, 0, 0), new THREE18.Vector3(Math.cos(a) * 0.3, 0.45 + r() * 0.2, Math.sin(a) * 0.3), 0.012, 4e-3, 4, 1)));
   }
   return { trunk: mergeGeometries(stems, false), crown: mergeGeometries(blobs, false) };
 }
@@ -5697,11 +6565,11 @@ function pine({ lod = 2, seed = 1, height = 14 }) {
   const { trunk, crown, cards } = pineGeometry(lod, seed);
   const bark = makeMaterial("bark");
   bark.name = "bark";
-  const nee = cards ? needleCardMaterial() : makeMaterial("needles", { side: THREE17.DoubleSide });
+  const nee = cards ? needleCardMaterial() : makeMaterial("needles", { side: THREE18.DoubleSide });
   nee.name = "needles";
   const u1 = applyChar(bark, { scale: 10 }), u2 = applyChar(nee, { scale: 10 });
-  const grp = new THREE17.Group();
-  const a = new THREE17.Mesh(trunk, bark), b = new THREE17.Mesh(crown, nee);
+  const grp = new THREE18.Group();
+  const a = new THREE18.Mesh(trunk, bark), b = new THREE18.Mesh(crown, nee);
   a.castShadow = b.castShadow = true;
   grp.add(a, b);
   grp.scale.setScalar(height);
@@ -5712,11 +6580,11 @@ function bush({ lod = 2, seed = 2, size = 1.4 }) {
   const { trunk, crown } = bushGeometry(lod, seed);
   const tw = makeMaterial("bark");
   tw.name = "twigs";
-  const lv = makeMaterial("leaves", { side: THREE17.DoubleSide });
+  const lv = makeMaterial("leaves", { side: THREE18.DoubleSide });
   lv.name = "leaves";
   const u1 = applyChar(tw, { scale: 10 }), u2 = applyChar(lv, { scale: 10 });
-  const grp = new THREE17.Group();
-  grp.add(new THREE17.Mesh(trunk, tw), new THREE17.Mesh(crown, lv));
+  const grp = new THREE18.Group();
+  grp.add(new THREE18.Mesh(trunk, tw), new THREE18.Mesh(crown, lv));
   grp.scale.setScalar(size);
   grp.userData = { char: [u1, u2] };
   return grp;
@@ -5731,7 +6599,7 @@ var InstancedFlora = class {
     const mk = (lod) => gen(lod, seed);
     const barkM = makeMaterial("bark");
     barkM.name = kind + "-bark";
-    const leafM = makeMaterial(kind === "pine" ? "needles" : "leaves", { side: THREE17.DoubleSide });
+    const leafM = makeMaterial(kind === "pine" ? "needles" : "leaves", { side: THREE18.DoubleSide });
     leafM.name = kind + "-leaf";
     applyChar(barkM, { instanced: true, scale: 10 });
     applyChar(leafM, { instanced: true, scale: 10 });
@@ -5745,8 +6613,8 @@ var InstancedFlora = class {
       return cardM;
     };
     const N = items.length;
-    this.aChar = new THREE17.InstancedBufferAttribute(new Float32Array(N * 2), 2);
-    this.aChar.setUsage(THREE17.DynamicDrawUsage);
+    this.aChar = new THREE18.InstancedBufferAttribute(new Float32Array(N * 2), 2);
+    this.aChar.setUsage(THREE18.DynamicDrawUsage);
     this.meshes = [];
     this.levels = nearFrac < 1 ? ["near", "mid", "far"] : ["near", "far"];
     const lodOf = { near: lodNear, mid: lodMid ?? Math.max(lodFar, lodNear - 2), far: lodFar };
@@ -5755,30 +6623,30 @@ var InstancedFlora = class {
       for (const [part, mat] of [["trunk", barkM], ["crown", leafFor(geo)]]) {
         const g2 = geo[part].clone();
         g2.setAttribute("aChar", this.aChar);
-        const m = new THREE17.InstancedMesh(g2, mat, N);
+        const m = new THREE18.InstancedMesh(g2, mat, N);
         m.castShadow = false;
         m.receiveShadow = true;
         m.frustumCulled = false;
         m.userData = { lvl, part };
-        m.instanceMatrix.setUsage(THREE17.DynamicDrawUsage);
+        m.instanceMatrix.setUsage(THREE18.DynamicDrawUsage);
         scene.add(m);
         this.meshes.push(m);
       }
     }
-    const sh = mk(Math.min(1, Math.max(0, lodNear - 2))), shM = new THREE17.MeshBasicMaterial();
+    const sh = mk(Math.min(1, Math.max(0, lodNear - 2))), shM = new THREE18.MeshBasicMaterial();
     for (const part of ["trunk", "crown"]) {
-      const m = new THREE17.InstancedMesh(sh[part].clone(), shM, N);
+      const m = new THREE18.InstancedMesh(sh[part].clone(), shM, N);
       m.castShadow = true;
       m.frustumCulled = false;
       m.layers.set(LAYER_SHADOW);
       m.userData = { lvl: "near", part, shadow: true };
-      m.instanceMatrix.setUsage(THREE17.DynamicDrawUsage);
+      m.instanceMatrix.setUsage(THREE18.DynamicDrawUsage);
       scene.add(m);
       this.meshes.push(m);
     }
     this.mats = [];
-    const mm = new THREE17.Matrix4(), q = new THREE17.Quaternion(), up = new THREE17.Vector3(0, 1, 0);
-    for (const it of items) this.mats.push(mm.compose(new THREE17.Vector3(it.x, 0, it.z), q.setFromAxisAngle(up, it.rot || 0), new THREE17.Vector3(it.s, it.s * (it.sy || 1), it.s)).clone());
+    const mm = new THREE18.Matrix4(), q = new THREE18.Quaternion(), up = new THREE18.Vector3(0, 1, 0);
+    for (const it of items) this.mats.push(mm.compose(new THREE18.Vector3(it.x, 0, it.z), q.setFromAxisAngle(up, it.rot || 0), new THREE18.Vector3(it.s, it.s * (it.sy || 1), it.s)).clone());
     this.order = { near: new Uint32Array(N), mid: new Uint32Array(N), far: new Uint32Array(N) };
     this.cnt = { near: 0, mid: 0, far: 0 };
     this.charState = new Float32Array(N * 2);
@@ -5812,8 +6680,8 @@ var InstancedFlora = class {
       const ord = this.order[m.userData.lvl], cnt = m.count;
       let a = m.geometry.attributes.aChar;
       if (a === this.aChar) {
-        a = new THREE17.InstancedBufferAttribute(new Float32Array(this.items.length * 2), 2);
-        a.setUsage(THREE17.DynamicDrawUsage);
+        a = new THREE18.InstancedBufferAttribute(new Float32Array(this.items.length * 2), 2);
+        a.setUsage(THREE18.DynamicDrawUsage);
         m.geometry.setAttribute("aChar", a);
       }
       for (let k = 0; k < cnt; k++) {
@@ -5837,6 +6705,260 @@ var InstancedFlora = class {
   }
 };
 
+// src/assets/props2.js
+import * as THREE19 from "three";
+var V3 = (x, y, z) => new THREE19.Vector3(x, y, z);
+function resample2(pts, n) {
+  const L = [0];
+  for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const out = [], tot = L[L.length - 1];
+  for (let k = 0; k < n; k++) {
+    const s = tot * k / (n - 1);
+    let i = 1;
+    while (i < L.length - 1 && L[i] < s) i++;
+    const t = (s - L[i - 1]) / Math.max(L[i] - L[i - 1], 1e-9);
+    out.push([pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t]);
+  }
+  return out;
+}
+var fuelMat = (name = "diesel") => new THREE19.MeshStandardMaterial({ color: 723464, roughness: 0.05, metalness: 0, name });
+function lighter({ lod = 2, color = 14173482 }) {
+  const grp = new THREE19.Group();
+  const W = 0.025, D = 0.012, Hb = 0.062;
+  const body = new THREE19.BoxGeometry(W, Hb, D, segs(lod, 1, 2, 6, 16, 48), segs(lod, 1, 2, 8, 24, 80), segs(lod, 1, 2, 4, 12, 32));
+  const p = body.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i) / (W / 2), z = p.getZ(i) / (D / 2), k = Math.pow(Math.pow(Math.abs(x), 4) + Math.pow(Math.abs(z), 4), 0.25) || 1;
+    const m = Math.max(Math.abs(x), Math.abs(z)) / k;
+    p.setX(i, p.getX(i) * m);
+    p.setZ(i, p.getZ(i) * m);
+  }
+  body.computeVertexNormals();
+  body.translate(0, Hb / 2, 0);
+  const plastic = new THREE19.MeshStandardMaterial({ color, roughness: 0.18, metalness: 0, transparent: true, opacity: 0.82, name: "lighterBody" });
+  grp.add(mesh(body, plastic, { name: "body" }));
+  const liq = new THREE19.BoxGeometry(W * 0.86, Hb * 0.55, D * 0.7);
+  liq.translate(0, Hb * 0.3, 0);
+  grp.add(mesh(liq, new THREE19.MeshStandardMaterial({ color: 5903368, roughness: 0.1, name: "butane" }), { name: "butane", cast: false }));
+  const steel = makeMaterial("steel");
+  steel.name = "lighterSteel";
+  const hood = new THREE19.CylinderGeometry(62e-4, 62e-4, 0.017, segs(lod, 6, 10, 24, 64, 160), 1, true);
+  hood.scale(1, 1, 0.82);
+  hood.translate(-48e-4, Hb + 85e-4, 0);
+  steel.side = THREE19.DoubleSide;
+  grp.add(mesh(hood, steel, { name: "hood" }));
+  const noz = new THREE19.CylinderGeometry(11e-4, 14e-4, 0.011, segs(lod, 4, 6, 10, 20, 48));
+  noz.translate(-48e-4, Hb + 55e-4, 0);
+  grp.add(mesh(noz, steel, { name: "nozzle" }));
+  const ws = segs(lod, 8, 12, 28, 72, 200);
+  const wheelG = new THREE19.CylinderGeometry(42e-4, 42e-4, 58e-4, ws, 1);
+  wheelG.rotateX(Math.PI / 2);
+  if (lod >= 2) {
+    const q = wheelG.attributes.position;
+    for (let i = 0; i < q.count; i++) {
+      const a = Math.atan2(q.getY(i), q.getX(i)), r = Math.hypot(q.getX(i), q.getY(i));
+      if (r > 3e-3) {
+        const k = 1 + 0.06 * Math.sign(Math.sin(a * ws * 0.5));
+        q.setX(i, q.getX(i) * k);
+        q.setY(i, q.getY(i) * k);
+      }
+    }
+    wheelG.computeVertexNormals();
+  }
+  const wheel = mesh(wheelG, steel, { name: "wheel" });
+  wheel.position.set(52e-4, Hb + 85e-4, 0);
+  grp.add(wheel);
+  for (const sz of [-1, 1]) {
+    const f = new THREE19.BoxGeometry(8e-3, 0.012, 8e-4);
+    f.translate(5e-3, Hb + 5e-3, sz * 36e-4);
+    grp.add(mesh(f, steel, { name: "fork" }));
+  }
+  const lev = new THREE19.BoxGeometry(85e-4, 45e-4, 75e-4);
+  lev.translate(78e-4, Hb + 25e-4, 0);
+  grp.add(mesh(lev, new THREE19.MeshStandardMaterial({ color: 11541012, roughness: 0.4, name: "lever" }), { name: "lever" }));
+  grp.userData = { flameAt: V3(-48e-4, Hb + 0.0115, 0), sparkAt: V3(12e-4, Hb + 95e-4, 0), wheel, H: Hb + 0.017 };
+  return grp;
+}
+function barrelOpen({ lod = 2, paint = "metalBlue", level = 0.8 }) {
+  const R = 0.2865, H = 0.88, yl = H * level;
+  const rad = segs(lod, 10, 28, 96, 400, 1300), rows = segs(lod, 10, 28, 90, 220, 400);
+  const p = [[0, 4e-3], [R - 0.01, 4e-3], [R - 4e-3, 0], [R + 6e-3, 8e-3], [R, 0.02]];
+  for (const hy of [0.29, 0.59]) p.push([R, hy - 0.025], [R + 0.012, hy - 0.01], [R + 0.012, hy + 0.01], [R, hy + 0.025]);
+  p.push([R, H - 0.02], [R + 7e-3, H - 8e-3], [R + 4e-3, H], [R - 4e-3, H - 2e-3], [R - 6e-3, H - 0.02], [R - 6e-3, yl - 0.01]);
+  const g2 = lathe(resample2(p, rows), rad);
+  const n = noise3(9);
+  if (lod >= 2) displace(g2, (x, y, z) => 2e-3 * n.fbm(x * 9, y * 9, z * 9, 3));
+  const m = makeMaterial(paint);
+  m.name = paint;
+  m.side = THREE19.DoubleSide;
+  const u = applyChar(m, { scale: 4, metal: true });
+  u.uCharBase.value = yl;
+  u.uCharH.value = -(H - yl) * 1.2;
+  u.uHeatFall.value = 1.6;
+  const grp = new THREE19.Group();
+  grp.add(mesh(g2, m, { name: "drum" }));
+  const lq = new THREE19.CircleGeometry(R - 7e-3, segs(lod, 10, 24, 64, 200, 600));
+  lq.rotateX(-Math.PI / 2);
+  lq.translate(0, yl, 0);
+  const liquid = mesh(lq, fuelMat(), { name: "liquid", cast: false });
+  grp.add(liquid);
+  grp.userData = { char: u, H, R, liquidY: yl, liquid };
+  return grp;
+}
+function fuelJet({ lod = 2, v = 3.1, h: h2 = 0.3, r = 45e-4 }) {
+  const pts = [], T = Math.sqrt(2 * h2 / 9.81), n = segs(lod, 3, 5, 10, 24, 60);
+  for (let i = 0; i <= n; i++) {
+    const t = T * i / n;
+    pts.push(V3(v * t, h2 - 0.5 * 9.81 * t * t, 0));
+  }
+  const g2 = new THREE19.TubeGeometry(new THREE19.CatmullRomCurve3(pts), n * 2, r, segs(lod, 3, 5, 8, 12, 24), false);
+  const m = new THREE19.MeshStandardMaterial({ color: 3811852, roughness: 0.08, transparent: true, opacity: 0.85, name: "fuelJet" });
+  const o = mesh(g2, m, { name: "jet", cast: false });
+  o.userData = { reach: v * T };
+  return o;
+}
+function spillStrip({ lod = 2, len = 8, w = 0.6, seed = 5 }) {
+  const n = noise3(seed), nu = segs(lod, 6, 16, 60, 200, 600), pos = [], uv = [], idx = [];
+  for (let i = 0; i <= nu; i++) {
+    const t = i / nu, x = t * len;
+    const half = w / 2 * (0.35 + 0.65 * Math.min(1, t * 3)) * (1 + 0.35 * n.fbm(x * 0.9, 0, seed, 3)) * (t > 0.9 ? Math.sqrt(Math.max(0, (1 - t) / 0.1)) * 0.9 + 0.25 : 1) * (1 + 0.5 * Math.max(0, t - 0.75) * 4 * 0.5);
+    const cz = 0.25 * w * n.fbm(x * 0.35, 3.3, seed, 2);
+    pos.push(x, 4e-3, cz - half, x, 4e-3, cz + half);
+    uv.push(t, 0, t, 1);
+    if (i < nu) {
+      const a = i * 2;
+      idx.push(a, a + 1, a + 3, a, a + 3, a + 2);
+    }
+  }
+  const g2 = new THREE19.BufferGeometry();
+  g2.setAttribute("position", new THREE19.Float32BufferAttribute(pos, 3));
+  g2.setAttribute("uv", new THREE19.Float32BufferAttribute(uv, 2));
+  g2.setIndex(idx);
+  g2.computeVertexNormals();
+  const o = mesh(g2, fuelMat("spill"), { name: "spill", cast: false });
+  return o;
+}
+var CYL_PROFILE = [[0, 0.012], [0.07, 6e-3], [0.098, 0], [0.102, 0.012], [0.102, 0.96], [0.094, 1.02], [0.07, 1.07], [0.04, 1.1], [0.03, 1.115], [0.03, 1.15], [0, 1.15]];
+function gasCylinder({ lod = 2 }) {
+  const grp = new THREE19.Group();
+  const g2 = lathe(resample2(CYL_PROFILE, segs(lod, 8, 18, 48, 140, 320)), segs(lod, 8, 20, 64, 220, 640));
+  const m = makeMaterial("acetylene");
+  m.name = "cylinder";
+  const u = applyChar(m, { scale: 5, metal: true });
+  u.uCharBase.value = 0;
+  u.uCharH.value = 1.15;
+  u.uHeatFall.value = 0.15;
+  grp.add(mesh(g2, m, { name: "shell" }));
+  const brass = new THREE19.MeshStandardMaterial({ color: 11043886, roughness: 0.35, metalness: 0.9, name: "brass" });
+  const valve = new THREE19.CylinderGeometry(0.014, 0.018, 0.06, segs(lod, 5, 8, 14, 32, 80));
+  valve.translate(0, 1.18, 0);
+  grp.add(mesh(valve, brass, { name: "valve" }));
+  const hand = new THREE19.CylinderGeometry(0.03, 0.03, 0.012, segs(lod, 6, 10, 20, 48, 120));
+  hand.translate(0, 1.215, 0);
+  grp.add(mesh(hand, brass, { name: "handwheel" }));
+  const out = new THREE19.CylinderGeometry(8e-3, 8e-3, 0.035, segs(lod, 4, 6, 10, 20, 48));
+  out.rotateZ(Math.PI / 2);
+  out.translate(0.03, 1.18, 0);
+  grp.add(mesh(out, brass, { name: "outlet" }));
+  grp.userData = { char: u, H: 1.15, R: 0.102 };
+  return grp;
+}
+function cylinderFragments({ lod = 2, seed = 3 }) {
+  const r = mulberry32(seed), n = noise3(seed);
+  const m = makeMaterial("steel");
+  m.name = "cylBurnt";
+  m.side = THREE19.DoubleSide;
+  m.metalness = 0.6;
+  m.roughness = 0.6;
+  const u = applyChar(m, { scale: 6, metal: true });
+  u.uTmax.value = 1e3;
+  u.uTnow.value = 900;
+  u.uSoot.value = 0.5;
+  u.uHeatFall.value = 0.1;
+  const rad = segs(lod, 8, 16, 48, 160, 480), parts = [];
+  const jag = (g2, yEdge, amp) => {
+    const p = g2.attributes.position;
+    for (let i = 0; i < p.count; i++) if (Math.abs(p.getY(i) - yEdge) < 1e-4) {
+      const a = Math.atan2(p.getZ(i), p.getX(i));
+      p.setY(i, yEdge + amp * (n.fbm(Math.cos(a) * 3, Math.sin(a) * 3, seed, 3) + 0.4 * Math.sin(a * 5)));
+    }
+    g2.computeVertexNormals();
+    return g2;
+  };
+  const bottom = new THREE19.Group();
+  bottom.add(mesh(jag(new THREE19.CylinderGeometry(0.102, 0.102, 0.5, rad, segs(lod, 1, 2, 6, 16, 40), true).translate(0, 0.25, 0), 0.5, 0.09), m, { name: "bottom" }));
+  const disc = new THREE19.CircleGeometry(0.1, rad);
+  disc.rotateX(Math.PI / 2);
+  disc.translate(0, 5e-3, 0);
+  bottom.add(mesh(disc, m, { name: "base" }));
+  const top = new THREE19.Group();
+  top.add(mesh(jag(lathe(resample2([[0.102, 0], [0.102, 0.2], [0.094, 0.26], [0.07, 0.31], [0.04, 0.34], [0.03, 0.355], [0.03, 0.39], [0, 0.39]], segs(lod, 6, 10, 24, 60, 140)), rad), 0, 0.07), m, { name: "top" }));
+  parts.push(bottom, top);
+  for (let i = 0; i < 3; i++) {
+    const g2 = new THREE19.CylinderGeometry(0.102, 0.102, 0.22 + 0.15 * r(), segs(lod, 3, 5, 12, 32, 90), segs(lod, 1, 2, 5, 12, 30), true, r() * 6.28, 0.9 + 0.8 * r());
+    const p = g2.attributes.position;
+    const tw = (r() - 0.5) * 3;
+    for (let k = 0; k < p.count; k++) {
+      const y = p.getY(k), a = y * tw, x = p.getX(k), z = p.getZ(k);
+      p.setX(k, x * Math.cos(a) - z * Math.sin(a));
+      p.setZ(k, x * Math.sin(a) + z * Math.cos(a));
+    }
+    g2.computeVertexNormals();
+    const pl = new THREE19.Group();
+    pl.add(mesh(g2, m, { name: "plate" }));
+    parts.push(pl);
+  }
+  return { parts, char: u };
+}
+function plankMat(scale = 8) {
+  const m = makeMaterial("woodPlank");
+  m.name = "plank";
+  const u = applyChar(m, { scale, alligator: [10, 14] });
+  return { m, u };
+}
+function pallet({ lod = 2 }) {
+  const { m, u } = plankMat(8), parts = [], s = segs(lod, 1, 1, 2, 6, 16);
+  const box = (w, h2, d, x, y, z) => {
+    const g2 = new THREE19.BoxGeometry(w, h2, d, s * 2, 1, s);
+    g2.translate(x, y, z);
+    parts.push([g2, m]);
+  };
+  for (const z of [-0.3275, -0.165, 0, 0.165, 0.3275]) box(1.2, 0.022, z === 0 || Math.abs(z) > 0.3 ? 0.145 : 0.1, 0, 0.133, z);
+  for (const x of [-0.5275, 0, 0.5275]) {
+    box(0.145, 0.022, 0.8, x, 0.111, 0);
+    for (const z of [-0.3275, 0, 0.3275]) box(0.145, 0.078, 0.1, x, 0.061, z);
+  }
+  for (const z of [-0.35, 0, 0.35]) box(1.2, 0.022, 0.1, 0, 0.011, z);
+  const grp = mergeByMaterial(parts, "pallet");
+  u.uCharBase.value = 0;
+  u.uCharH.value = 0.3;
+  grp.userData = { char: u, mass: 22, area: 3.5, size: 1.2 };
+  return grp;
+}
+function crate({ lod = 2, s = 0.6 }) {
+  const { m, u } = plankMat(10), parts = [], q = segs(lod, 1, 1, 2, 6, 16), t = 0.018, nb = 4;
+  const box = (w, h2, d, x, y, z) => {
+    const g2 = new THREE19.BoxGeometry(w, h2, d, q, q, q);
+    g2.translate(x, y, z);
+    parts.push([g2, m]);
+  };
+  for (let i = 0; i < nb; i++) {
+    const y = s / nb * (i + 0.5);
+    for (const sg of [-1, 1]) {
+      box(s, s / nb - 8e-3, t, 0, y, sg * (s / 2 - t / 2));
+      box(t, s / nb - 8e-3, s - 2 * t, sg * (s / 2 - t / 2), y, 0);
+    }
+  }
+  box(s - 2 * t, t, s - 2 * t, 0, t / 2, 0);
+  box(s, t, s, 0, s + t / 2, 0);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(0.04, s, 0.04, sx * (s / 2 + 2e-3), s / 2, sz * (s / 2 + 2e-3));
+  const grp = mergeByMaterial(parts, "crate");
+  u.uCharBase.value = 0;
+  u.uCharH.value = s;
+  grp.userData = { char: u, mass: 9 * (s / 0.6) ** 2, area: 2.2 * (s / 0.6) ** 2 * 1, size: s };
+  return grp;
+}
+
 // src/assets/index.js
 var ASSETS = [
   { id: "candle", name: "Sv\xED\u010Dka v mosazn\xE9m sv\xEDcnu", build: candle, size: 0.14, cat: "rekvizity" },
@@ -5855,13 +6977,18 @@ var ASSETS = [
   { id: "strawStack", name: "Stoh sl\xE1my (velk\xE9 bal\xEDky)", build: strawStack, size: 6, cat: "velk\xE9" },
   { id: "car", name: "Osobn\xED auto (sedan)", build: car, size: 5, cat: "velk\xE9" },
   { id: "house", name: "Venkovsk\xFD d\u016Fm", build: house, size: 12, cat: "velk\xE9" },
+  { id: "lighter", name: "Plynov\xFD zapalova\u010D (k\u0159esac\xED)", build: lighter, size: 0.09, cat: "rekvizity" },
+  { id: "barrelOpen", name: "Sud 200 l bez v\xEDka s naftou", build: barrelOpen, size: 1, cat: "kapaliny" },
+  { id: "gasCylinder", name: "Acetylenov\xE1 l\xE1hev 50 l", build: gasCylinder, size: 1.3, cat: "v\xFDbu\u0161niny" },
+  { id: "pallet", name: "Europaleta", build: pallet, size: 1.3, cat: "rekvizity" },
+  { id: "crate", name: "D\u0159ev\u011Bn\xE1 bedna 0,6 m", build: crate, size: 0.8, cat: "rekvizity" },
   { id: "pine", name: "Borovice 14 m", build: pine, size: 15, cat: "vegetace" },
   { id: "bush", name: "Such\xFD ke\u0159", build: bush, size: 1.6, cat: "vegetace" }
 ];
 var assetById = (id) => ASSETS.find((a) => a.id === id);
 
 // src/scenarios/index.js
-import * as THREE19 from "three";
+import * as THREE22 from "three";
 
 // src/physics/spread.js
 function headROS(fuel, U) {
@@ -5948,8 +7075,8 @@ function arrivalTimes({ nx, ny, cell, fuel, fuelMap, ignitions, windDir, U, slop
 }
 
 // src/scenarios/forestDetail.js
-import * as THREE18 from "three";
-var V = (x, y, z) => new THREE18.Vector3(x, y, z);
+import * as THREE20 from "three";
+var V = (x, y, z) => new THREE20.Vector3(x, y, z);
 function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
   const tid = Math.min(ctx.tier.id, 5);
   const nTrunk = [2, 3, 5, 6, 8, 10][tid], nBranch = [0, 2, 3, 5, 6, 8][tid];
@@ -5963,11 +7090,11 @@ function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
   const bark = makeMaterial("bark");
   applyChar(bark, { scale: 6, alligator: [6, 10] });
   const charU = bark.userData.char;
-  const geo = new THREE18.CylinderGeometry(0.02, 0.035, 1, 6, 1);
+  const geo = new THREE20.CylinderGeometry(0.02, 0.035, 1, 6, 1);
   geo.rotateZ(Math.PI / 2);
   const branches = [];
   for (let i = 0; i < nBranch; i++) {
-    const mesh2 = new THREE18.Mesh(geo, bark);
+    const mesh2 = new THREE20.Mesh(geo, bark);
     mesh2.visible = false;
     mesh2.castShadow = true;
     ctx.add(mesh2);
@@ -6066,8 +7193,443 @@ function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
   };
 }
 
+// src/scenarios/iter6.js
+import * as THREE21 from "three";
+var V2 = (x, y, z) => new THREE21.Vector3(x, y, z);
+var kW = (q) => (q / 1e3).toFixed(q < 1e4 ? 1 : 0) + " kW/m\xB2";
+var degC = (T) => (T - 273.15).toFixed(0) + " \xB0C";
+var blastRows = (W) => [
+  ["TNT ekvivalent", W >= 1 ? W.toFixed(1) + " kg" : (W * 1e3).toFixed(0) + " g", "Kinney\u2013Graham \u26054"],
+  ...blastSummary(W, [3, 10, 30, 100]).map((b) => [`  p\u0159etlak v ${b.R} m`, b.kPa < 1 ? (b.kPa * 1e3).toFixed(0) + " Pa" : b.kPa.toFixed(1) + " kPa", b.effect])
+];
+function tableTop(ctx, w = 0.9, d = 0.6) {
+  const m = makeMaterial("woodPlank");
+  const g2 = new THREE21.BoxGeometry(w, 0.04, d);
+  g2.translate(0, -0.02, 0);
+  const t = new THREE21.Mesh(g2, m);
+  t.receiveShadow = true;
+  ctx.add(t);
+}
+var sheetState = (b) => `${degC(b.Ts)} (max ${degC(b.Tmax)}) \u2013 ${b.state === "cold" ? "chladn\xFD" : b.state}`;
+var ITER6_FIRST = [
+  // ---------------------------------------------------------------------------------------------- zapalovač
+  {
+    id: "lighter",
+    group: "Z\xE1\u017Eeh",
+    name: "Zapalova\u010D: jiskra \u2192 plamen",
+    ground: "dirt",
+    time: "noc",
+    duration: 9,
+    loop: true,
+    desc: "K\u0159esac\xED kole\u010Dko strhne z \u201Ekam\xEDnku\u201C (ferrocer) t\u0159\xEDsky, kter\xE9 na vzduchu samy vzplanou (~3 000 \xB0C). Prvn\xED \u0161krtnut\xED nechytne, druh\xE9 zap\xE1l\xED butan: lamin\xE1rn\xED plam\xEDnek 25 mm, ~57 W, modr\xE1 pata a \u017Elut\xE1 \u0161pi\u010Dka.",
+    cams: [{ name: "detail", pos: [0.075, 0.105, 0.13], target: [0, 0.075, 0] }, { name: "st\u016Fl", pos: [0.35, 0.28, 0.5], target: [0, 0.05, 0] }],
+    build(ctx) {
+      tableTop(ctx);
+      const L = lighter({ lod: ctx.lod });
+      ctx.add(L);
+      const at = L.userData.flameAt, sk = L.userData.sparkAt, r = mulberry32(21);
+      const sp = fireSpec({ kind: "jet", fuel: "butane", mdot: 125e-8 });
+      const strikes = [0.7, 1.7], tOn = 1.74, tOff = 7.2;
+      const lit = (t) => t < tOn ? 0 : t < tOff ? Math.min(1, (t - tOn) / 0.12) : Math.max(0, 1 - (t - tOff) / 0.08);
+      const src = ctx.fx.addSource({ pos: V2(at.x, at.y, at.z), seed: 6, volume: true, ...sourceOptions(sp), end: Infinity, Q: (t) => sp.Qpeak * lit(t) });
+      let prev = 0;
+      return {
+        update(dt, t) {
+          const fx = ctx.fx;
+          for (const ts of strikes) {
+            const k = (t - ts) / 0.07;
+            if (k >= 0 && k < 1) {
+              L.userData.wheel.rotation.z -= dt * 55;
+              let n = Math.round(dt * 900 * fx.budgetScale.spark);
+              if (prev < ts) n += 6;
+              for (let i = 0; i < n; i++) {
+                const v = 0.9 + 1.9 * r(), a = (r() - 0.5) * 1.5, e = 0.5 + 0.9 * r();
+                fx.sp.spawn({ x: sk.x, y: sk.y, z: sk.z, vx: -Math.cos(e) * Math.cos(a) * v, vy: Math.sin(e) * v, vz: Math.sin(a) * v * 0.8, life: 0.04 + 0.14 * r() * r(), T: 2500 + 400 * r(), tauC: 0.9, size: 1e-4 + 16e-5 * r(), drag: 22 + 22 * r(), grav: 1, seed: r() });
+              }
+              if (r() < dt * 60) {
+                const d = 0.02 + 0.03 * r(), px = sk.x - d * 0.7, py = sk.y + d * 0.8, pz = sk.z + (r() - 0.5) * 0.03;
+                for (let i = 0; i < 5; i++) fx.sp.spawn({ x: px, y: py, z: pz, vx: (r() - 0.5) * 1.6, vy: (r() - 0.3) * 1.6, vz: (r() - 0.5) * 1.6, life: 0.04 + 0.06 * r(), T: 2700, tauC: 0.5, size: 8e-5, drag: 25, grav: 1, seed: r() });
+              }
+              fx.lights.add(sk.x, sk.y + 5e-3, sk.z, 0.9 * (0.6 + 0.8 * r()), 2800, 0.01);
+            }
+          }
+          prev = t;
+        },
+        info: () => [
+          ...sp.rows,
+          ...fireRows(src).slice(1, 6),
+          ["Jiskra", "ferrocer (Ce + Fe), vzn\xEDt\xED se p\u0159i 150\u2013180 \xB0C, ho\u0159\xED ~3 000 \xB0C", "\u26054"],
+          ["Pro\u010D prvn\xED \u0161krtnut\xED nechytne", "plyn je\u0161t\u011B nedos\xE1hl doln\xED meze v\xFDbu\u0161nosti 1,8 % u jisker", "\u26053"],
+          ["S\xE1l\xE1n\xED ve 3 cm od plamene", kW(ctx.fx.heatFlux([at.x + 0.03, at.y + 0.012, at.z]).total), "bodov\xFD zdroj \u26053"]
+        ]
+      };
+    }
+  }
+];
+var ITER6_LIQUIDS = [
+  // ---------------------------------------------------------------------------------------------- hořící sud s naftou
+  {
+    id: "dieselBarrel",
+    group: "Kapaliny",
+    name: "Ho\u0159\xEDc\xED sud s naftou",
+    ground: "concrete",
+    time: "den",
+    timeScale: 6,
+    duration: 900,
+    desc: "Sud 200 l bez v\xEDka, ~170 l nafty. Lou\u017Ee o pr\u016Fm\u011Bru 0,56 m: ~350 kW, plamen ~1,9 m, pulzace 2 Hz, hust\xFD \u010Dern\xFD kou\u0159. Ho\u0159\xED skoro 6 hodin (hladina kles\xE1 2,2 mm/min). Lak nad hladinou sho\u0159\xED, pod hladinou ho kapalina chlad\xED.",
+    cams: [{ name: "celek", pos: [3.6, 1.9, 4.4], target: [0, 1.5, 0] }, { name: "hr\xE1\u010D", pos: [2.4, 1.7, 2.2], target: [0, 1.1, 0] }, { name: "sloup kou\u0159e", pos: [10, 2.5, 13], target: [0, 5, 0] }],
+    build(ctx) {
+      const b = barrelOpen({ lod: ctx.lod, paint: "metalBlue", level: 0.8 });
+      ctx.add(b);
+      const ud = b.userData, sp = fireSpec({ kind: "pool", fuel: "diesel", D: 2 * (ud.R - 6e-3), volumeL: 170 });
+      const grow = (t) => Math.min(1, (t / 12) ** 2) * (1 - 0.6 * Math.exp(-t / 45));
+      const src = ctx.fx.addSource({ pos: V2(0, ud.liquidY + 0.01, 0), seed: 31, volume: true, ...sourceOptions(sp), end: Infinity, Q: (t) => sp.Qpeak * grow(t), start: 1, shapeK: 1.6, taper: 0.7, neck: 0.25, puffAmp: 0.9, volTongues: 0, turbAmp: 0.8, volSoot: 0.6, mult: { smoke: 2.6 } });
+      const shell = ctx.fx.addBurnable({ pos: V2(0, 0, 0), material: "steelPainted", char: ud.char, probe: [ud.R - 0.02, ud.H - 0.03, 0], label: "pl\xE1\u0161\u0165 u okraje" });
+      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: 0.9, rate: 1 / 500, seed: 9 });
+      const rate = sp.mdot / sp.Qpeak;
+      let burnt = 0;
+      return {
+        update(dt) {
+          if (src.ph) {
+            burnt += src.ph.Q * rate * dt;
+            ud.liquid.position.y = -burnt / (FUELS.diesel.rho * Math.PI * (ud.R - 6e-3) ** 2);
+          }
+        },
+        info: () => [
+          ...sp.rows,
+          ...fireRows(src).slice(1),
+          ["Sho\u0159elo", burnt.toFixed(2) + " kg", "\u1E41 = Q/\u0394Hc"],
+          ["Pl\xE1\u0161\u0165 u okraje", sheetState(shell), "tenk\xFD plech \u26054"],
+          ["Tok na pl\xE1\u0161\u0165", kW(shell.q), "kontakt s plamenem \u26053"],
+          ["S\xE1l\xE1n\xED ve 2 m (v\xFD\u0161ka pasu)", kW(ctx.fx.heatFlux([2, 1, 0]).total) + " \u2013 " + fluxEffect(ctx.fx.heatFlux([2, 1, 0]).total), "Modak \u26054"]
+        ]
+      };
+    }
+  },
+  // ---------------------------------------------------------------------------------------------- prostřelený sud
+  {
+    id: "leak",
+    group: "Kapaliny",
+    name: "Prost\u0159elen\xFD sud: ho\u0159\xEDc\xED pram\xEDnek",
+    ground: "concrete",
+    time: "den",
+    timeScale: 4,
+    duration: 420,
+    desc: "Otvor 9 mm p\u016Fl metru pod hladinou: vyt\xE9k\xE1 0,12 l/s (Torricelli). V\u0161e, co vyte\u010De, sho\u0159\xED \u2192 ~4,6 MW na pruhu ~8 \xD7 0,6 m, plameny ~2,4 m, \u010Dern\xFD kou\u0159. Benz\xEDn vzplane po cel\xE9 d\xE9lce za p\xE1r sekund, nafta se rozho\u0159\xEDv\xE1 pomalu od zdroje zap\xE1len\xED.",
+    cams: [{ name: "celek", pos: [4.5, 3.2, 11], target: [4.2, 1.6, 0] }, { name: "hr\xE1\u010D", pos: [-2.2, 1.7, 4.5], target: [3, 1.2, 0] }, { name: "od sudu", pos: [-1.6, 1.3, 1.2], target: [4, 0.9, 0] }],
+    controls: [{ id: "leakFuel", label: "Palivo", type: "select", value: "diesel", options: ["diesel", "gasoline"], restart: true }],
+    build(ctx) {
+      const fuel = ctx.controls.leakFuel || "diesel", mat = MATERIALS[fuel];
+      const b = barrel({ lod: ctx.lod, paint: "metalRed" });
+      ctx.add(b);
+      const R = b.userData.R, hole = 0.3, head = 0.5;
+      const sp = fireSpec({ kind: "leak", fuel, holeMM: 9, head });
+      const v0 = Math.sqrt(2 * 9.81 * head) * 0.97;
+      const jet = fuelJet({ lod: ctx.lod, v: v0, h: hole });
+      jet.position.set(R, 0, 0);
+      ctx.add(jet);
+      const x0 = R + jet.userData.reach - 0.15, len = sp.stream.len, w = sp.stream.w;
+      const strip2 = spillStrip({ lod: ctx.lod, len, w, seed: 5 });
+      strip2.position.x = x0;
+      ctx.add(strip2);
+      const holeM = new THREE21.Mesh(new THREE21.CircleGeometry(55e-4, 12), new THREE21.MeshBasicMaterial({ color: 0 }));
+      holeM.position.set(R + 1e-3, hole, 0);
+      holeM.rotation.y = Math.PI / 2;
+      ctx.add(holeM);
+      const N = ctx.tier.id === 0 ? 4 : 5, seg = len / N, tIgn = 3, spread = mat.spread * (fuel === "diesel" ? 2.5 : 1);
+      const srcs = [];
+      for (let i = 0; i < N; i++) {
+        const xc = x0 + (N - 0.5 - i) * seg, start = tIgn + i * seg / spread;
+        const kq = 0.75 + 0.5 * (i * 0.618 % 1);
+        srcs.push(ctx.fx.addSource({
+          pos: V2(xc, 0.01, i % 2 ? 0.06 : -0.06),
+          fuel,
+          seed: 40 + i * 7,
+          volume: true,
+          footprint: { type: "rect", w: seg * 1.7, d: w * 1.15 },
+          start,
+          shapeK: 1.45,
+          taper: 0.6,
+          puffAmp: 0.7,
+          volSoot: 0.3,
+          mult: { smoke: 1.5, haze: 0.35 },
+          Q: (t) => sp.Q(ctx.t) / N * kq * Math.min(1, t / (fuel === "diesel" ? 14 : 2))
+        }));
+        ctx.fx.addScorch({ pos: V2(xc, 0, 0), radius: seg * 0.75, rate: 1 / 200, seed: 12 + i });
+      }
+      const tBack = tIgn + len / spread;
+      const foot = ctx.fx.addSource({ pos: V2(R + 0.35, 0.01, 0), fuel, seed: 55, volume: true, D: 0.7, start: tBack, Q: (t) => 35e4 * Math.min(1, t / 6) });
+      const shell = ctx.fx.addBurnable({ pos: V2(0, 0, 0), material: "steelPainted", char: b.userData.char, probe: [R + 0.02, 0.35, 0], label: "pl\xE1\u0161\u0165 sudu" });
+      b.userData.char.uCharBase.value = 0;
+      b.userData.char.uCharH.value = 0.88;
+      b.userData.char.uHeatFall.value = 0.5;
+      return {
+        update(dt, t) {
+          const h2 = drainHead(t, head, 9e-3, 0.258);
+          jet.scale.x = Math.sqrt(h2 / head) || 0.01;
+          jet.visible = h2 > 2e-3;
+          this.tot = [...srcs, foot].reduce((s, x) => s + (x.active && x.ph ? x.ph.Q : 0), 0);
+        },
+        info() {
+          return [
+            ...sp.rows,
+            ["Palivo", FUELS[fuel].name, mat.flash ? `bod vzplanut\xED ${degC(mat.flash)}` : ""],
+            ["Celkov\xFD v\xFDkon", fmtW(this.tot || 0), "sou\u010Det \xFAsek\u016F"],
+            ["\u0160\xED\u0159en\xED plamene po pruhu", (spread * 100).toFixed(0) + " cm/s \u2192 k sudu za " + (len / spread).toFixed(0) + " s", "\u26052\u20133"],
+            ["V\xFD\u0161ka plamen\u016F pruhu", sp.stream.L.toFixed(1) + " m", "Yuan & Cox \u26054"],
+            ...fireRows(srcs[N - 1], "\xFAsek u sudu").slice(4, 8),
+            ["Pl\xE1\u0161\u0165 sudu", sheetState(shell), "tenk\xFD plech \u26054"],
+            ["Tok na pl\xE1\u0161\u0165", kW(shell.q), "\u26053"],
+            ["Co hroz\xED", shell.Tmax > 700 ? "zav\u0159en\xFD sud v plameni: roztr\u017Een\xED a ohniv\xE1 koule (viz V\xFDbuch sudu)" : "dokud plamen nedob\u011Bhne k sudu, jen s\xE1l\xE1n\xED", "D-008"]
+          ];
+        }
+      };
+    }
+  }
+];
+var ITER6_BLAST = [
+  // ---------------------------------------------------------------------------------------------- acetylenová láhev
+  {
+    id: "acetyleneCyl",
+    group: "Exploze",
+    name: "V\xFDbuch acetylenov\xE9 lahve (v po\u017E\xE1ru)",
+    ground: "dirt",
+    time: "soumrak",
+    timeScale: 20,
+    duration: 560,
+    desc: "Tlakov\xE1 l\xE1hev 50 l (7 kg C\u2082H\u2082 v acetonu) v ho\u0159\xEDc\xED hranici palet. Ocel p\u0159i ~550 \xB0C ztr\xE1c\xED polovinu pevnosti, acetylen se uvnit\u0159 rozkl\xE1d\xE1 \u2192 pl\xE1\u0161\u0165 se roztrhne na kusy, plyn vzplane v ohnivou kouli ~13 m (1 s), oslniv\u011B \u017Elutou a plnou saz\xED. Tlakov\xE1 vlna \u2248 1\u20132 kg TNT, \xFAlomky let\xED ~80 m/s na stovky metr\u016F (z\xF3na hasi\u010D\u016F 200 m).",
+    cams: [{ name: "celek", pos: [15, 4, 19], target: [0, 4.5, 0] }, { name: "hr\xE1\u010D (12 m)", pos: [9, 1.7, 8], target: [0, 2.5, 0] }, { name: "z d\xE1lky (70 m)", pos: [55, 6, 45], target: [0, 7, 0] }],
+    build(ctx) {
+      const pal = [];
+      const rr = mulberry32(5);
+      for (let i = 0; i < 4; i++) {
+        const p = pallet({ lod: Math.min(ctx.lod, 3) });
+        p.position.set((rr() - 0.5) * 0.08, i * 0.146, (rr() - 0.5) * 0.08);
+        p.rotation.y = (rr() - 0.5) * 0.25 + i % 2 * Math.PI / 2;
+        ctx.add(p);
+        pal.push(p);
+      }
+      {
+        const p = pallet({ lod: Math.min(ctx.lod, 3) });
+        p.position.set(-0.95, 0.5, 0.1);
+        p.rotation.z = -1.12;
+        ctx.add(p);
+        pal.push(p);
+      }
+      {
+        const p = pallet({ lod: Math.min(ctx.lod, 3) });
+        p.position.set(-0.1, 0.38, -0.78);
+        p.rotation.x = -1.05;
+        ctx.add(p);
+        pal.push(p);
+      }
+      const cyl = gasCylinder({ lod: ctx.lod });
+      cyl.rotation.z = Math.PI / 2;
+      cyl.position.set(0.58, 0.69, 0);
+      ctx.add(cyl);
+      const pile = fireSpec({ kind: "pile", material: "softwood", mass: 132, stick: 0.03, D: 1.5, tGrow: 90 });
+      const src = ctx.fx.addSource({ pos: V2(0, 0.1, 0), seed: 61, volume: true, ...sourceOptions(pile), end: Infinity });
+      const shell = ctx.fx.addBurnable({ pos: V2(0, 0, 0), material: { ...MATERIALS.steelThick, rcd: MATERIALS.steelThick.rcd * 2 }, char: cyl.userData.char, probe: [0, 0.75, 0], label: "pl\xE1\u0161\u0165 lahve" });
+      cyl.userData.char.uHeatFall.value = 0.1;
+      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: 2.2, rate: 1 / 300, glow: 0.3, seed: 7 });
+      const es = explosionSpec({ kind: "gasCylinder" });
+      const Tburst = MATERIALS.steelThick.weak;
+      let boom2 = false, tBoom = 0;
+      const frags = [];
+      return {
+        update(dt, t) {
+          for (const p of pal) {
+            const u = p.userData.char;
+            u.uChar.value = Math.min(1, t / 240);
+            u.uGlow.value = Math.min(1, t / 40);
+          }
+          if (!boom2 && shell.Ts >= Tburst) {
+            boom2 = true;
+            tBoom = t;
+            cyl.visible = false;
+            ctx.setTimeScale(1);
+            const c2 = V2(0, 0.7, 0);
+            ctx.fx.addExplosion({ pos: c2, seed: 17, ...es.ex });
+            for (const f of es.fires) ctx.fx.addSource({ pos: V2(0.4, 0.01, 0.3), seed: 71, volume: true, ...f });
+            src.brandBurst(70, 3.2);
+            src.o.Q = /* @__PURE__ */ ((q) => (tt) => 0.35 * q(tt))(src.o.Q);
+            for (let i = 0; i < 6; i++) {
+              const a = i * 1.05 + 0.3, R = 2.5 + 2.2 * rr();
+              ctx.fx.addSource({ pos: V2(Math.cos(a) * R, 0.02, Math.sin(a) * R), fuel: "woodDry", Q: 6e4 + 8e4 * rr(), D: 0.5, start: 0.8, end: 200 + 200 * rr(), volume: i < 3, seed: 80 + i });
+            }
+            pal.forEach((p, i) => {
+              p.position.x += (rr() - 0.5) * 1.6;
+              p.position.z += (rr() - 0.5) * 1.6;
+              p.position.y = 0.02 + i % 2 * 0.1;
+              p.rotation.x += (rr() - 0.5) * 0.7;
+              p.rotation.z += (rr() - 0.5) * 0.7;
+            });
+            const fr = cylinderFragments({ lod: Math.min(ctx.lod, 3), seed: 3 });
+            const dirs = [V2(-1, 0.55, 0.1), V2(1, 0.75, -0.15), V2(0.1, 0.9, 1), V2(-0.2, 0.5, -1), V2(0.3, 1.2, 0.4)];
+            fr.parts.forEach((g2, i) => {
+              g2.position.copy(c2);
+              ctx.add(g2);
+              frags.push({ g: g2, v: dirs[i].normalize().multiplyScalar(es.vFrag * (i < 2 ? 0.75 : 0.45) * (0.8 + 0.4 * rr())), w: V2(rr() * 9, rr() * 9, rr() * 9), rest: false });
+            });
+            this.fragU = fr.char;
+            ctx.message("L\xE1hev se roztrhla: ohniv\xE1 koule " + es.fb.D.toFixed(0) + " m, \xFAlomky " + es.vFrag.toFixed(0) + " m/s.");
+          }
+          if (boom2) {
+            for (const f of frags) {
+              if (f.rest) continue;
+              f.v.y -= 9.81 * dt;
+              f.v.multiplyScalar(Math.exp(-0.05 * dt));
+              f.g.position.addScaledVector(f.v, dt);
+              f.g.rotation.x += f.w.x * dt;
+              f.g.rotation.y += f.w.y * dt;
+              f.g.rotation.z += f.w.z * dt;
+              if (f.g.position.y < 0.08) {
+                f.g.position.y = 0.08;
+                if (Math.abs(f.v.y) < 2.5) {
+                  f.rest = true;
+                } else {
+                  f.v.y *= -0.3;
+                  f.v.x *= 0.5;
+                  f.v.z *= 0.5;
+                  f.w.multiplyScalar(0.4);
+                }
+              }
+            }
+            if (this.fragU) this.fragU.uTnow.value = 293 + 600 * Math.exp(-(t - tBoom) / 90);
+          }
+        },
+        info: () => [
+          ["Stav", boom2 ? `roztr\u017Eena v \u010Dase ${(tBoom / 60).toFixed(1)} min` : "oh\u0159\xEDv\xE1 se v plameni (\u010Das zrychlen 20\xD7)", ""],
+          ["Pl\xE1\u0161\u0165 lahve", sheetState(shell), `mez ${degC(Tburst)} \u26054`],
+          ["Tok na pl\xE1\u0161\u0165", kW(shell.q), "kontakt \u26053"],
+          ...es.rows,
+          ...blastRows(es.W).slice(1),
+          ...fireRows(src, "hranice").slice(1, 3),
+          ["Dolet \xFAlomku bez odporu", ((es.vFrag * 0.75) ** 2 / 9.81).toFixed(0) + " m", "v\xB2/g \u26053"],
+          ["Pro\u010D ne \u201Edetonace\u201C", "rozklad C\u2082H\u2082 v por\xE9zn\xED hmot\u011B je pomal\xFD; ni\u010D\xED roztr\u017Een\xED a ohe\u0148, ne brizance", "Jank\u016Fj & Mynarz 2022 \u26054"]
+        ]
+      };
+    }
+  },
+  // ---------------------------------------------------------------------------------------------- obecný výbuch
+  {
+    id: "blastLab",
+    group: "Laborato\u0159",
+    name: "Obecn\xFD v\xFDbuch (n\xE1lo\u017E \u2192 v\u0161e)",
+    ground: "dryGrass",
+    time: "den",
+    duration: 26,
+    loop: true,
+    desc: "Jeden popis v\xFDbuchu: druh a hmotnost \u2192 p\u0159etlak, ohniv\xE1 koule, kou\u0159, trosky, kr\xE1ter, od 50 g po 5 t. Mocninn\xE9 z\xE1kony proch\xE1zej\xED ru\u010Dn\u011B vylad\u011Bn\xFDmi body (gran\xE1t 0,24 kg, 1 t TNT), mezi nimi dr\u017E\xED fyzik\xE1ln\xED exponenty (d\xE9lky \u221D W^\u2153, plochy \u221D W^\u2154).",
+    cams: [{ name: "25 m", pos: [18, 3, 17], target: [0, 3, 0] }, { name: "80 m", pos: [62, 6, 50], target: [0, 14, 0] }, { name: "300 m", pos: [240, 20, 180], target: [0, 50, 0] }],
+    controls: [
+      { id: "bKind", label: "Druh", type: "select", value: "he", options: ["he", "fireball", "gasCylinder"], restart: true },
+      { id: "bMass", label: "Hmotnost [kg]", type: "range", min: 0.05, max: 5e3, value: 10, log: true },
+      { id: "bCased", label: "Kovov\xFD pl\xE1\u0161\u0165 (st\u0159epiny)", type: "check", value: false }
+    ],
+    build(ctx) {
+      const mk = () => explosionSpec(ctx.controls.bKind === "he" ? { kind: "he", explosive: "tnt", mass: ctx.controls.bMass, cased: ctx.controls.bCased } : ctx.controls.bKind === "fireball" ? { kind: "fireball", mass: ctx.controls.bMass } : { kind: "gasCylinder", gasMass: Math.min(20, Math.max(1, ctx.controls.bMass)) });
+      const ref = barrel({ lod: Math.min(ctx.lod, 2), paint: "metalOlive" });
+      ref.position.set(6, 0, -3);
+      ctx.add(ref);
+      let boom2 = false, es = mk();
+      return {
+        update(dt, t) {
+          if (!boom2 && t > 1.5) {
+            boom2 = true;
+            es = mk();
+            ctx.fx.addExplosion({ pos: V2(0, es.dy, 0), seed: 23, ...es.ex });
+            for (const f of es.fires) ctx.fx.addSource({ pos: V2(0, 0.01, 0), seed: 24, volume: true, ...f });
+          }
+        },
+        info: () => {
+          const e = boom2 ? es : mk();
+          return [...e.rows, ...blastRows(e.W).slice(1), ["Kou\u0159 (\u010D\xE1stic / \u017Eivot)", e.ex.smoke.n + " / " + e.ex.smoke.life.toFixed(0) + " s", "mocninn\xFD z\xE1kon"], ["Trosky (po\u010Det / rychlost)", e.ex.debris.n + " / " + e.ex.debris.speed.toFixed(0) + " m/s", ""], ["H\u0159ib / kondenza\u010Dn\xED d\xF3m", (e.ex.mushroom ? "ano" : "ne") + " / " + (e.ex.wilson ? "ano" : "ne"), "od 100 / 300 kg"]];
+        }
+      };
+    }
+  }
+];
+var ITER6_SPREAD = [
+  // ---------------------------------------------------------------------------------------------- řetěz vznícení
+  {
+    id: "chain",
+    group: "\u0160\xED\u0159en\xED",
+    name: "P\u0159estup tepla: \u0159et\u011Bz vzn\xEDcen\xED",
+    ground: "dirt",
+    time: "den",
+    timeScale: 10,
+    duration: 1500,
+    desc: "Ho\u0159\xED dv\u011B palety (~0,9 MW). Okoln\xED v\u011Bci dost\xE1vaj\xED tepeln\xFD tok podle vzd\xE1lenosti a ka\u017Ed\xE1 s\u010D\xEDt\xE1 svou d\xE1vku do vzn\xEDcen\xED podle materi\xE1lu: sl\xE1ma chytne od ~8 kW/m\xB2 za sekundy, d\u0159evo a\u017E nad 12 kW/m\xB2 za minuty, pneumatika a\u017E nad 17 kW/m\xB2. Co chytne, p\u0159id\xE1 vlastn\xED teplo a zap\xE1l\xED dal\u0161\xED. Paleta ve 4,5 m z\u016Fstane pod prahem; plech sudu neho\u0159\xED, ale ztrat\xED lak a z\u010Dern\xE1.",
+    cams: [{ name: "celek", pos: [5.5, 3.6, 6.5], target: [0, 0.9, 0] }, { name: "hr\xE1\u010D", pos: [3.6, 1.7, 5.2], target: [0, 0.8, 0] }, { name: "shora", pos: [0.5, 9, 2.5], target: [0, 0.3, 0] }],
+    build(ctx) {
+      const fx = ctx.fx, items = [];
+      const put = (obj, x, z, ry = 0) => {
+        obj.position.set(x, 0, z);
+        obj.rotation.y = ry;
+        ctx.add(obj);
+        return obj;
+      };
+      const add = (label, obj, o) => {
+        const b = fx.addBurnable({ label, char: obj.userData.char, ...o, onBurnout: () => {
+          obj.userData.done = true;
+        } });
+        b.obj = obj;
+        items.push(b);
+        return b;
+      };
+      const p1 = put(pallet({ lod: ctx.lod }), 0, 0), p2 = pallet({ lod: ctx.lod });
+      p2.position.set(0.03, 0.146, 0.02);
+      p2.rotation.y = 0.12;
+      ctx.add(p2);
+      const core = add("2 palety (ohnisko)", p1, { pos: V2(0, 0, 0), material: "softwood", mass: 44, area: 7, size: 1.2, ignited: true, seed: 3, source: { footprint: { type: "rect", w: 1.2, d: 0.8 } } });
+      const u2 = p2.userData.char;
+      const bale = put(strawStack({ lod: ctx.lod, nx: 2, ny: 1, nz: 1, seed: 8 }), 2.7, 0.2, 0.25);
+      add("bal\xEDk sl\xE1my (1,7 m)", bale, { pos: V2(2.7, 0, 0.2), material: "straw", mass: 250, area: 9, size: 1.6, height: 0.5, probe: [-1, 0.5, 0], seed: 4, fireY: 0.55, source: { footprint: { type: "rect", w: 2.4, d: 1.2, rot: 0.25 } } });
+      const cr = put(crate({ lod: ctx.lod, s: 0.6 }), -0.25, -1.5, 0.3);
+      add("bedna (1,2 m)", cr, { pos: V2(-0.25, 0, -1.5), material: "softwood", mass: 9, area: 2.2, size: 0.6, probe: [0.05, 0.4, 0.32], seed: 5, fireY: 0.25 });
+      const ti = put(tire({ lod: ctx.lod, rim: false }), -0.3, 1.4);
+      ti.rotation.x = 0;
+      add("pneumatika (1,1 m)", ti, { pos: V2(-0.3, 0, 1.4), material: "rubber", mass: 9, area: 1.2, size: 0.65, probe: [0.05, 0.3, -0.33], seed: 6, D: 0.65, fireY: 0.15 });
+      const far = put(pallet({ lod: ctx.lod }), -4.5, 0.6, 1.3);
+      add("paleta daleko (4,5 m)", far, { pos: V2(-4.5, 0, 0.6), material: "softwood", mass: 22, area: 3.5, size: 1.2, probe: [0.5, 0.2, 0], seed: 7 });
+      const drum = put(barrel({ lod: ctx.lod, paint: "metalBlue" }), -1.25, -0.2);
+      drum.userData.char.uHeatFall.value = 0.25;
+      const sh = fx.addBurnable({ label: "sud \u2013 plech (0,9 m)", pos: V2(-1.25, 0, -0.2), material: "steelPainted", char: drum.userData.char, probe: [0.3, 0.5, 0.03] });
+      sh.obj = drum;
+      items.push(sh);
+      fx.addScorch({ pos: V2(0, 0, 0), radius: 1.6, rate: 1 / 400, glow: 0.3, seed: 3 });
+      return {
+        update() {
+          u2.uChar.value = p1.userData.char.uChar.value;
+          u2.uGlow.value = p1.userData.char.uGlow.value;
+          for (const b of items) if (b.state === "burning" || b.state === "burnt") {
+            const k = b.mat.look === "fluff" ? 0.55 : b.mat.look === "melt" ? 0.5 : 0.65;
+            b.obj.scale.y = 1 - k * b.burned ** 1.5;
+            if (b === core) p2.scale.y = b.obj.scale.y, p2.position.y = 0.146 * b.obj.scale.y;
+          }
+          this.tot = fx.sources.reduce((s, x) => s + (x.active && x.ph ? x.ph.Q : 0), 0);
+        },
+        info() {
+          const rows = [["Celkov\xFD v\xFDkon", fmtW(this.tot || 0), "sou\u010Det zdroj\u016F"]];
+          for (const b of items) {
+            const st = b.inert ? sheetState(b) : b.state === "burning" ? `HO\u0158\xCD od ${(b.tIgn / 60).toFixed(1)} min, ${fmtW(b.src?.ph?.Q || 0)}` : b.state === "burnt" ? "vyho\u0159elo" : `d\xE1vka ${(b.heat * 100).toFixed(0)} %`;
+            const tig = b.inert || b.state === "burning" || b.state === "burnt" ? "" : (() => {
+              const t = timeToIgnition(b.q, b.mat);
+              return Number.isFinite(t) ? `p\u0159i tomto toku za ${t < 90 ? t.toFixed(0) + " s" : (t / 60).toFixed(1) + " min"}` : `pod prahem ${(b.mat.qCrit / 1e3).toFixed(0)} kW/m\xB2`;
+            })();
+            rows.push([b.label, `${kW(b.q)} \xB7 ${st}`, tig]);
+          }
+          rows.push(["S\xE1l\xE1n\xED ve 3 m (hr\xE1\u010D)", kW(fx.heatFlux([3, 1.2, 3]).total) + " \u2013 " + fluxEffect(fx.heatFlux([3, 1.2, 3]).total), "Modak \u26054"], ["Model", "d\xE1vka = \u222B(q\u2033 \u2212 q\u2033crit)\u207F dt, n = 2 tlust\xE9, 1 tenk\xE9", "Quintiere; Shields \u26053\u20134"]);
+          return rows;
+        }
+      };
+    }
+  }
+];
+
 // src/scenarios/index.js
-var V2 = (x, y, z) => new THREE19.Vector3(x, y, z);
+var V4 = (x, y, z) => new THREE22.Vector3(x, y, z);
 var fmtW = (q) => q >= 1e6 ? (q / 1e6).toFixed(2) + " MW" : q >= 1e3 ? (q / 1e3).toFixed(1) + " kW" : q.toFixed(0) + " W";
 var deg = (r) => (r * 180 / Math.PI).toFixed(0) + "\xB0";
 function fireRows(src, label = "") {
@@ -6085,7 +7647,7 @@ function fireRows(src, label = "") {
     [p + "Sv\xEDtivost", ph.I < 1e4 ? ph.I.toFixed(1) + " cd" : (ph.I / 1e3).toFixed(0) + " kcd", "odhad \u26052"]
   ];
 }
-function blastRows(W, label = "TNT ekv.") {
+function blastRows2(W, label = "TNT ekv.") {
   return [
     [label, W >= 1 ? W.toFixed(1) + " kg" : (W * 1e3).toFixed(0) + " g", "Kinney\u2013Graham \u26054"],
     ...blastSummary(W, [1, 3, 10, 30, 100, 300]).map((b) => [`  p\u0159etlak v ${b.R} m`, b.kPa < 1 ? (b.kPa * 1e3).toFixed(0) + " Pa" : b.kPa.toFixed(1) + " kPa", b.effect])
@@ -6093,19 +7655,19 @@ function blastRows(W, label = "TNT ekv.") {
 }
 function table(ctx, w = 1.2, d = 0.7) {
   const m = makeMaterial("woodPlank");
-  const g2 = new THREE19.BoxGeometry(w, 0.04, d);
+  const g2 = new THREE22.BoxGeometry(w, 0.04, d);
   g2.translate(0, -0.02, 0);
-  const t = new THREE19.Mesh(g2, m);
+  const t = new THREE22.Mesh(g2, m);
   t.receiveShadow = true;
   ctx.add(t);
-  const leg = new THREE19.BoxGeometry(0.05, 0.72, 0.05);
+  const leg = new THREE22.BoxGeometry(0.05, 0.72, 0.05);
   for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
-    const l = new THREE19.Mesh(leg, m);
+    const l = new THREE22.Mesh(leg, m);
     l.position.set(x * (w / 2 - 0.05), -0.4, z * (d / 2 - 0.05));
     ctx.add(l);
   }
 }
-var SCENARIOS = [
+var BASE = [
   // ---------------------------------------------------------------------------------------------- jiskra
   {
     id: "spark",
@@ -6129,7 +7691,7 @@ var SCENARIOS = [
           while (acc >= 1) {
             acc -= 1;
             const sp = 14 + 24 * r(), ax = (r() - 0.5) * 0.5, ay = (r() - 0.5) * 0.35;
-            const d = V2(dir.x + ax, dir.y + ay, dir.z + (r() - 0.5) * 0.3).normalize();
+            const d = V4(dir.x + ax, dir.y + ay, dir.z + (r() - 0.5) * 0.3).normalize();
             fx.sp.spawn({ x: at.x, y: at.y, z: at.z, vx: d.x * sp, vy: d.y * sp, vz: d.z * sp, life: 0.4 + r() * 1.2, T: 1700 + 250 * r(), tauC: 0.22 + 0.4 * r(), size: 3e-4 + 6e-4 * r(), drag: 0.25 + 0.35 * r(), grav: 1, seed: r() });
           }
           burst += dt * 14;
@@ -6170,7 +7732,7 @@ var SCENARIOS = [
       ctx.add(c2);
       const at = c2.userData.flameAt;
       const src = ctx.fx.addSource({
-        pos: V2(at.x, at.y - 4e-3, at.z),
+        pos: V4(at.x, at.y - 4e-3, at.z),
         fuel: "paraffin",
         Q: 80,
         D: 0.016,
@@ -6229,7 +7791,7 @@ var SCENARIOS = [
       t.userData.char.uChar.value = 0.55;
       t.userData.char.uGlow.value = 0.8;
       const at = t.userData.flameAt;
-      const src = ctx.fx.addSource({ pos: V2(at.x, at.y - 0.06, at.z), fuel: "woodResin", Q: 4e3, D: 0.065, volume: true, mult: { embers: 0.12, sparks: 0.08 }, taper: 0.9, seed: 3 });
+      const src = ctx.fx.addSource({ pos: V4(at.x, at.y - 0.06, at.z), fuel: "woodResin", Q: 4e3, D: 0.065, volume: true, mult: { embers: 0.12, sparks: 0.08 }, taper: 0.9, seed: 3 });
       return { update() {
       }, info: () => fireRows(src) };
     }
@@ -6248,7 +7810,7 @@ var SCENARIOS = [
       ctx.add(f);
       f.userData.char.uChar.value = 0.45;
       f.userData.char.uGlow.value = 0.7;
-      const src = ctx.fx.addSource({ pos: V2(0, 0.04, 0), fuel: "woodDry", Q: (t) => 15e3 * (0.9 + 0.1 * Math.sin(t * 0.7)), D: 0.32, volume: true, seed: 4 });
+      const src = ctx.fx.addSource({ pos: V4(0, 0.04, 0), fuel: "woodDry", Q: (t) => 15e3 * (0.9 + 0.1 * Math.sin(t * 0.7)), D: 0.32, volume: true, seed: 4 });
       return { update() {
       }, info: () => fireRows(src) };
     }
@@ -6267,7 +7829,7 @@ var SCENARIOS = [
       ctx.add(f);
       f.userData.char.uChar.value = 0.5;
       f.userData.char.uGlow.value = 0.8;
-      const src = ctx.fx.addSource({ pos: V2(0, 0.05, 0), fuel: "woodDry", Q: (t) => 2e5 * (0.92 + 0.08 * Math.sin(t * 0.5)), D: 0.8, volume: true, seed: 5 });
+      const src = ctx.fx.addSource({ pos: V4(0, 0.05, 0), fuel: "woodDry", Q: (t) => 2e5 * (0.92 + 0.08 * Math.sin(t * 0.5)), D: 0.8, volume: true, seed: 5 });
       return { update() {
       }, info: () => fireRows(src) };
     }
@@ -6286,7 +7848,7 @@ var SCENARIOS = [
       ctx.add(f);
       f.userData.char.uChar.value = 0.65;
       f.userData.char.uGlow.value = 1;
-      const src = ctx.fx.addSource({ pos: V2(0, 0.08, 0), fuel: "woodDry", Q: (t) => 3e6 * (0.9 + 0.1 * Math.sin(t * 0.3)), D: 2.4, volume: true, seed: 6 });
+      const src = ctx.fx.addSource({ pos: V4(0, 0.08, 0), fuel: "woodDry", Q: (t) => 3e6 * (0.9 + 0.1 * Math.sin(t * 0.3)), D: 2.4, volume: true, seed: 6 });
       return { update() {
       }, info: () => fireRows(src) };
     }
@@ -6308,8 +7870,8 @@ var SCENARIOS = [
       const { W, D, H } = s.userData;
       const curve = { alpha: T2_ALPHA.ultrafast, Qpeak: 12e6, tPlateau: 600, tau: 400 };
       const tg = Math.sqrt(curve.Qpeak / curve.alpha);
-      const src = ctx.fx.addSource({ pos: V2(0, H * 0.55, 0), fuel: "straw", Q: (t) => hrrCurve(t, curve), footprint: { type: "rect", w: W * 1.05, d: D * 1.05 }, scale: (t) => Math.min(1, 0.15 + Math.sqrt(t / tg)), volume: true, mult: { embers: 2 }, seed: 7 });
-      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: Math.max(W, D) * 1, rate: 1 / 900, glow: 0.6, seed: 2 });
+      const src = ctx.fx.addSource({ pos: V4(0, H * 0.55, 0), fuel: "straw", Q: (t) => hrrCurve(t, curve), footprint: { type: "rect", w: W * 1.05, d: D * 1.05 }, scale: (t) => Math.min(1, 0.15 + Math.sqrt(t / tg)), volume: true, mult: { embers: 2 }, seed: 7 });
+      ctx.fx.addScorch({ pos: V4(0, 0, 0), radius: Math.max(W, D) * 1, rate: 1 / 900, glow: 0.6, seed: 2 });
       return {
         update(dt, t) {
           s.userData.char.uChar.value = Math.min(1, t / (tg + curve.tPlateau));
@@ -6334,9 +7896,9 @@ var SCENARIOS = [
       const p = tirePile({ lod: Math.max(0, ctx.lod - 1), n: 5 });
       ctx.add(p);
       const curve = { alpha: T2_ALPHA.medium, Qpeak: 15e5, tPlateau: 500, tau: 300 };
-      const src = ctx.fx.addSource({ pos: V2(0, 0.25, 0), fuel: "rubber", Q: (t) => hrrCurve(t + 60, curve), D: 0.95, volume: true, seed: 8, mult: { smoke: 1.3 } });
-      const pool = ctx.fx.addSource({ pos: V2(0, 0.01, 0), fuel: "rubber", Q: (t) => 3e5 * Math.min(1, t / 60), D: 1.5, start: 120, volume: false, seed: 9, mult: { smoke: 0.6, embers: 0 } });
-      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: 1.6, rate: 1 / 200, glow: 0.3, seed: 3 });
+      const src = ctx.fx.addSource({ pos: V4(0, 0.25, 0), fuel: "rubber", Q: (t) => hrrCurve(t + 60, curve), D: 0.95, volume: true, seed: 8, mult: { smoke: 1.3 } });
+      const pool = ctx.fx.addSource({ pos: V4(0, 0.01, 0), fuel: "rubber", Q: (t) => 3e5 * Math.min(1, t / 60), D: 1.5, start: 120, volume: false, seed: 9, mult: { smoke: 0.6, embers: 0 } });
+      ctx.fx.addScorch({ pos: V4(0, 0, 0), radius: 1.6, rate: 1 / 200, glow: 0.3, seed: 3 });
       return { update(dt, t) {
         p.userData.char.uChar.value = Math.min(1, 0.2 + t / 900);
         p.userData.char.uGlow.value = 0.5;
@@ -6364,8 +7926,8 @@ var SCENARIOS = [
         const fade = t < sp.duration ? 1 : Math.max(0, 1 - (t - sp.duration) / 12);
         return sp.Q * k * fade;
       };
-      const src = ctx.fx.addSource({ pos: V2(0, 0.01, 0), fuel: "diesel", Q, D: Dt, volume: true, seed: 10, start: 0.5 });
-      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: sp.D * 0.6, rate: 1 / 60, seed: 4 });
+      const src = ctx.fx.addSource({ pos: V4(0, 0.01, 0), fuel: "diesel", Q, D: Dt, volume: true, seed: 10, start: 0.5 });
+      ctx.fx.addScorch({ pos: V4(0, 0, 0), radius: sp.D * 0.6, rate: 1 / 60, seed: 4 });
       return {
         update() {
         },
@@ -6388,12 +7950,12 @@ var SCENARIOS = [
       const c2 = car({ lod: ctx.lod });
       ctx.add(c2);
       const L2 = c2.userData.L / 2;
-      const eng = ctx.fx.addSource({ pos: V2(L2 - 0.75, 0.75, 0), fuel: "vehicle", Q: (t) => hrrCurve(t, { alpha: T2_ALPHA.medium, Qpeak: 15e5, tPlateau: 600, tau: 400 }), footprint: { type: "rect", w: 1.1, d: 1.4 }, volume: true, seed: 11 });
-      const cab = ctx.fx.addSource({ pos: V2(-0.2, 0.95, 0), fuel: "vehicle", start: 240, Q: (t) => hrrCurve(t, { alpha: T2_ALPHA.fast, Qpeak: 35e5, tPlateau: 400, tau: 500 }), footprint: { type: "rect", w: 2.2, d: 1.4 }, volume: true, seed: 12 });
+      const eng = ctx.fx.addSource({ pos: V4(L2 - 0.75, 0.75, 0), fuel: "vehicle", Q: (t) => hrrCurve(t, { alpha: T2_ALPHA.medium, Qpeak: 15e5, tPlateau: 600, tau: 400 }), footprint: { type: "rect", w: 1.1, d: 1.4 }, volume: true, seed: 11 });
+      const cab = ctx.fx.addSource({ pos: V4(-0.2, 0.95, 0), fuel: "vehicle", start: 240, Q: (t) => hrrCurve(t, { alpha: T2_ALPHA.fast, Qpeak: 35e5, tPlateau: 400, tau: 500 }), footprint: { type: "rect", w: 2.2, d: 1.4 }, volume: true, seed: 12 });
       const tires = [];
-      for (const wx of [-1.35, 1.35]) for (const wz of [-0.85, 0.85]) tires.push(ctx.fx.addSource({ pos: V2(wx, 0.05, wz), fuel: "rubber", start: 480 + (wx > 0 ? 0 : 120), end: 1500, Q: (t) => 25e4 * Math.min(1, t / 90), D: 0.5, volume: false, seed: 20 + tires.length, mult: { smoke: 0.5 } }));
-      const fuel = ctx.fx.addSource({ pos: V2(-1.5, 0.01, 0), fuel: "gasoline", start: 420, end: 600, Q: (t) => 8e5 * Math.min(1, t / 20) * Math.max(0, 1 - t / 180), D: 1.6, volume: false, seed: 30 });
-      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: 3.2, rate: 1 / 1200, glow: 0.2, seed: 5 });
+      for (const wx of [-1.35, 1.35]) for (const wz of [-0.85, 0.85]) tires.push(ctx.fx.addSource({ pos: V4(wx, 0.05, wz), fuel: "rubber", start: 480 + (wx > 0 ? 0 : 120), end: 1500, Q: (t) => 25e4 * Math.min(1, t / 90), D: 0.5, volume: false, seed: 20 + tires.length, mult: { smoke: 0.5 } }));
+      const fuel = ctx.fx.addSource({ pos: V4(-1.5, 0.01, 0), fuel: "gasoline", start: 420, end: 600, Q: (t) => 8e5 * Math.min(1, t / 20) * Math.max(0, 1 - t / 180), D: 1.6, volume: false, seed: 30 });
+      ctx.fx.addScorch({ pos: V4(0, 0, 0), radius: 3.2, rate: 1 / 1200, glow: 0.2, seed: 5 });
       return {
         update(dt, t) {
           const u = c2.userData.char;
@@ -6425,11 +7987,11 @@ var SCENARIOS = [
     build(ctx) {
       const b = barrel({ lod: ctx.lod });
       ctx.add(b);
-      const pre = ctx.fx.addSource({ pos: V2(0.3, 0.01, 0.2), fuel: "gasoline", Q: 4e5, D: 0.7, end: 6, volume: true, seed: 40 });
+      const pre = ctx.fx.addSource({ pos: V4(0.3, 0.01, 0.2), fuel: "gasoline", Q: 4e5, D: 0.7, end: 6, volume: true, seed: 40 });
       const M = 25, fb = bleveFireball(M), film = () => ctx.controls.film;
       const Wburst = 0.05;
       let boom2 = false;
-      const vel = V2(0, 0, 0);
+      const vel = V4(0, 0, 0);
       let spin = 0;
       return {
         update(dt, t) {
@@ -6437,7 +7999,7 @@ var SCENARIOS = [
             boom2 = true;
             const W = film() ? 4 : Wburst;
             ctx.fx.addExplosion({
-              pos: V2(0, 0.4, 0),
+              pos: V4(0, 0.4, 0),
               W,
               seed: 3,
               flash: 2e6,
@@ -6450,9 +8012,9 @@ var SCENARIOS = [
             });
             for (let i = 0; i < 7; i++) {
               const a = i * 0.9, R = 2 + i % 3 * 2.2;
-              ctx.fx.addSource({ pos: V2(Math.cos(a) * R, 0.01, Math.sin(a) * R), fuel: "gasoline", Q: 12e4, D: 0.4, start: 0.6, end: 12 + i * 3, volume: false, seed: 50 + i });
+              ctx.fx.addSource({ pos: V4(Math.cos(a) * R, 0.01, Math.sin(a) * R), fuel: "gasoline", Q: 12e4, D: 0.4, start: 0.6, end: 12 + i * 3, volume: false, seed: 50 + i });
             }
-            ctx.fx.addSource({ pos: V2(0, 0.01, 0), fuel: "gasoline", Q: (q) => 6e6 * Math.max(0, 1 - q / 26), D: 3.5, start: 0.4, end: 26, volume: true, seed: 60 });
+            ctx.fx.addSource({ pos: V4(0, 0.01, 0), fuel: "gasoline", Q: (q) => 6e6 * Math.max(0, 1 - q / 26), D: 3.5, start: 0.4, end: 26, volume: true, seed: 60 });
             vel.set(1.5, film() ? 28 : 17, -1);
             spin = 6;
           }
@@ -6472,7 +8034,7 @@ var SCENARIOS = [
             b.userData.char.uGlow.value = 0.5;
           }
         },
-        info: () => [["Zapojen\xE9 palivo", M + " kg (z ~150 kg)", "p\u0159edpoklad \u26052"], ["Ohniv\xE1 koule D", fb.D.toFixed(1) + " m", "CCPS \u26054"], ["Trv\xE1n\xED koule", fb.t.toFixed(2) + " s", "CCPS \u26054"], ["V\xFD\u0161ka st\u0159edu", fb.H.toFixed(1) + " m", "CCPS \u26053"], ["Energie roztr\u017Een\xED", "\u2248 0,05 kg TNT (3 bar, 0,2 m\xB3)", "Brode \u26053"], ...blastRows(ctx.controls.film ? 4 : 0.05).slice(1, 5)]
+        info: () => [["Zapojen\xE9 palivo", M + " kg (z ~150 kg)", "p\u0159edpoklad \u26052"], ["Ohniv\xE1 koule D", fb.D.toFixed(1) + " m", "CCPS \u26054"], ["Trv\xE1n\xED koule", fb.t.toFixed(2) + " s", "CCPS \u26054"], ["V\xFD\u0161ka st\u0159edu", fb.H.toFixed(1) + " m", "CCPS \u26053"], ["Energie roztr\u017Een\xED", "\u2248 0,05 kg TNT (3 bar, 0,2 m\xB3)", "Brode \u26053"], ...blastRows2(ctx.controls.film ? 4 : 0.05).slice(1, 5)]
       };
     }
   },
@@ -6480,7 +8042,7 @@ var SCENARIOS = [
   {
     id: "acetylene",
     group: "Exploze",
-    name: "V\xFDbuch acetylenov\xE9 bomby",
+    name: "V\xFDbuch sm\u011Bsi acetylen + kysl\xEDk (s\xE1\u010Dek)",
     ground: "grass",
     time: "soumrak",
     duration: 12,
@@ -6498,10 +8060,10 @@ var SCENARIOS = [
             boom2 = true;
             b.children[0].visible = false;
             b.children[2].visible = false;
-            ctx.fx.addExplosion({ pos: V2(0, 0.4, 0), W, seed: 7, flash: 3e6, scorch: 0.9, dust: true, dustAlbedo: [0.3, 0.3, 0.25], fireball: { D: fb.D, t: fb.t, T: 3e3, soot: 0 }, smoke: { n: 60, life: 4, albedo: [0.75, 0.75, 0.77], tau: 0.25, buoy: 1.5 }, debris: { n: 24, speed: 30, size: 0.03, hot: 0.2, up: 0.5 }, sparks: { n: 80, speed: 25 } });
+            ctx.fx.addExplosion({ pos: V4(0, 0.4, 0), W, seed: 7, flash: 3e6, scorch: 0.9, dust: true, dustAlbedo: [0.3, 0.3, 0.25], fireball: { D: fb.D, t: fb.t, T: 3e3, soot: 0 }, smoke: { n: 60, life: 4, albedo: [0.75, 0.75, 0.77], tau: 0.25, buoy: 1.5 }, debris: { n: 24, speed: 30, size: 0.03, hot: 0.2, up: 0.5 }, sparks: { n: 80, speed: 25 } });
           }
         },
-        info: () => [["Sm\u011Bs", "C\u2082H\u2082 : O\u2082 = 1 : 2,5, 50 l", ""], ["Hmotnost C\u2082H\u2082", (mC2H2 * 1e3).toFixed(0) + " g", ""], ["\xDA\u010Dinnost \u2192 TNT", "45 %", "odhad \u26052"], ...blastRows(W), ["Ohniv\xE1 koule", fb.D.toFixed(2) + " m / " + (fb.t * 1e3).toFixed(0) + " ms", "objem produkt\u016F \u26052"]]
+        info: () => [["Sm\u011Bs", "C\u2082H\u2082 : O\u2082 = 1 : 2,5, 50 l", ""], ["Hmotnost C\u2082H\u2082", (mC2H2 * 1e3).toFixed(0) + " g", ""], ["\xDA\u010Dinnost \u2192 TNT", "45 %", "odhad \u26052"], ...blastRows2(W), ["Ohniv\xE1 koule", fb.D.toFixed(2) + " m / " + (fb.t * 1e3).toFixed(0) + " ms", "objem produkt\u016F \u26052"]]
       };
     }
   },
@@ -6528,11 +8090,11 @@ var SCENARIOS = [
           if (!boom2 && t > 1.5) {
             boom2 = true;
             g2.visible = false;
-            ctx.fx.addExplosion({ pos: V2(0, 0.05, 0), W, seed: 9, flash: 2e6, scorch: 1.4, dust: true, fireball: { D: fb.D, t: fb.t, T: 2600, soot: 1 }, smoke: { n: 140, life: 7, albedo: [0.11, 0.1, 0.095], tau: 1.6, buoy: 0.7, buoyAcc: 0.25 }, debris: { n: 160, speed: 300, size: 6e-3, hot: 0.9, up: 0.25, T: 1100 }, sparks: { n: 220, speed: 70 } });
-            ctx.fx.debris.burst(V2(0, 0.05, 0), { n: 40, speed: 12, size: 0.05, hot: 0, up: 0.7 });
+            ctx.fx.addExplosion({ pos: V4(0, 0.05, 0), W, seed: 9, flash: 2e6, scorch: 1.4, dust: true, fireball: { D: fb.D, t: fb.t, T: 2600, soot: 1 }, smoke: { n: 140, life: 7, albedo: [0.11, 0.1, 0.095], tau: 1.6, buoy: 0.7, buoyAcc: 0.25 }, debris: { n: 160, speed: 300, size: 6e-3, hot: 0.9, up: 0.25, T: 1100 }, sparks: { n: 220, speed: 70 } });
+            ctx.fx.debris.burst(V4(0, 0.05, 0), { n: 40, speed: 12, size: 0.05, hot: 0, up: 0.7 });
           }
         },
-        info: () => [["N\xE1pl\u0148", "180 g Composition B (RE 1,33)", "\u26054"], ...blastRows(W), ["Rychlost st\u0159epin", v.toFixed(0) + " m/s", "Gurney \u26054"], ["Ohniv\xE1 koule", fb.D.toFixed(2) + " m / " + (fb.t * 1e3).toFixed(0) + " ms", "\u26052"]]
+        info: () => [["N\xE1pl\u0148", "180 g Composition B (RE 1,33)", "\u26054"], ...blastRows2(W), ["Rychlost st\u0159epin", v.toFixed(0) + " m/s", "Gurney \u26054"], ["Ohniv\xE1 koule", fb.D.toFixed(2) + " m / " + (fb.t * 1e3).toFixed(0) + " ms", "\u26052"]]
       };
     }
   },
@@ -6557,10 +8119,10 @@ var SCENARIOS = [
           if (!boom2 && t > 2) {
             boom2 = true;
             d.visible = false;
-            ctx.fx.addExplosion({ pos: V2(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, ring: true, wilson: 2.5 });
+            ctx.fx.addExplosion({ pos: V4(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, ring: true, wilson: 2.5 });
           }
         },
-        info: () => [...blastRows(W), ["Ohniv\xE1 koule", fb.D.toFixed(0) + " m / " + fb.t.toFixed(2) + " s", "\u26052"], ["Rychlost \u010Dela v 10 m", "\u2248 " + (343 * Math.sqrt(1 + 6 * blastSummary(W, [10])[0].Ps / (7 * 101325))).toFixed(0) + " m/s", "Rankine\u2013Hugoniot \u26055"]]
+        info: () => [...blastRows2(W), ["Ohniv\xE1 koule", fb.D.toFixed(0) + " m / " + fb.t.toFixed(2) + " s", "\u26052"], ["Rychlost \u010Dela v 10 m", "\u2248 " + (343 * Math.sqrt(1 + 6 * blastSummary(W, [10])[0].Ps / (7 * 101325))).toFixed(0) + " m/s", "Rankine\u2013Hugoniot \u26055"]]
       };
     }
   },
@@ -6623,18 +8185,26 @@ var SCENARIOS = [
     desc: "Voln\xFD plamen pro lad\u011Bn\xED enginu: zvol palivo, v\xFDkon a pr\u016Fm\u011Br \u2013 v\xFD\u0161ka, n\xE1klon, barva a kou\u0159 se spo\u010D\xEDtaj\xED.",
     cams: [{ name: "celek", pos: [6, 3, 7], target: [0, 1.5, 0] }],
     controls: [
-      { id: "fuel", label: "Palivo", type: "select", value: "woodDry", options: ["woodDry", "diesel", "gasoline", "rubber", "straw", "paraffin", "vehicle", "houseContents"] },
+      { id: "fuel", label: "Palivo", type: "select", value: "woodDry", options: ["woodDry", "diesel", "gasoline", "rubber", "straw", "paraffin", "vehicle", "houseContents", "butane", "acetylene", "acetone", "ethanol"] },
       { id: "Q", label: "V\xFDkon Q [kW]", type: "range", min: 1, max: 2e4, value: 500, log: true },
       { id: "D", label: "Pr\u016Fm\u011Br D [m]", type: "range", min: 0.05, max: 6, value: 1, log: true }
     ],
     build(ctx) {
-      const src = ctx.fx.addSource({ pos: V2(0, 0.01, 0), fuel: "woodDry", Q: () => ctx.controls.Q * 1e3, D: () => ctx.controls.D, volume: true, seed: 90 });
+      const src = ctx.fx.addSource({ pos: V4(0, 0.01, 0), fuel: "woodDry", Q: () => ctx.controls.Q * 1e3, D: () => ctx.controls.D, volume: true, seed: 90 });
       return { update() {
         src.o.fuel = ctx.controls.fuel;
       }, info: () => fireRows(src) };
     }
   }
 ];
+var insertAfter = (arr, id, items) => {
+  arr.splice(arr.findIndex((s) => s.id === id) + 1, 0, ...items);
+};
+var SCENARIOS = [...ITER6_FIRST, ...BASE];
+insertAfter(SCENARIOS, "tires", ITER6_SPREAD);
+insertAfter(SCENARIOS, "diesel", ITER6_LIQUIDS);
+insertAfter(SCENARIOS, "acetylene", [ITER6_BLAST[0]]);
+insertAfter(SCENARIOS, "lab", [ITER6_BLAST[1]]);
 function landscapeFire(ctx, o) {
   const { size, cell } = o, nx = Math.round(size / cell), ny = nx;
   const r = mulberry32(o.seed), f2 = fbm2(o.seed, 3, 5);
@@ -6678,11 +8248,11 @@ function landscapeFire(ctx, o) {
   const I0 = crownInitiation(4, 100);
   const poolN = [40, 70, 110, 180, 240, 300][ctx.tier.id] ?? 180;
   const pool = [];
-  for (let i = 0; i < poolN; i++) pool.push(ctx.fx.addSource({ pos: V2(0, 0, 0), fuel: o.fuel, Q: 0, D: cell, footprint: { type: "rect", w: cell, d: cell }, volume: i < 4, seed: 100 + i, mult: { smoke: 1, embers: 0.6, haze: 0.15, light: 1 } }));
+  for (let i = 0; i < poolN; i++) pool.push(ctx.fx.addSource({ pos: V4(0, 0, 0), fuel: o.fuel, Q: 0, D: cell, footprint: { type: "rect", w: cell, d: cell }, volume: i < 4, seed: 100 + i, mult: { smoke: 1, embers: 0.6, haze: 0.15, light: 1 } }));
   pool.forEach((s) => s.enabled = false);
   const detail = o.kind === "pine" ? forestDetail(ctx, { flora, arr: () => arr, fuel, seed: o.seed + 5 }) : null;
   if (detail) ctx.addDisposable(detail);
-  const scorch = ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: 0.1, seed: 9 });
+  const scorch = ctx.fx.addScorch({ pos: V4(0, 0, 0), radius: 0.1, seed: 9 });
   scorch.mesh.visible = false;
   let stats = { burning: 0, burnt: 0, crown: 0 };
   const cellCenter = (k) => [(k % nx + 0.5) * cell - size / 2, ((k / nx | 0) + 0.5) * cell - size / 2];
@@ -6691,9 +8261,9 @@ function landscapeFire(ctx, o) {
   cv.height = ny;
   const cg = cv.getContext("2d");
   const img = cg.createImageData(nx, ny);
-  const tex = new THREE19.CanvasTexture(cv);
-  tex.magFilter = THREE19.LinearFilter;
-  const bpMat = new THREE19.MeshStandardMaterial({ map: tex, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
+  const tex = new THREE22.CanvasTexture(cv);
+  tex.magFilter = THREE22.LinearFilter;
+  const bpMat = new THREE22.MeshStandardMaterial({ map: tex, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
   bpMat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, sharedUniforms());
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nout vec3 vBpW;").replace("#include <worldpos_vertex>", "#include <worldpos_vertex>\nvBpW = (modelMatrix * vec4(transformed, 1.0)).xyz;");
@@ -6708,7 +8278,7 @@ function landscapeFire(ctx, o) {
   }`);
   };
   bpMat.customProgramCacheKey = () => "burnPlane";
-  const burnPlane = new THREE19.Mesh(new THREE19.PlaneGeometry(size, size), bpMat);
+  const burnPlane = new THREE22.Mesh(new THREE22.PlaneGeometry(size, size), bpMat);
   burnPlane.rotation.x = -Math.PI / 2;
   burnPlane.position.y = 0.02;
   ctx.add(burnPlane);
@@ -6837,7 +8407,7 @@ function houseFire(ctx) {
     rm.tfo = start + tfo;
     const Qin = (t) => t < tfo ? alpha * t * t : rm.Qmax * Math.min(1, 0.6 + (t - tfo) / 120) * (t > tfo + 1500 ? Math.exp(-(t - tfo - 1500) / 400) : 1);
     rm.Qin = Qin;
-    const inside = ctx.fx.addSource({ pos: V2(rm.x, 0.12, rm.z), fuel: "houseContents", start, Q: (t) => Math.min(Qin(t), rm.Qmax * 0.7), footprint: { type: "rect", w: rm.w * 0.6, d: rm.d * 0.6 }, scale: (t) => Math.min(1, 0.2 + t / tfo), L: () => Hw * 0.95, ventLocal: 0.35, volume: false, seed: 200 + k, mult: { smoke: 0.4, embers: 0.2, haze: 0 } });
+    const inside = ctx.fx.addSource({ pos: V4(rm.x, 0.12, rm.z), fuel: "houseContents", start, Q: (t) => Math.min(Qin(t), rm.Qmax * 0.7), footprint: { type: "rect", w: rm.w * 0.6, d: rm.d * 0.6 }, scale: (t) => Math.min(1, 0.2 + t / tfo), L: () => Hw * 0.95, ventLocal: 0.35, volume: false, seed: 200 + k, mult: { smoke: 0.4, embers: 0.2, haze: 0 } });
     srcs.push(inside);
     for (const w of rm.wins) {
       if (w.door) continue;
@@ -6845,7 +8415,7 @@ function houseFire(ctx) {
       const off = { S: [w.u, ud.D / 2], N: [-w.u, -ud.D / 2], E: [ud.W / 2, -w.u], W: [-ud.W / 2, w.u] }[wall];
       const share = w.w * w.h / rm.Ao;
       const s = ctx.fx.addSource({
-        pos: V2(off[0] + n[0] * 0.25, w.y + w.h * 0.55, off[1] + n[2] * 0.25),
+        pos: V4(off[0] + n[0] * 0.25, w.y + w.h * 0.55, off[1] + n[2] * 0.25),
         fuel: "houseContents",
         start: start + tfo,
         Q: (t) => Math.max(0, Qin(t + tfo) - rm.Qmax * 0.6) * share * 0.9 + 2e5 * share,
@@ -6864,7 +8434,7 @@ function houseFire(ctx) {
   mkRoom(1, tStart[1]);
   const roofT = rooms[0].tfo + 600;
   const tc = 300;
-  const roof = ctx.fx.addSource({ pos: V2(-1.5, Hw + 1.8, 0), fuel: "houseContents", start: roofT, Q: (t) => 6e6 * Math.min(1, t / 240) * (1 + (t > tc ? 1.3 * Math.exp(-(t - tc) / 45) : 0)), footprint: { type: "rect", w: 5, d: 4 }, scale: (t) => Math.min(1, 0.2 + t / 300), volume: true, seed: 230, mult: { embers: 2 } });
+  const roof = ctx.fx.addSource({ pos: V4(-1.5, Hw + 1.8, 0), fuel: "houseContents", start: roofT, Q: (t) => 6e6 * Math.min(1, t / 240) * (1 + (t > tc ? 1.3 * Math.exp(-(t - tc) / 45) : 0)), footprint: { type: "rect", w: 5, d: 4 }, scale: (t) => Math.min(1, 0.2 + t / 300), volume: true, seed: 230, mult: { embers: 2 } });
   let collapsed = false;
   const hole = (t) => t < roofT ? 0 : t < roofT + tc ? Math.min(1.8, (t - roofT) / 200 * 1.8) : 3.1 + Math.min(0.9, (t - roofT - tc) / 400);
   return {
@@ -6873,7 +8443,7 @@ function houseFire(ctx) {
       for (const u of [c2.roof, c2.wood]) u.uHole.value.set(-1.6, 0, hr, Hw - 0.3);
       if (!collapsed && t > roofT + tc && t < roofT + tc + 30) {
         collapsed = true;
-        const P = V2(-1.6, Hw, 0), r = mulberry32(77), sp = ctx.fx.sp, em = ctx.tier.emberMul ?? 1;
+        const P = V4(-1.6, Hw, 0), r = mulberry32(77), sp = ctx.fx.sp, em = ctx.tier.emberMul ?? 1;
         for (let i = 0; i < 500 * em * ctx.fx.budgetScale.spark; i++) {
           const a = r() * 6.283, rr = 2.5 * Math.sqrt(r()), dm = 1e-3 + 6e-3 * r() ** 2, vt = Math.sqrt(4 * 250 * 9.81 * dm / 3.6);
           sp.spawn({
@@ -6915,7 +8485,7 @@ function houseFire(ctx) {
             seed: r()
           });
         }
-        ctx.fx.debris.burst(V2(-1.6, Hw + 1.2, 0), { n: 50, speed: 5, size: 0.25, hot: 0.7, up: 0.2, T: 1050 }, r);
+        ctx.fx.debris.burst(V4(-1.6, Hw + 1.2, 0), { n: 50, speed: 5, size: 0.25, hot: 0.7, up: 0.2, T: 1050 }, r);
         roof.brandBurst(45, 2.2, [P.x, Hw + 0.3, P.z]);
         ctx.fx.shake = Math.max(ctx.fx.shake, 0.15);
         ctx.message?.("Z\u0159\xEDcen\xED st\u0159echy nad ob\xFDv\xE1kem: krov pad\xE1 do \u017E\xE1ru, v\xFDtrysk jisker.");
@@ -6952,7 +8522,10 @@ __export(physics_exports, {
   AMB: () => AMB,
   DAMAGE: () => DAMAGE,
   EXPLOSIVES: () => EXPLOSIVES,
+  FLUX_EFFECTS: () => FLUX_EFFECTS,
   FUELS: () => FUELS,
+  MATERIALS: () => MATERIALS,
+  SIGMA: () => SIGMA,
   SOOT_SIGMA: () => SOOT_SIGMA,
   T2_ALPHA: () => T2_ALPHA,
   TNT_J_PER_KG: () => TNT_J_PER_KG,
@@ -6964,36 +8537,65 @@ __export(physics_exports, {
   blastSummary: () => blastSummary,
   bleveFireball: () => bleveFireball,
   byram: () => byram,
+  charDepth: () => charDepth,
   cmf: () => cmf,
   compartment: () => compartment,
+  contactFlux: () => contactFlux,
+  craterRadius: () => craterRadius,
   crownInitiation: () => crownInitiation,
   damageAt: () => damageAt,
+  drainHead: () => drainHead,
+  drainTime: () => drainTime,
+  emissivePower: () => emissivePower,
+  explosionSpec: () => explosionSpec,
+  fireSpec: () => fireSpec,
   flameColorTemp: () => flameColorTemp,
   flameHeight: () => flameHeight,
   flameLuminousIntensity: () => flameLuminousIntensity,
   flameTilt: () => flameTilt,
+  fluxAt: () => fluxAt,
+  fluxEffect: () => fluxEffect,
+  fluxFromFire: () => fluxFromFire,
   gasTNT: () => gasTNT,
+  glassState: () => glassState,
   gurneySphere: () => gurneySphere,
   heFireball: () => heFireball,
   headROS: () => headROS,
   hrrCurve: () => hrrCurve,
   hrrCurveEnd: () => hrrCurveEnd,
+  ignitionDose: () => ignitionDose,
+  laminarFlameHeight: () => laminarFlameHeight,
+  leakFire: () => leakFire,
   lengthToBreadth: () => lengthToBreadth,
+  lineFlameHeight: () => lineFlameHeight,
+  material: () => material,
+  objectFire: () => objectFire,
   overpressure: () => overpressure,
+  pileFire: () => pileFire,
   planck: () => planck,
   plumeAxis: () => plumeAxis,
   plumeMassFlow: () => plumeMassFlow,
+  pointSourceFlux: () => pointSourceFlux,
   poolFire: () => poolFire,
   positivePhase: () => positivePhase,
   puffingFrequency: () => puffingFrequency,
   rosAt: () => rosAt,
+  scaleFire: () => scaleFire,
   scaled: () => scaled,
+  sheetEquilibrium: () => sheetEquilibrium,
+  sheetLook: () => sheetLook,
   shockRadiusAt: () => shockRadiusAt,
   shockSpeed: () => shockSpeed,
   shockTable: () => shockTable,
   smokeColor: () => smokeColor,
   smokeOpticalDepth: () => smokeOpticalDepth,
+  sootRate: () => sootRate,
+  sourceOptions: () => sourceOptions,
   spillFire: () => spillFire,
+  stepDose: () => stepDose,
+  stepSheetTemp: () => stepSheetTemp,
+  timeToIgnition: () => timeToIgnition,
+  torricelli: () => torricelli,
   ventilation: () => ventilation,
   virtualOrigin: () => virtualOrigin,
   windAt: () => windAt,
@@ -7003,6 +8605,7 @@ export {
   ASSETS,
   AirField,
   BillboardSystem,
+  Burnable,
   Debris,
   Environment,
   Explosion,

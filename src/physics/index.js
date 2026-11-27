@@ -5,3 +5,6 @@ export * from './combustion.js';
 export * from './wind.js';
 export * from './blast.js';
 export * from './spread.js';
+export * from './materials.js';
+export * from './heat.js';
+export * from './spec.js';

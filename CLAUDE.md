@@ -11,7 +11,8 @@ Cizí data se nepoužívají (povolené by byly jen CC0 šablony – zatím žá
 ## Navázání a plán
 - Postup a zásady: `STRATEGIE.md`. Plán další iterace (projít každý objekt, texturu, fyziku i průběh): `AUDIT.md`.
   Jak začít novou sešnu (repo, GitHub, artefakt, startovní prompt): `NAVAZANI.md`. Reference: `REFERENCE.md`.
-- Stav k 2026-11-27: iterace 1–5 hotové (poslední commit iterace 5: 53a4ec2, dataset 2c7fedb).
+- Stav k 2026-11-27 pozdě večer: iterace 1–6 hotové. Iterace 6 = obecný model ohně (`MODEL.md`), 24 scénářů, 23 assetů.
+- Obecný model (jeden popis ohně a výbuchu, přestup tepla, vznícení, následky): **`MODEL.md`**. Analýza tématu: `ANALYZA_2026-11-27.md`.
 
 ## Jak spustit
 ```bash
@@ -37,7 +38,8 @@ Prohlížeč: otevři `dist/index.html` dvojklikem (funguje z `file://`).
 Parametry URL: `?scn=<id>&tier=0..5&wind=0..3&o2=0..1&t=<s>&ui=0`.
 
 ## Mapa kódu (detail v ARCHITECTURE.md)
-- `src/physics/` – čisté funkce bez Three.js (palivo, plamen, kouř, vítr, výbuch, šíření). Testovatelné v Node.
+- `src/physics/` – čisté funkce bez Three.js (palivo, plamen, kouř, vítr, výbuch, šíření; od iterace 6 materiály, přestup
+  tepla a vznícení, jeden popis ohně a výbuchu `spec.js`). Testovatelné v Node.
 - `src/fx/` – vizuální efekty (shadery, částice, post-proces).
 - `src/assets/` – procedurální modely s LOD a materiál ohořelosti.
 - `src/scenarios/` – use casy = složení assetů + efektů z fyzikálního výpočtu.
@@ -80,6 +82,18 @@ Parametry URL: `?scn=<id>&tier=0..5&wind=0..3&o2=0..1&t=<s>&ui=0`.
   ve vrstvě `LAYER_SHADOW` (7); nový instancovaný porost musí udělat totéž (D-034).
 - Zvuk se zapíná jen gestem; `fx.audioEvents` se bez zvuku drží na 64 (hostitel bez FireAudio je nevybírá).
 - Objemový kouř: kvádr musí mít poloměr ≥ 2 b, jinak jsou vidět svislé hrany (D-036).
+
+- Volby zdroje se skládají `{ end: Infinity, ...o }`: klíč `end: undefined` zdroj tiše vypne. `sourceOptions` proto `end`
+  vynechává, když doba hoření není konečná; při ručním skládání voleb totéž.
+- Hořlavé předměty (`fx.addBurnable`) sčítají dávku jen při skutečné simulaci (`__fire.ff`); skok času (`a.t = …`) je
+  přeskočí. Testy scénářů s `Burnable` proto simulují, neskáčou (viz `tools/test.mjs`, `chain`, `acetyleneCyl`).
+- Sálání v blízkém poli: body musí ležet na přivráceném povrchu plamene, ne na ose – jinak vychází 2–3× méně a nic se
+  nevznítí (D-043).
+- Denní jas plamene řídí strop v `App.updateExposure` (D-039); v noci se neuplatní. `lumRef` (výbuchy) se netýká.
+- `applyChar({ metal: true })`: bez nastavení `uTmax` se stav plechu odvodí z `uChar/uGlow` (starší scénáře).
+- Scénář se zrychleným časem a výbuchem musí před výbuchem přepnout `ctx.setTimeScale(1)`, jinak trosky letí × timeScale.
+- Commons API omezuje rychlost i při jednom dotazu za pár sekund (sdílená adresa): skript musí čekat a opakovat (6–60 s),
+  stažení 120 kandidátů trvá přes hodinu; hledání podle kategorie (`generator=categorymembers`) je přesnější než text.
 
 ## Co nedělat
 - Nepřidávat CDN závislosti (artefakt i `file://` musí běžet offline).

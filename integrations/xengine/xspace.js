@@ -9,6 +9,8 @@
 import { FIRE_PRESETS, EXPLOSION_PRESETS } from './presets.js';
 import * as C from '../../src/physics/combustion.js';
 import { FUELS } from '../../src/physics/fuels.js';
+import { MATERIALS } from '../../src/physics/materials.js';
+import { timeToIgnition } from '../../src/physics/heat.js';
 
 /** Popis polí (pro formats.js a dokument polí; svodná je přepíše do jedné pravdy xEngine). */
 export const FIRE_COMPONENTS = {
@@ -18,6 +20,15 @@ export const FIRE_COMPONENTS = {
     node: { type: 'string', doc: 'id uzlu kostry prefabu, se kterým se oheň veze' },
     offset: { type: 'vec3', unit: 'm', default: [0, 0, 0], doc: 'posun od uzlu / počátku prefabu' },
     scale: { type: 'number', min: 0.25, max: 2, default: 1, doc: 'násobek výkonu Q (průměr a výška plamene se dopočtou)' },
+  },
+  // Návrh F-10 (iterace 6): hořlavý předmět – oheň ho ohřívá, sčítá se dávka do vznícení a pak hoří vlastním ohněm
+  // z materiálu a hmotnosti (FireLab fx/burnable.js). Nehořlavé materiály (plech, sklo, zdivo) jen mění vzhled.
+  flammable: {
+    material: { type: 'string', required: true, enum: () => Object.keys(MATERIALS), doc: 'materiál z FireLab MATERIALS (zapálení, výkon, zbytek)' },
+    mass: { type: 'number', unit: 'kg', min: 0.01, doc: 'hmotnost hořlavé části' },
+    area: { type: 'number', unit: 'm²', min: 0.001, doc: 'hořící povrch (zhruba plocha stěn předmětu)' },
+    size: { type: 'number', unit: 'm', min: 0.01, doc: 'největší rozměr (určuje dobu rozhoření)' },
+    ignited: { type: 'boolean', default: false, doc: 'hoří od načtení' },
   },
   explosive: {
     preset: { type: 'string', required: true, enum: () => Object.keys(EXPLOSION_PRESETS), doc: 'předvolba výbuchu FireLab' },
@@ -35,6 +46,9 @@ export const CODES = {
   EXPLOSIVE_UNKNOWN_PRESET: 'neznámá předvolba výbuchu',
   EXPLOSIVE_BAD_TRIGGER: 'neznámý spouštěč výbuchu',
   EXPLOSIVE_CHAIN: 'jiná výbušnina blíž než 2 m (řetězová reakce)',
+  FLAMMABLE_UNKNOWN_MATERIAL: 'neznámý materiál hořlavého předmětu',
+  FLAMMABLE_MISSING_SIZE: 'hořlavý předmět potřebuje mass, area a size',
+  FLAMMABLE_NEAR_FIRE: 'předmět se od sousedního ohně vznítí do minuty',
 };
 
 /**
@@ -44,7 +58,7 @@ export const CODES = {
  */
 export function fireNumbers(preset, scale = 1) {
   const p = FIRE_PRESETS[preset]; if (!p) return null;
-  const Q0 = typeof p.Q === 'function' ? p.Q(10) : p.Q, Q = Q0 * scale, D = p.D * Math.sqrt(scale);
+  const Q0 = p.Qpeak ?? (typeof p.Q === 'function' ? p.Q(10) : p.Q), Q = Q0 * scale, D = p.D * Math.sqrt(scale); // Qpeak: vrchol křivky u předvoleb z popisu
   const L = p.L ? p.L(Q) * Math.pow(scale, 0.4) : C.flameHeight(Q, D);
   const chi = FUELS[p.fuel]?.chiR ?? 0.3, R = (q) => Math.sqrt((chi * Q) / (4 * Math.PI * q));
   return { fuel: p.fuel, Q, D, L, R25: R(2500), R5: R(5000), R125: R(12500) };
@@ -72,3 +86,18 @@ export function checkExplosive(c, ctx = {}) {
   if (ctx.nearestExplosive != null && ctx.nearestExplosive < 2) out.push(f('EXPLOSIVE_CHAIN', 'warn', `${ctx.nearestExplosive.toFixed(2)} m`));
   return out;
 }
+
+/**
+ * Kontrola komponenty `flammable`. ctx = { flux [W/m²] tepelný tok v místě předmětu od ohňů levelu (fire.heatFlux) }.
+ * Vrací nálezy; `FLAMMABLE_NEAR_FIRE` je informace pro autora levelu (řetěz vznícení může být záměr).
+ */
+export function checkFlammable(c, ctx = {}) {
+  const m = c && MATERIALS[c.material];
+  if (!m) return [f('FLAMMABLE_UNKNOWN_MATERIAL', 'error', String(c?.material))];
+  const out = [];
+  if (m.mode !== 'inert' && !(c.mass > 0 && c.area > 0 && c.size > 0)) out.push(f('FLAMMABLE_MISSING_SIZE', 'error'));
+  if (ctx.flux != null) { const t = timeToIgnition(ctx.flux, m); if (t < 60) out.push(f('FLAMMABLE_NEAR_FIRE', 'info', `${(ctx.flux / 1000).toFixed(1)} kW/m² → ${t.toFixed(0)} s`)); }
+  return out;
+}
+/** Doba do vznícení materiálu při toku q [W/m²] (pro nástroje a nápovědu v editoru). */
+export const ignitionTime = (material, q) => timeToIgnition(q, material);

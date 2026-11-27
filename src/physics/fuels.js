@@ -38,11 +38,11 @@ export const FUELS = {
     Tflame: 1200, water: 0.45, tar: 0.15, embers: 1.0, sparks: 0.2, conf: 3,
   },
   diesel: {
-    fv: 2.0, Tlum: 1380, name: 'Nafta', dHc: 44.4e6, mInf: 0.045, kBeta: 2.1, rho: 840, ys: 0.059, yCO: 0.012, chiR: 0.35,
+    sootBlack: 0.96, fv: 2.0, Tlum: 1380, name: 'Nafta', dHc: 44.4e6, mInf: 0.045, kBeta: 2.1, rho: 840, ys: 0.059, yCO: 0.012, chiR: 0.35,
     Tflame: 1150, water: 0.0, tar: 0.15, embers: 0, sparks: 0, conf: 4,
   },
   gasoline: {
-    fv: 1.5, Tlum: 1400, name: 'Benzín', dHc: 43.7e6, mInf: 0.055, kBeta: 2.1, rho: 740, ys: 0.038, yCO: 0.01, chiR: 0.35,
+    sootBlack: 0.92, fv: 1.5, Tlum: 1400, name: 'Benzín', dHc: 43.7e6, mInf: 0.055, kBeta: 2.1, rho: 740, ys: 0.038, yCO: 0.01, chiR: 0.35,
     Tflame: 1200, water: 0.0, tar: 0.05, embers: 0, sparks: 0, conf: 4,
   },
   rubber: {
@@ -50,7 +50,7 @@ export const FUELS = {
     Tflame: 1100, water: 0.0, tar: 0.5, embers: 0.1, sparks: 0.05, conf: 3,
   },
   vehicle: {
-    fv: 1.8, Tlum: 1360, name: 'Osobní auto (plasty, pryž, palivo)', dHc: 25.0e6, rho: 0, ys: 0.08, yCO: 0.04, chiR: 0.35,
+    sootBlack: 0.92, fv: 1.8, Tlum: 1360, name: 'Osobní auto (plasty, pryž, palivo)', dHc: 25.0e6, rho: 0, ys: 0.08, yCO: 0.04, chiR: 0.35,
     Tflame: 1150, water: 0.05, tar: 0.35, embers: 0.2, sparks: 0.3, conf: 3,
   },
   houseContents: {
@@ -72,6 +72,25 @@ export const FUELS = {
     fv: 0.4, name: 'Suché křoví (keře, tráva)', dHc: 18.0e6, rho: 0, ys: 0.012, yCO: 0.04, chiR: 0.25,
     Tflame: 1180, water: 0.25, tar: 0.15, embers: 0.7, sparks: 0.1, conf: 3,
     w: 1.5, R0: 0.02, wa: 1.3, wb: 1.4, tr: 40,
+  },
+  // --- doplněno v iteraci 6 (zobecnění palety): plyny a rozpouštědla. Výtěžky sazí Tewarson (SFPE), louže Babrauskas.
+  butane: {
+    fv: 3.0, name: 'Butan (zapalovač)', dHc: 45.7e6, rho: 580, ys: 0.029, yCO: 0.007, chiR: 0.28,
+    Tflame: 1400, water: 0.0, tar: 0.0, embers: 0, sparks: 0, conf: 4,
+  },
+  acetylene: {
+    // acetylen na vzduchu: nejsazovější běžný plyn (ys ≈ 0,096), oslnivě žlutý plamen a vlající černé vločky sazí
+    sootBlack: 1, fv: 6.0, Tlum: 1500, name: 'Acetylen (na vzduchu)', dHc: 48.2e6, rho: 1.1, ys: 0.096, yCO: 0.04, chiR: 0.4,
+    Tflame: 1350, water: 0.0, tar: 0.1, embers: 0, sparks: 0, conf: 4,
+  },
+  acetone: {
+    fv: 0.8, Tlum: 1350, name: 'Aceton', dHc: 25.8e6, mInf: 0.041, kBeta: 1.9, rho: 790, ys: 0.014, yCO: 0.003, chiR: 0.27,
+    Tflame: 1250, water: 0.0, tar: 0.0, embers: 0, sparks: 0, conf: 4,
+  },
+  ethanol: {
+    // líh: téměř nesvítivý modrý plamen (ys ≈ 0,008), ve dne skoro neviditelný
+    fv: 0.15, name: 'Líh (etanol)', dHc: 26.8e6, mInf: 0.015, kBeta: 100, rho: 790, ys: 0.008, yCO: 0.001, chiR: 0.2,
+    Tflame: 1500, water: 0.0, tar: 0.0, embers: 0, sparks: 0, conf: 4,
   },
   steelSpark: {
     fv: 0, name: 'Ocelová jiskra (broušení)', dHc: 0, rho: 7850, ys: 0, yCO: 0, chiR: 1, Tflame: 1800,

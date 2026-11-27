@@ -29,10 +29,21 @@ Spark kreslí i hořící oharky (typ 2); jejich plamínek a kouřová stopa jdo
 `App.step` volá `audio.update(fx, camera)`. Porost: tři prstence LOD a stín z náhrad ve vrstvě `LAYER_SHADOW` (D-034).
 `integrations/xengine/xspace.js` – pole a kontroly dat ohně pro xEngine (bez Three.js).
 
+## Iterace 6: obecný model (podrobně `MODEL.md`)
+- `src/physics/materials.js` – 16 materiálů z pohledu ohně (zapálení, výkon z povrchu, šíření, zbytek).
+- `src/physics/heat.js` – tepelný tok v bodě (`fluxFromFire`, `fluxAt`), doba do vznícení, dávka (FTP), ohřev plechu,
+  usazování sazí, zuhelnatění, sklo.
+- `src/physics/spec.js` – jeden popis ohně (`fireSpec`, `scaleFire`, `sourceOptions`) a výbuchu (`explosionSpec`), výtok otvorem.
+- `src/fx/burnable.js` – `Burnable`: hořlavý nebo ohřívaný předmět. `FXWorld.addBurnable`, `heatFlux`, `smokeAt`, `fireList`.
+- `src/fx/char.js` – volba `metal: true` (stavy lakovaného plechu). `src/assets/props2.js` – rekvizity iterace 6.
+- `src/scenarios/iter6.js` – 6 scénářů; vkládají se do seznamu v `scenarios/index.js`. Scénář smí volat `ctx.setTimeScale`.
+- Nové volby zdroje: `volTongues` (0 = jedna obálka bez jazyků), `shapeK`, `volSoot`; `App.updateExposure` má denní strop jasu.
+
 ## Tok jednoho snímku
 1. `App.step(dt)` – čas scénáře `t += dt × timeScale` (průběh požáru), efekty běží v reálném čase `dt`.
 2. `scenario.update(dtS, t)` – mění zdroje (výkon, ohořelost, šíření).
-3. `FXWorld.update(dt)` – rozpočty (poptávka zdrojů → škála), přidělení objemů podle důležitosti,
+3. `FXWorld.update(dt)` – rozpočty (poptávka zdrojů → škála), přidělení objemů podle důležitosti, po zdrojích krok
+   hořlavých předmětů (`Burnable.update`: tok → dávka → vznícení; plech: teplota, saze),
    `FireSource.update` spočítá fyziku (Q, L, náklon, T, pulzace, τ kouře, svítivost) a vypustí částice,
    `Explosion.update` (ohnivá koule, rázová vlna z tabulky R(t), prach, trosky, záblesk, u velkých náloží pole proudění
    houbového mraku `flow` → `air.extraUp`),

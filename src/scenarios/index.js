@@ -13,6 +13,7 @@ import { mulberry32 } from '../engine/rng.js';
 import { fbm2 } from '../assets/textures.js';
 import { PRE, FLAMEK, sharedUniforms, GLSL_COMMON } from '../fx/shared.js';
 import { forestDetail } from './forestDetail.js';
+import { ITER6_FIRST, ITER6_LIQUIDS, ITER6_BLAST, ITER6_SPREAD } from './iter6.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 export const fmtW = (q) => (q >= 1e6 ? (q / 1e6).toFixed(2) + ' MW' : q >= 1e3 ? (q / 1e3).toFixed(1) + ' kW' : q.toFixed(0) + ' W');
@@ -47,7 +48,7 @@ function table(ctx, w = 1.2, d = 0.7) {
 }
 
 // =====================================================================================================
-export const SCENARIOS = [
+const BASE = [
   // ---------------------------------------------------------------------------------------------- jiskra
   {
     id: 'spark', group: 'Zážeh', name: 'Jiskra (broušení oceli)', ground: 'concrete', time: 'noc',
@@ -276,7 +277,7 @@ export const SCENARIOS = [
   },
   // ---------------------------------------------------------------------------------------------- acetylen
   {
-    id: 'acetylene', group: 'Exploze', name: 'Výbuch acetylenové bomby', ground: 'grass', time: 'soumrak', duration: 12, loop: true,
+    id: 'acetylene', group: 'Exploze', name: 'Výbuch směsi acetylen + kyslík (sáček)', ground: 'grass', time: 'soumrak', duration: 12, loop: true,
     desc: '50 l PE sáček se stechiometrickou směsí C₂H₂ + O₂ (≈ 15 g C₂H₂). Detonace → modrobílý záblesk ~3 000 K, téměř bez sazí, ostrá tlaková vlna.',
     cams: [{ name: 'celek', pos: [5, 2, 6], target: [0, 0.6, 0] }, { name: 'hráč', pos: [9, 1.7, 9], target: [0, 0.6, 0] }],
     build(ctx) {
@@ -362,7 +363,7 @@ export const SCENARIOS = [
     desc: 'Volný plamen pro ladění enginu: zvol palivo, výkon a průměr – výška, náklon, barva a kouř se spočítají.',
     cams: [{ name: 'celek', pos: [6, 3, 7], target: [0, 1.5, 0] }],
     controls: [
-      { id: 'fuel', label: 'Palivo', type: 'select', value: 'woodDry', options: ['woodDry', 'diesel', 'gasoline', 'rubber', 'straw', 'paraffin', 'vehicle', 'houseContents'] },
+      { id: 'fuel', label: 'Palivo', type: 'select', value: 'woodDry', options: ['woodDry', 'diesel', 'gasoline', 'rubber', 'straw', 'paraffin', 'vehicle', 'houseContents', 'butane', 'acetylene', 'acetone', 'ethanol'] },
       { id: 'Q', label: 'Výkon Q [kW]', type: 'range', min: 1, max: 20000, value: 500, log: true },
       { id: 'D', label: 'Průměr D [m]', type: 'range', min: 0.05, max: 6, value: 1, log: true },
     ],
@@ -372,6 +373,14 @@ export const SCENARIOS = [
     },
   },
 ];
+
+// Iterace 6: nové use casy se vkládají na svá místa v seznamu (pořadí skupin = pořadí prvního výskytu).
+const insertAfter = (arr, id, items) => { arr.splice(arr.findIndex((s) => s.id === id) + 1, 0, ...items); };
+export const SCENARIOS = [...ITER6_FIRST, ...BASE];
+insertAfter(SCENARIOS, 'tires', ITER6_SPREAD);
+insertAfter(SCENARIOS, 'diesel', ITER6_LIQUIDS);
+insertAfter(SCENARIOS, 'acetylene', [ITER6_BLAST[0]]);
+insertAfter(SCENARIOS, 'lab', [ITER6_BLAST[1]]);
 
 // =====================================================================================================
 /** Krajinný požár: porost, mapa paliva, časy příchodu (Dijkstra), bazén zdrojů pro hořící buňky. */

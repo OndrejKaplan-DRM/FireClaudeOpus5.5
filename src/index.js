@@ -24,3 +24,4 @@ export { Environment, TIMES } from './engine/env.js';
 export { ASSETS, assetById } from './assets/index.js';
 export { SCENARIOS, scenarioById } from './scenarios/index.js';
 export * as physics from './physics/index.js';
+export { Burnable } from './fx/burnable.js';

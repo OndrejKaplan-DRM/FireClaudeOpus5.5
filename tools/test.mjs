@@ -18,13 +18,16 @@ for (const [id, dur] of ids) {
   if (only && !only.includes(id)) continue;
   const e0 = errs.length, ts = Date.now();
   // explozím dát čas po spuštění, dlouhým scénářům posunout čas
-  const sec = { barrel: 7.2, acetylene: 1.7, grenade: 1.62, tnt: 2.6, forest: 4, brush: 4 }[id] ?? 3;
+  const sec = { barrel: 7.2, acetylene: 1.7, grenade: 1.62, tnt: 2.6, forest: 4, brush: 4, lighter: 2.6, blastLab: 2.2, chain: 40, leak: 30, dieselBarrel: 20, acetyleneCyl: +(process.env.CYL_SEC ?? 21) }[id] ?? 3;
   const seek = { haystack: 300, tires: 200, car: 700, forest: 1800, brush: 500, house: 700, diesel: 20 }[id] ?? 0;
   const res = await page.evaluate(([id, sec, seek]) => { try {
     const f = window.__fire, a = f.app;
     a.loadScenario(id);
     if (seek) { a.t = seek; a.fx.scnTime = seek; }
-    const t = performance.now(); f.ff(sec); const simMs = performance.now() - t;
+    const t = performance.now();
+    if (id === 'acetyleneCyl') { for (let i = 0; i < 60 && !/roztr/.test(a.run.info()[0][1]); i++) f.ff(1, 1 / 30); f.ff(0.45); } // do roztržení lahve + 0,45 s
+    else f.ff(sec);
+    const simMs = performance.now() - t;
     f.settle();
     const url = f.shot();
     const st = a.stats();

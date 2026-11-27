@@ -19,6 +19,8 @@ import { LAYER_FX } from '../engine/pipeline.js';
 /** Normální rozdělení N(0,1) z generátoru r (Box–Muller). */
 const gauss = (r) => Math.sqrt(-2 * Math.log(Math.max(r(), 1e-9))) * Math.cos(6.2831853 * r());
 
+import { Burnable } from './burnable.js';
+import { fluxFromFire } from '../physics/heat.js';
 export const FLAME_LUM = 20000; // jas plamene [cd/m²] při 1500 K a ε = 1 (po vizuální kompresi teploty) – viz DECISIONS D-010
 
 export class FXWorld {
@@ -26,6 +28,7 @@ export class FXWorld {
     this.renderer = renderer; this.scene = scene; this.pipeline = pipeline;
     this.air = new AirField();
     this.time = 0; this.scnTime = 0; this.sources = []; this.explosions = []; this.decals = [];
+    this.burnables = []; this.dtReal = 0; // hořlavé a ohřívané předměty (fx/burnable.js)
     this.audioEvents = []; // lupnutí pro zvuk (FireAudio je vybírá každý snímek; bez zvuku se drží max. 64)
     this.gustNoise = fbm1(77); this.o2 = 1; this.vent = C.ventilation(1);
     this.shake = 0; this.flameLum = FLAME_LUM; this.lumRef = 12000; // lumRef: původní klíč 16/expozice (výbuchy, jiskry, žhnutí) – vzhled sudu beze změny
@@ -71,7 +74,7 @@ export class FXWorld {
   clear() {
     for (const s of this.sources) s.dispose?.();
     for (const e of this.explosions) e.dispose?.();
-    this.sources = []; this.explosions = [];
+    this.sources = []; this.explosions = []; this.burnables = [];
     this.bb.clear(); this.sp.clear(); this.hz?.clear(); this.debris.clear();
     for (const d of this.decals) d.dispose(); this.decals = [];
     this.vols.forEach((v) => (v.mesh.visible = false)); this.balls.forEach((v) => (v.mesh.visible = false)); this.svols?.forEach((v) => (v.mesh.visible = false));
@@ -80,6 +83,34 @@ export class FXWorld {
   addSource(opts) { const s = new FireSource(this, opts); this.sources.push(s); return s; }
   addExplosion(opts) { const e = new Explosion(this, opts); this.explosions.push(e); return e; }
   addScorch(opts) { const d = new Scorch(this.scene, opts); this.decals.push(d); return d; }
+  /** Hořlavý nebo ohřívaný předmět (vznícení tepelným tokem, vlastní hoření, ohoření, saze na plechu). */
+  addBurnable(opts) { const b = new Burnable(this, opts); this.burnables.push(b); return b; }
+  /** Popis hořících zdrojů pro výpočet tepelného toku (physics/heat.js). */
+  fireList(skip = null) {
+    const out = [], cw = Math.cos(this.air.dir), sw = Math.sin(this.air.dir);
+    for (const s of this.sources) {
+      if (s === skip || !s.active || !s.ph || s.ph.Q <= 1) continue;
+      out.push({ x: s.pos.x, y: s.pos.y, z: s.pos.z, Q: s.ph.Q, D: s.D, L: s.ph.L, chiR: s.fuel.chiR, theta: s.ph.tilt.theta, wx: cw, wz: sw, sooty: s.fuel.ys > 0.03, tau: s.ph.tau, b: s.ph.b });
+    }
+    return out;
+  }
+  /** Tepelný tok [W/m²] v bodě p = [x, y, z] od všech ohňů (sálání + kontakt s plamenem + horký oblak). */
+  heatFlux(p, skip = null) {
+    let rad = 0, conv = 0, Tg = 293, inFlame = false;
+    for (const f of this.fireList(skip)) { const q = fluxFromFire(f, p); rad += q.rad; conv += q.conv; if (q.Tg > Tg) Tg = q.Tg; inFlame = inFlame || q.inFlame; }
+    return { rad, conv, total: rad + conv, Tg, inFlame };
+  }
+  /** Optická hustota kouře [1/m] v bodě (oblak nad zdrojem, Gaussův profil, ředění s výškou) – pro usazování sazí. ★2 */
+  smokeAt(p) {
+    let k = 0;
+    for (const f of this.fireList()) {
+      const s = Math.sin(f.theta), c = Math.cos(f.theta), dx = p[0] - f.x, dy = p[1] - f.y, dz = p[2] - f.z;
+      const al = dx * s * f.wx + dy * c + dz * s * f.wz; if (al <= 0) continue;
+      const r2 = dx * dx + dy * dy + dz * dz - al * al, bl = 0.12 * al + f.D * 0.5;
+      k += (f.tau / Math.max(2 * f.b, 0.2)) * Math.exp(-r2 / (bl * bl)) * Math.min(1, Math.pow(f.L / al, 1.2) + 0.25);
+    }
+    return k;
+  }
 
   update(dt, camera) {
     this.time += dt; GTIME.value = this.time;
@@ -110,6 +141,7 @@ export class FXWorld {
     }
     for (const s of this.sources) s.update(dt, this.time);
     this.sources = this.sources.filter((s) => !s.dead);
+    this.dtReal = dt; for (const b of this.burnables) b.update();
     let bi = 0;
     this.balls.forEach((v) => (v.mesh.visible = false));
     for (const e of this.explosions) e.update(dt, this.time, e.wantsBall() && bi < this.balls.length ? this.balls[bi++] : null, camera);
@@ -288,7 +320,7 @@ export class FireSource {
       u.uFlame2.value.z = Math.max(Math.min(tier.flameEdge ?? 0.14, edgeM / this._volR), (1.3 * u.uStepLen.value) / this._volR * 0.5);
       u.uPuff.value.set(ph.fp, this.o.puffAmp ?? 0.5);
       u.uShape.value.y = this.o.taper ?? 0.85; u.uShape.value.z = this.o.baseWide ?? 0.25; u.uShape.value.w = this.o.neck ?? 0.2;
-      u.uSoot.value = Math.min(1.0, f.ys * ph.vent.sootMul * 18);
+      u.uSoot.value = Math.min(1.0, f.ys * ph.vent.sootMul * 18) * (this.o.volSoot ?? 1); // volSoot: podíl chladných sazí kreslených přímo v objemu plamene
       u.uBlue.value = this.o.blue; u.uLift.value = ph.vent.lift;
     }
     // --- jazyky plamene (sprity)

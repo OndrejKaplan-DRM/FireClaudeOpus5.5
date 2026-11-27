@@ -81,3 +81,90 @@ jen kontrola barvy, tvar a okraje měří špatně.
 | Sazové plameny (pneumatiky, nafta) občas **vyvrhnou černý chuchvalec** nad špičkou | sazový výron při vzplanutí (τ 3–6, albedo 0,05) | ★2 |
 | Výbuch zblízka: stovky **tmavých hrud** v oblaku, tenké výtrysky zeminy | hroudy jako trosky (balistika), výtrysky z menších a hustších částic | ★3 |
 | 1 t TNT: **houbový mrak** (prstenec + prachový sloupec); Wilsonův dóm jako tenký světlý plášť s jasným lemem | pole proudění termiky (Morton–Taylor–Turner), dóm s lemem a průsvitným středem | stoupání ★2, dóm umělecký ★1 |
+
+
+---
+
+# Paleta iterace 6 – 42 fotografií (2026-11-27 večer)
+
+Ondřej: *„Udělej si paletu 40ti fotek, které se tohoto tématu týkají, a izoluj a pochop a rozpracuj jednotlivé
+charakteristiky do obecného enginu.“* Z Wikimedia Commons staženo 123 kandidátů (hledání textem i podle kategorií, jen
+licence CC a volné dílo), ručně z nich vybráno **42 k tématu** (minulý výběr byl automatický a část snímků byla mimo:
+mapa odlesnění, ptáci na větvi, gril). **Obrázky nejsou v repu** (D-028); seznam s autory a licencemi a změřená čísla
+jsou v `dataset/reference/palette6.json`. Skripty: stahování a výběr byly jen v sandboxu (`getrefs.py`, `palette.py`).
+
+## Seznam
+Sloupec „plamen“ = odstín / sytost / zobrazený jas plamene lineárně (medián–9. decil) u pixelů plamene (R > 190, R − B > 70).
+
+| Kategorie | Soubor | Co ukazuje | Plamen | Autor | Licence | Zdroj |
+|---|---|---|---|---|---|---|
+| zážeh | `p01_lighterSpark_0.jpg` | jiskry zapalovače | 24° / 0.73 / 0.52–0.69 | Ricardo Liberato | CC BY-SA 2.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Zippo_Detail.jpg) |
+| zážeh | `p02_dLighter_2.jpg` | plamen zapalovače | — | The original uploader was Kallemax at En | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:Silva_Helios_rope_burner_lighter.jpg) |
+| zážeh | `p03_candle_0.jpg` | svíčka | 20° / 0.62 / 0.53–0.58 | PattayaPatrol | CC BY-SA 4.0 | [odkaz](https://commons.wikimedia.org/wiki/File:DFC_6183_A_single_tealight_glows_warmly_inside_a_glass_holder_surrounded_by_scattered_pink_and_purple_bougainvillea_petals.jpg) |
+| oheň | `p04_campfire_0.jpg` | plameny v noci | 19° / 0.98 / 0.43–0.77 | Marc-Lautenbacher | CC BY-SA 4.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Campfire_flames_at_night.jpg) |
+| oheň | `p05_campfire_1.jpg` | odtržený jazyk | 5° / 1.00 / 0.19–0.28 | SutKartonu | CC0 | [odkaz](https://commons.wikimedia.org/wiki/File:Midnight_Campfire_at_the_Beach_2026.jpg) |
+| oheň | `p06_campfire_2.jpg` | jiskry nad ohništěm | 12° / 0.81 / 0.38–0.71 | Thibaud Furst | CC BY-SA 3.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Campfire_(79586115).jpeg) |
+| oheň | `p07_campfire_3.jpg` | polena a žhavé uhlí | 10° / 0.96 / 0.33–0.65 | Tony Webster from Portland, Oregon, Unit | CC BY 2.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Campfire_(15621989189).jpg) |
+| oheň | `p08_campfire_4.jpg` | malý oheň z dálky | 16° / 0.98 / 0.40–0.66 | MartinSpamer | CC BY-SA 3.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Wood_campfire.JPG) |
+| uhlíky | `p09_cEmbers_0.jpg` | žhavé lože | 4° / 0.96 / 0.22–0.38 | JanReschuh | CC BY-SA 3.0 | [odkaz](https://commons.wikimedia.org/wiki/File:0507_HRO_Strandparty_PICT5896.jpg) |
+| uhlíky | `p10_cEmbers_4.jpg` | roj jisker | 9° / 0.93 / 0.31–0.62 | Thomas Bresson | CC BY 3.0 | [odkaz](https://commons.wikimedia.org/wiki/File:2013-06-12_23-01-22-braises.jpg) |
+| uhlíky | `p11_cEmbers_5.jpg` | uhlí s plamínkem | 13° / 0.94 / 0.33–0.53 | cogdogblog | CC BY 2.0 | [odkaz](https://commons.wikimedia.org/wiki/File:2013-365-28_Complexity_Never_Seen_(8425465941).jpg) |
+| jiskry | `p12_grinder_1.jpg` | bruska – vějíř | 28° / 0.92 / 0.44–0.74 | U.S. Navy photo by Mass Communication Sp | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:US_Navy_100715-N-0569K-026_Aviation_Structural_Mechanic_2nd_Class_Timothy_J._Workman_grinds_steel_used_for_aircraft_support_equipment_repairs_in_the_jet_shop_aboard_the_aircraft_carrier_USS_Enterprise_(CVN_65).jpg) |
+| jiskry | `p13_grinder_4.jpg` | bruska – proud | 52° / 0.95 / 0.54–0.82 | Colowokanga | CC BY-SA 4.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Shower_of_Sparks.jpg) |
+| pneumatiky | `p14_tire_3.jpg` | den, černý kouř | 10° / 0.88 / 0.38–0.61 | Mstyslav Chernov/Unframe/http://www.unfr | CC BY-SA 3.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Tires_on_fire_used_as_a_barricade_line._Clashes_in_Kyiv,_Ukraine._Events_of_February_18,_2014.jpg) |
+| pneumatiky | `p15_tire_4.jpg` | hromada, kouř | 17° / 0.93 / 0.37–0.90 | Mstyslav Chernov/Unframe/http://www.unfr | CC BY-SA 3.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Protesters_throwing_tires_to_the_fire_set_by_the_protesters_to_prevent_internal_forces_from_crossing_the_barricade_line._Kyiv,_Ukraine._Jan_22,_2014.jpg) |
+| sláma | `p16_cStraw_0.jpg` | hořící sláma | 13° / 0.82 / 0.38–0.60 | CAPTAIN RAJU | CC0 | [odkaz](https://commons.wikimedia.org/wiki/File:Burning_the_Straw_(Chondipur)_in_2025.01.jpg) |
+| sláma | `p17_cStraw_4.jpg` | bílý dým | 23° / 0.67 / 0.39–0.49 | CAPTAIN RAJU | CC0 | [odkaz](https://commons.wikimedia.org/wiki/File:Burning_the_Straw_(Chondipur)_in_2025.05.jpg) |
+| sláma | `p18_cStraw_5.jpg` | pás plamenů ve dne | 37° / 0.98 / 0.59–0.90 | Frank Vincentz | CC BY-SA 3.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Gelsenkirchen_Horst_-_Schloss_-_Gaudium_-_L%C3%B6wenritter_32_ies.jpg) |
+| auto | `p19_carFire_3.jpg` | výcvikový požár | 20° / 0.68 / 0.61–0.76 | SSG Jarrod Chavana | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:U.S._Air_Force_Senior_Airman_Christopher_Crusius,_a_firefighter_assigned_to_the_612th_Air_Base_Squadron,_is_engulfed_in_flames_as_he_opens_the_hood_during_a_simulated_car_fire_as_part_of_Central_America_Sharing_130827-F-NG649-002.jpg) |
+| auto | `p20_carFire_4.jpg` | požár auta ve dne | 7° / 0.96 / 0.24–0.43 | Kecko | CC BY 2.0 | [odkaz](https://commons.wikimedia.org/wiki/File:SV-RTL_Firefighting_(16685391802).jpg) |
+| vyhořelé auto | `p21_carWreck_0.jpg` | rez, saze, bílý popílek | — | Neil Theasby | CC BY-SA 2.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Burnt_out_car_wreck_-_geograph.org.uk_-_6813228.jpg) |
+| vyhořelé auto | `p22_carWreck_2.jpg` | hranice shořelého laku | 34° / 0.66 / 0.42–0.51 | Neil Theasby | CC BY-SA 2.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Burnt_out_car_wreck_near_Bolton_Ings_-_geograph.org.uk_-_5035204.jpg) |
+| vyhořelé auto | `p23_carWreck_4.jpg` | starý vrak | 29° / 0.65 / 0.39–0.44 | Sonse | CC BY 2.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Burnt_out_Car_Wreck_on_M76_(37730039262).jpg) |
+| dům | `p24_cHouse_0.jpg` | noční požár | 18° / 0.79 / 0.36–0.58 | Pacific Southwest Forest Service, USDA f | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:2025_Southern_California_fires_and_the_United_States_Forest_Service_(USFS)_-_Eaton_Fire_Initial_Attack_(54263442283).jpg) |
+| dům | `p25_cHouse_3.jpg` | střecha, černý kouř | 27° / 0.64 / 0.43–0.55 | Panamitsu | CC BY-SA 4.0 | [odkaz](https://commons.wikimedia.org/wiki/File:House_fire_in_Waikanae,_16_May_2026,_P_03.jpg) |
+| dům | `p26_cFlash_1.jpg` | plameny pod stropem | 16° / 0.81 / 0.44–0.72 | Pabloboj | CC BY-SA 4.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Flashover001.jpg) |
+| škody | `p27_cSoot_2.jpg` | saze nad okny | 57° / 0.74 / 0.75–0.94 | Jim.henderson | CC0 | [odkaz](https://commons.wikimedia.org/wiki/File:Burnt_out_Ballys_6Av_20_jeh.JPG) |
+| škody | `p28_cChar_0.jpg` | zuhelnatělý pařez | 24° / 0.68 / 0.40–0.53 | Naturpuur | CC BY-SA 4.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Kultplatz_Danielsberg,_M%C3%B6lltal,_K%C3%A4rnten.jpg) |
+| škody | `p29_cChar_1.jpg` | aligátoří trám | — | Herzi Pinki | CC BY-SA 4.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Mostschenke_Oberlaa_02.jpg) |
+| kapaliny | `p30_dKuwait_1.jpg` | hořící ropná jezera | 9° / 0.90 / 0.30–0.56 | Lt. Steve Gozzo, U.S. Navy | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:F-14A_VF-114_over_burning_Kuwaiti_oil_well_1991.JPEG) |
+| kapaliny | `p31_dKuwait_2.jpg` | hořící vrt | 34° / 0.83 / 0.63–0.84 | EdJF | CC BY-SA 4.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Kuwaiti_Oil_Well_Fire.jpg) |
+| ohnivá koule | `p32_dWall_1.jpg` | benzínová stěna ohně | 14° / 1.00 / 0.37–0.59 | Air Force Viper Demo Team (United States | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:US_Air_Force_F-16_Viper_at_the_Fort_Worth_Airshow,_2017.jpg) |
+| ohnivá koule | `p33_dWall_2.jpg` | benzínová stěna ohně | 17° / 0.98 / 0.41–0.76 | U.S. Department of Defense Current Photo | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:120928-M-MM918-002_(8046941568).jpg) |
+| ohnivá koule | `p34_cFireball_0.jpg` | stoupající hřiby | 16° / 0.96 / 0.36–0.71 | Jon Sullivan | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:Fire_explosions.jpg) |
+| výbuch | `p35_detonation_0.jpg` | ohnivá koule a prach | 24° / 0.99 / 0.49–0.78 | U.S. Air Force photo by Tech. Sgt. Justi | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:379_ECES_EOD_team_practices_controlled_detonation_procedure_for_base_defense_(9467998).jpg) |
+| výbuch | `p36_detonation_2.jpg` | koule se střepinami | 22° / 0.93 / 0.46–0.84 | The U.S. Army
+
+PFC Gary Silverman/Photog | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:Flickr_-_The_U.S._Army_-_Controlled_detonation_(1).jpg) |
+| výbuch | `p37_detonation_3.jpg` | sloup prachu a hřib | 30° / 0.69 / 0.39–0.43 | U.S. Navy photo by Photographer's Mate 1 | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:US_Navy_050210-N-6932B-257_Chief_Operations_Specialist_Slade_Scott_and_Gunner%27s_Mate_2nd_Class_Clifford_Sabo_conduct_a_controlled_detonation_of_unexploded_ordnance.jpg) |
+| výbuch | `p38_detonation_4.jpg` | černý mrak s ohněm | 13° / 0.93 / 0.32–0.42 | U.S. Navy photo by Photographer's Mate 1 | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:US_Navy_050210-N-6932B-214_Chief_Operations_Specialist_Slade_Scott_and_Gunner%27s_Mate_2nd_Class_Clifford_Sabo_conduct_a_controlled_detonation_of_unexploded_ordnance.jpg) |
+| výbuch | `p39_cExpl_1.jpg` | výtrysky zeminy | — | Lance Cpl. Austin Long | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:%27Breacher_you_have_control!%27_130110-M-WC184-006.jpg) |
+| výbuch | `p40_cExpl_4.jpg` | velká koule u vozidel | 9° / 0.86 / 0.43–0.58 | Cpl. John McCall | Public domain | [odkaz](https://commons.wikimedia.org/wiki/File:1_CEB_Clears_Rout_611_During_Operation_Outlaw_Wrath.jpg) |
+| plyn | `p41_dWeld_0.jpg` | hořák – předmíšený plamen | — | Sheila | CC BY 2.0 | [odkaz](https://commons.wikimedia.org/wiki/File:Oxy-fuel_welding_-_flame1.jpg) |
+| tetelení | `p42_cHaze_4.jpg` | tetelení vzduchu | — | Fabian Horst | CC BY-SA 4.0 | [odkaz](https://commons.wikimedia.org/wiki/File:2019-03-31_-_DB0IL-DM0SL_-_Line_of_Sight.jpg) |
+
+## Co jsem z palety změřila
+- **Denní plameny** (22 snímků s plamenem přes 1 % plochy): medián odstínu 17°, sytosti 0.93, zobrazeného jasu
+  0.39 (9. decil 0.66). Sláma a čisté plameny jdou do žluté (37°) a téměř do bílé, pneumatiky a auta zůstávají
+  sytě oranžovočervené (7–17°). Render FireLab před úpravou: 0,23 / 0,30 (tmavě hnědočervený), po úpravě stropu jasu
+  0,41 / 0,50 (sud nafty, T3). → D-039.
+- **Kouř uhlovodíků** (pneumatiky, auto, ropa): uhlově černý, neprůhledný, ostré „květákové“ okraje, osluněná strana
+  hnědošedá; velmi tmavé pixely tvoří 15–48 % snímku. → `sootBlack` u nafty, benzínu, aut a acetylenu (D-040).
+- **Vyhořelá auta** (shluky barev karoserie, lineární RGB): krémově bílý popílek laku (0,42–0,67; 0,37–0,64; 0,22–0,51),
+  holá tmavší ocel (0,27; 0,23; 0,14), rez (0,50; 0,32; 0,17) až (0,24; 0,11; 0,04), černé saze jen u okrajů oken a švů.
+  → barvy shaderu plechu (D-042).
+- **Zuhelnatělé dřevo**: černé (0,02) s modrošedým leskem plošek (0,04; 0,05; 0,06 až 0,18; 0,20; 0,21), aligátoří bloky 2–5 cm.
+- **Jiskry zapalovače**: tenké stopy 2–5 cm, vějíř nahoru a dopředu od kolečka, na konci se větví; bělavě žluté.
+- **Výbuchy**: ohnivá koule benzínu je jasně žlutooranžová s černým lemem a přechází v černý hřib (stěna ohně na leteckých
+  dnech); trhavina dává šedohnědý sloup prachu s tmavými hroudami a krátký záblesk; černý mrak s oranžovými kapsami dohořívání.
+
+## Charakteristika → parametr enginu (nové v iteraci 6)
+| Na fotkách | V enginu | Jistota |
+|---|---|---|
+| Denní plamen je 2–20× jasnější než okolí, sytě oranžový až žlutý | strop jasu plamene ve dne až 6,5× `FLAME_LUM` (`App.updateExposure`) | umělecké ★2, kalibrováno měřením |
+| Kouř nafty, benzínu, aut a pneumatik je černý bez ohledu na množství | `sootBlack` u paliva: barva kouře podle složení částic, hustota podle výtěžku | ★3 |
+| Plamen ze sudu: sloup v šířce sudu, zaškrcení a kulovité puffy | jedna obálka bez jazyků (`volTongues: 0`), `shapeK` 1,6, `puffAmp` 0,9 | tvar ★2, pulzace ★4 |
+| Hořící rozlité palivo: souvislá stěna plamenů nestejné výšky | překrývající se úseky s nestejným výkonem, `shapeK` 1,45 | ★2 |
+| Vyhořelý plech: krémový popílek, rez, černé lemy u otvorů | `applyChar({ metal: true })`: stavy podle nejvyšší teploty, barvy z fotek | teploty ★3, rozložení ★2 |
+| Jiskry zapalovače: krátké tenké stopy, větvení | částice 100–260 µm, silný odpor vzduchu, rozprsk na konci | ★3 |
+| Acetylen na vzduchu: oslnivá žlutá a černé saze | palivo `acetylene` (výtěžek sazí 0,096), koule T 1 800 K, saze 0,9 | ★3–4 |

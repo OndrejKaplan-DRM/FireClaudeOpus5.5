@@ -104,7 +104,7 @@ export function car({ lod = 2, color = 'carPaint' }) {
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   g.setIndex(idx); g.computeVertexNormals();
   const bm = makeMaterial(color, { vertexColors: true, roughness: 0.35, metalness: 0.35 }); bm.name = 'body';
-  const u = applyChar(bm, { scale: 2 }); u.uCharBase.value = 0.3; u.uCharH.value = 1.2;
+  const u = applyChar(bm, { scale: 2, metal: true }); u.uCharBase.value = 0.3; u.uCharH.value = 1.2;
   const grp = new THREE.Group();
   grp.add(mesh(g, bm, { name: 'body' }));
   // kola

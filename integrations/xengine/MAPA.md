@@ -57,3 +57,13 @@ Pro všechny sešny xEngine. Cesty ve FireLab jsou od kořene repa `OndrejKaplan
 - **Svodná:** kořen repa (submodul `vendor/`), `formats.js` (nová pole po zkoušce D-030), `02_KONTRAKTY.md`, sloučení.
 - **FireLab** (Kristína v tomto repu): fyzika, shadery, předvolby, most `fire-system.js`. Změnu chtěnou z xEngine
   napiš do svého `*_STAV.md` jako „pro FireLab“; promítne se sem.
+
+## Iterace 6 (2026-11-27 večer)
+| Potřebuju | Kde ve FireLab | Poznámka |
+|---|---|---|
+| Oheň z popisu (palivo, množství, tvar) | `presets.js` → `fireFromSpec(popis)`; `src/physics/spec.js` → `fireSpec` | louže, rozlití, vytékání, hromada dřeva, předmět, tryska, knot |
+| Výbuch z druhu a hmotnosti | `presets.js` → `explosionFromSpec(popis)`; `spec.js` → `explosionSpec` | trhavina 50 g – 5 t, ohnivá koule, směs plynu, tlaková láhev |
+| Tok tepla včetně kontaktu s plamenem | `fire.heatFluxFull(x, y, z)` | `{ rad, conv, total, Tg, inFlame }` |
+| Za jak dlouho se něco vznítí | `fire.ignitionTimeAt(material, x, y, z)`; `src/physics/heat.js` → `timeToIgnition`, `ignitionDose`, `stepDose` | materiály v `src/physics/materials.js` |
+| Hořlavý předmět v datech | `xspace.js` → `FIRE_COMPONENTS.flammable`, `checkFlammable` | návrh F-10, čeká na Ondřeje a svodnou |
+| Obecný model a jeho meze | `MODEL.md` v kořeni FireLab | co je fyzika a co umění |

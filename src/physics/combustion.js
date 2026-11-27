@@ -106,7 +106,10 @@ export function smokeOpticalDepth(Q, D, z, fuel, vent) {
  */
 export function smokeColor(fuel, vent) {
   const f = FUELS[fuel];
-  const soot = Math.min(1, f.ys * vent.sootMul * 9);
+  // kapalné uhlovodíky, plasty a pryž: částice kouře jsou skoro čisté saze (elementární uhlík, albedo ~0,05) – výtěžek sazí
+  // určuje hustotu kouře, ne jeho barvu. Dřevo a sláma mají v kouři i dehet, popel a páru → šedá až hnědá. (sootBlack ★3,
+  // denní fotky požárů aut, pneumatik a nafty: kouř uhlově černý s ostrými okraji)
+  const soot = Math.max(Math.min(1, f.ys * vent.sootMul * 9), f.sootBlack ?? 0);
   const white = [0.82, 0.83, 0.85], tar = [0.36, 0.29, 0.2], black = [0.05, 0.047, 0.045];
   const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
   let c = mix([0.5, 0.5, 0.5], white, f.water);
