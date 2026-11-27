@@ -3,6 +3,9 @@
 *Text je připravený pro `docs/navrhy/` v repu xEngine. Do xEngine ho zapíše jen sešna s přidělenou rolí a s Ondřejovým slovem
 (číslo dostane podle role: sešna A od 101, B od 001). Do té doby žije tady.*
 
+**Ondřejova rozhodnutí 27. 11. 2026:** napojení dělá **sešna A**, FireLab jako **git submodul**. Krok za krokem:
+[`SESNA_A.md`](SESNA_A.md). Otázka 3 (fyzikální × filmový sud) zůstává otevřená.
+
 ## Co se navrhuje
 1. **Sešna A (běh)** zaregistruje v `src/app/game.js` systém `createFireSystem` z FireLab (`integrations/xengine/fire-system.js`)
    a přidá ho jako závislost (`dependencies`: FireLab jako git submodul nebo zkopírovaný balík `firelab` – viz otázka 1).
@@ -31,7 +34,6 @@
 - Most světla: mihotání jen úrovní (dorovnání vrstvy o rozdíl), kvantované po 1/64 → ~30 volání `setLight` za sekundu.
 
 ## Otázky na Ondřeje
-1. FireLab do xEngine jako **git submodul** (`vendor/firelab`, aktualizace ručně) / **balík v `packages/`** (zkopírovaný build
-   `dist/firelab.module.js`)?
+1. ~~submodul / balík~~ → **submodul** (27. 11.).
 2. Komponentu `fire` v xSpace **hned** (B ji přidá do `formats.js` po zkoušce na jednom kusu) / **až po první hře s ohněm**?
 3. Výbuch sudu v Aréně: **fyzikální** (CCPS, slabá tlaková vlna) / **filmový** (větší koule, víc trosek – přepínač ve FireLab existuje)?

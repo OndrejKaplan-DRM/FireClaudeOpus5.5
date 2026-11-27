@@ -23,9 +23,9 @@ const light = {
 };
 function count() { lightLog.maxOn = Math.max(lightLog.maxOn, lightLog.recs.filter((r) => r.on).length); }
 
-// hra vysílá combat:explode (Aréna A-3) – fx.fire na ni reaguje, když je deklarovaná
+// hra vysílá combat:exploded (xEngine sešna A, src/world/combat.js) – fx.fire na ni reaguje, když je deklarovaná
 const events = [];
-E.add({ name: 'combat', phase: 'sim', events: ['combat:explode'] });
+E.add({ name: 'combat', phase: 'sim', events: ['combat:exploded'] });
 const fire = createFireSystem({ render, light, quality, seed: 7 });
 E.add(fire);
 E.add(render);

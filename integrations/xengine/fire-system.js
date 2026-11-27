@@ -15,15 +15,18 @@
 //    (jen vzhled, mimo stav hry). Náhoda efektů jde z vlastního semínka (mulberry32), ne z Math.random hry.
 //  - Expozici dělá hostitel (toneMappingExposure = env.exposure); FireLab běží s před-expozicí 1 a tónovou
 //    křivku dostanou jeho shadery z three.js (fxOut).
-//  - Události jen deklarované: systém vysílá fire:ignited, fire:out, fire:exploded; poslouchá combat:explode,
-//    pokud ji někdo deklaroval (Aréna A-3).
+//  - Události jen deklarované: systém vysílá fire:ignited, fire:out, fire:exploded; poslouchá combat:exploded
+//    (xEngine sešna A, src/world/combat.js: { pos, radius, damage, push, weapon }) a combat:explode (Aréna A-3:
+//    { kind, pos }), pokud je někdo deklaroval. Který výbuch se vykreslí, rozhoduje explosionFor(událost).
+//  - Uložení hry: snapshot() / restore() nesou hořící ohně (předvolba, poloha, věk); výbuchy jsou jen vzhled.
 import * as THREE from 'three';
-import { FXWorld, FLAME_LUM } from '../../src/fx/world.js';
+import { FXWorld, FireSource, FLAME_LUM } from '../../src/fx/world.js';
 import { TIERS } from '../../src/engine/tiers.js';
 import { PRE } from '../../src/fx/shared.js';
 import { setFxLayer } from '../../src/engine/pipeline.js';
 import { bbRGB } from '../../src/fx/lights.js';
 import { FIRE_PRESETS, EXPLOSION_PRESETS } from './presets.js';
+import * as C from '../../src/physics/combustion.js';
 
 /** Stupeň kvality xEngine (0 clean, 1 low = T460, 2 mid, 3 high) → stupeň FireLab a limity hostitele. */
 export const QUALITY_MAP = {
@@ -58,15 +61,30 @@ const V = (a) => (Array.isArray(a) ? new THREE.Vector3(a[0], a[1], a[2]) : a.clo
  * @param {number[]} [o.ambient] okolní osvětlení [lx] RGB pro kouř (výchozí noc ve městě)
  * @param {number} [o.wind=0] třída větru 0..3, [o.windDir=0] směr [rad]
  */
-export function createFireSystem({ render, light = null, quality = 1, cellOf = null, seed = 1, ambient = [0.4, 0.42, 0.5], wind = 0, windDir = 0, flameKey = 100 } = {}) {
+/** Výchozí převod výbuchu z boje na předvolbu FireLab: podle jména zbraně, jinak nic (plazma není oheň). */
+export function defaultExplosionFor(e) {
+  const w = String(e?.weapon || e?.kind || '').toLowerCase();
+  if (EXPLOSION_PRESETS[w]) return w;
+  if (/barrel|sud/.test(w)) return 'barrel';
+  if (/grenade|granat|rocket|raketa|mortar/.test(w)) return 'grenade';
+  if (/tnt|c4|charge|nalož/.test(w)) return 'tnt';
+  return null;
+}
+
+export function createFireSystem({ render, light = null, quality = 1, cellOf = null, seed = 1, ambient = [0.4, 0.42, 0.5], wind = 0, windDir = 0, flameKey = 100, explosionFor = defaultExplosionFor } = {}) {
   let E = null, fx = null, tier = null, simT = 0, seedN = seed;
   const fires = new Map(); // id → { src, preset, out }
   const recs = []; // záznamy světel v systému light (opakovaně používané)
   let nextId = 1, listening = false;
   const stats = { fires: 0, explosions: 0, lights: 0, lightMoves: 0, lightLevels: 0 };
 
+  // Bez plátna (Node, createNullRender, headless: true): jen simulace ohně pro hru – heatFlux, snapshot, události.
+  const headless = !!render.headless || !render.renderer;
+  const simW = { scnTime: 0, vent: C.ventilation(1), tier: { volumes: 0 } };
+  const world = () => fx || simW;
+
   function mkFx() {
-    if (fx || !tier) return;
+    if (fx || !tier || headless) return;
     setFxLayer(0);
     PRE.value = 1;
     const pipeline = { depthTexture: null };
@@ -118,15 +136,19 @@ export function createFireSystem({ render, light = null, quality = 1, cellOf = n
     events: ['fire:ignited', 'fire:out', 'fire:exploded'],
     stats,
     get fx() { return fx; },
+    get headless() { return headless; },
     get tier() { return tier; },
 
     init(engine) {
       E = engine;
       tier = hostTier(quality);
-      if (!listening && E.eventList().some((e) => e.event === 'combat:explode')) {
+      if (!listening) {
         listening = true;
-        // Aréna A-3: { pos: [x,y,z], kind?: 'grenade'|'barrel'|... }
-        E.on('combat:explode', (d) => sys.explode(d?.kind || 'grenade', d?.pos || [0, 0, 0]));
+        const declared = new Set(E.eventList().map((e) => e.event));
+        // událost je sdílený (přepisovaný) objekt → hodnoty hned zkopírovat
+        const onBoom = (d) => { const pre = explosionFor(d); if (pre) sys.explode(pre, [d.pos[0], d.pos[1], d.pos[2]]); };
+        if (declared.has('combat:exploded')) E.on('combat:exploded', onBoom); // xEngine sešna A
+        if (declared.has('combat:explode')) E.on('combat:explode', onBoom); // Aréna A-3
       }
     },
     build() { mkFx(); },
@@ -140,16 +162,18 @@ export function createFireSystem({ render, light = null, quality = 1, cellOf = n
      * Zapálí oheň: preset (jméno z FIRE_PRESETS) nebo vlastní volby FireLab, pozice [x,y,z].
      * Vrací id ohně (pro extinguish a heatFlux) nebo null na stupni clean.
      */
-    ignite(preset, pos, over = {}) {
-      if (!fx) return null;
+    ignite(preset, pos, over = {}, quiet = false) {
+      if (!fx && !(headless && tier)) return null;
       const base = typeof preset === 'string' ? FIRE_PRESETS[preset] : preset;
       if (!base) throw new Error(`fx.fire: neznámý oheň „${preset}“`);
       const id = nextId++;
       // start/end jsou relativní k zapálení (FireSource.t0 = čas světa při vzniku)
-      const src = fx.addSource({ volume: tier.volumes > 0, seed: seedN++, ...base, ...over, pos: V(pos) });
-      fires.set(id, { src, preset: typeof preset === 'string' ? preset : 'custom', out: false });
+      const opts = { volume: tier.volumes > 0, seed: seedN++, ...base, ...over, pos: V(pos) };
+      simW.scnTime = simT;
+      const src = fx ? fx.addSource(opts) : new FireSource(simW, opts);
+      fires.set(id, { src, preset: typeof preset === 'string' ? preset : 'custom', def: typeof preset === 'string' ? null : preset, over, out: false });
       stats.fires = fires.size;
-      E?.emit('fire:ignited', { id, preset: typeof preset === 'string' ? preset : 'custom', pos: [...(Array.isArray(pos) ? pos : [pos.x, pos.y, pos.z])] });
+      if (!quiet) E?.emit('fire:ignited', { id, preset: typeof preset === 'string' ? preset : 'custom', pos: [...(Array.isArray(pos) ? pos : [pos.x, pos.y, pos.z])] });
       return id;
     },
     extinguish(id) {
@@ -160,14 +184,15 @@ export function createFireSystem({ render, light = null, quality = 1, cellOf = n
     },
     /** Výbuch z EXPLOSION_PRESETS (barrel, grenade, acetylene, tnt). */
     explode(preset, pos) {
-      if (!fx) return null;
+      if (!fx && !(headless && tier)) return null;
       const mk = EXPLOSION_PRESETS[preset];
       if (!mk) throw new Error(`fx.fire: neznámý výbuch „${preset}“`);
       const p = mk(), P = V(pos);
-      fx.addExplosion({ ...p.ex, pos: P.clone().add(new THREE.Vector3(0, p.dy || 0, 0)), seed: seedN++ });
-      for (const f of p.fires) sys.ignite(f, [P.x, P.y + 0.01, P.z]);
+      if (fx) fx.addExplosion({ ...p.ex, pos: P.clone().add(new THREE.Vector3(0, p.dy || 0, 0)), seed: seedN++ });
       stats.explosions++;
       E?.emit('fire:exploded', { preset, pos: [P.x, P.y, P.z], W: p.ex.W, fireballD: p.ex.fireball?.D ?? 0 });
+      // až po výbuchu: ohně, které zanechal (louže benzínu)
+      p.fires.forEach((f, k) => { const id = sys.ignite(f, [P.x, P.y + 0.01, P.z]); if (id != null) fires.get(id).origin = { explosion: preset, k }; });
       return p.ex.W;
     },
     /**
@@ -175,20 +200,53 @@ export function createFireSystem({ render, light = null, quality = 1, cellOf = n
      * hráče a vznícení okolí. Deterministické: závisí jen na čase simulace.
      */
     heatFlux(x, y, z) {
+      // jen z času simulace (ne z posledního snímku): Q(t) zdroje, ventilace, Heskestadova výška → deterministické
       let q = 0;
       for (const { src } of fires.values()) {
-        const ph = src.ph; if (!ph || !src.active) continue;
-        const cx = src.pos.x, cy = src.pos.y + ph.L * 0.4, cz = src.pos.z;
-        const R2 = Math.max((x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2, (src.D * 0.5) ** 2);
-        q += ((src.fuel.chiR ?? 0.3) * ph.Q) / (4 * Math.PI * R2);
+        if (!src.enabled) continue;
+        const o = src.o, tl = simT - src.t0 - o.start;
+        if (tl < 0 || simT - src.t0 > o.end) continue;
+        const vent = o.ventLocal != null ? C.ventilation(o.ventLocal) : world().vent;
+        const Q = Math.max(0, src.Qat(tl)) * vent.chi; if (Q <= 1) continue;
+        const D = typeof o.D === 'function' ? o.D(tl) : src.D;
+        const L = o.L ? o.L(Q) : C.flameHeight(Q, D);
+        const cx = src.pos.x, cy = src.pos.y + L * 0.4, cz = src.pos.z;
+        const R2 = Math.max((x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2, (D * 0.5) ** 2);
+        q += ((src.fuel.chiR ?? 0.3) * Q) / (4 * Math.PI * R2);
       }
       return q;
     },
     /** Hoří oheň s tímto id? */
     burning(id) { const f = fires.get(id); return !!(f && f.src.active); },
 
+    /** Uložení: jen to, co ovlivňuje hru (hořící ohně a jejich věk). Vlastní volby s funkcemi Q(t) se neukládají. */
+    snapshot() {
+      const list = [];
+      for (const [id, f] of fires) {
+        const p = f.src.pos, rec = { id, pos: [p.x, p.y, p.z], age: simT - f.src.t0, over: f.over };
+        if (f.origin) rec.origin = f.origin; // oheň z výbuchu: předvolba výbuchu + pořadí (Q(t) je funkce)
+        else if (f.def && Object.values(f.def).some((v) => typeof v === 'function')) continue; // vlastní Q(t) neumím uložit
+        else { rec.preset = f.preset; rec.def = f.def; }
+        list.push(rec);
+      }
+      return { simT, nextId, fires: list };
+    },
+    restore(d) {
+      sys.reset();
+      simT = d.simT || 0; simW.scnTime = simT; nextId = d.nextId || 1;
+      if (fx) fx.scnTime = simT;
+      for (const f of d.fires || []) {
+        const def = f.origin ? EXPLOSION_PRESETS[f.origin.explosion]().fires[f.origin.k] : f.def || f.preset;
+        const got = sys.ignite(def, f.pos, f.over || {}, true); // bez události: oheň už hořel
+        if (got == null) continue;
+        const rec = fires.get(got); fires.delete(got); fires.set(f.id, rec);
+        rec.src.t0 = simT - f.age; if (f.origin) rec.origin = f.origin;
+      }
+      nextId = Math.max(nextId, ...(d.fires || []).map((f) => f.id + 1));
+    },
+
     step(dt) {
-      simT += dt;
+      simT += dt; simW.scnTime = simT;
       if (fx) fx.scnTime = simT;
     },
     frame(real) {
