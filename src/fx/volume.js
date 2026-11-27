@@ -217,7 +217,7 @@ void main(){
 #endif
     t += dt;
   }
-  fragColor = vec4(col, 1.0 - trans);
+  fragColor = fxOut(vec4(col, 1.0 - trans));
 }`;
 
 const _vp = new THREE.Vector4();

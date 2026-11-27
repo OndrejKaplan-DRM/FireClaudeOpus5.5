@@ -20,6 +20,8 @@ void main(){
   vec3 em = bbColor(850.0 + 250.0 * n2) * rim * uFlameK * 0.3;
   if (uCrater > 0.0) col *= mix(1.0, 0.5, smoothstep(0.5, 0.0, r) * uCrater);
   gl_FragColor = vec4(col + em, a * 0.92);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
 }`;
 
 export class Scorch {

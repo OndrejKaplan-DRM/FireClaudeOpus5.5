@@ -26,6 +26,7 @@ export class Debris {
     this.mesh.setColorAt(0, new THREE.Color(0, 0, 0));
     this.mesh.count = 0; this.mesh.castShadow = true; this.mesh.frustumCulled = false;
     scene.add(this.mesh);
+    if (cap <= 0) this.mesh.visible = false; // hostitel bez osvětlených materiálů (xEngine low, D-022)
     this.s = new Float32Array(Math.max(cap, 1) * 16);
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._e = new THREE.Euler(); this._v = new THREE.Vector3(); this._c = new THREE.Color();
   }

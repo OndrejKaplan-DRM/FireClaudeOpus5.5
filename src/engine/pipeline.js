@@ -1,7 +1,11 @@
 // Vykreslovací řetězec: HDR scéna → (kopie hloubky) → průhledné efekty → heat haze → bloom → expozice + ACES → obrazovka.
 import * as THREE from 'three';
 
-export const LAYER_FX = 1, LAYER_HAZE = 2;
+// Vrstvy kamery. LAYER_FX lze přepnout (setFxLayer) před stavbou efektů – hostitel (např. xEngine) má vrstvu 1
+// vyhrazenou pro zbraň a ruce, efekty pak patří do vrstvy světa 0.
+export let LAYER_FX = 1;
+export const LAYER_HAZE = 2;
+export function setFxLayer(n) { LAYER_FX = n; }
 
 const FS_TRI = new THREE.BufferGeometry();
 FS_TRI.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));

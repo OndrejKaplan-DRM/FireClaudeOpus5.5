@@ -167,7 +167,7 @@ void main(){
     float life = smoothstep(0.0, 0.12, age) * (1.0 - smoothstep(0.55, 1.0, age));
     vec3 em = sootColor(T) * a.r * uFlameLum * vC.a * life * vC.rgb;
     float al = a.b * a.a * life * 0.5 * vC.a;
-    fragColor = vec4(em * soft, al * soft);
+    fragColor = fxOut(vec4(em * soft, al * soft));
   } else if (vP.w > 2.5) {
     // ohnivý chuchvalec (ohnivá koule, horní část velkých požárů): maska z kouřového listu, emise Planck
     float T = vG.w * (0.82 + 0.3 * a.g) ;
@@ -175,7 +175,7 @@ void main(){
     float d = clamp(a.r * 1.6, 0.0, 1.0);
     vec3 em = sootColor(T) * d * uFlameLum * vC.a * life;
     float al = (1.0 - exp(-a.r * vC.r * 3.0)) * life * soft;
-    fragColor = vec4(em * soft, al);
+    fragColor = fxOut(vec4(em * soft, al));
   } else {
     // kouř: R = hustota, G = propustnost ke světlu shora, B = okraj
     float tau = vC.a;
@@ -187,7 +187,7 @@ void main(){
     vec3 glow = vG.rgb * (0.35 + 0.65 * (1.0 - a.g)) * uPreExp;
     vec3 c = alb * (lit + glow);
     if (vP.w > 1.5) c += bbColor(900.0 + 250.0 * (1.0 - age)) * uFlameLum * 0.012 * (1.0 - age) * (1.0 - age); // žhnoucí kouř u paty
-    fragColor = vec4(c * al, al);
+    fragColor = fxOut(vec4(c * al, al));
   }
 }`;
 
@@ -348,7 +348,7 @@ void main(){
   float f = exp(-dot(p, p) * 2.5);
   // ×2,5: bodový zdroj pod pixel oko vnímá jasněji (oslnění, Purkyně/Stiles–Crawford) – umělecké ★2, D-021
   vec3 c = bbColor(vT) * f * vA * uLum * 2.5;
-  o = vec4(c, 0.0);
+  o = fxOut(vec4(c, 0.0));
 }`;
 
 export class SparkSystem extends BaseSystem {

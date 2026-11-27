@@ -135,7 +135,7 @@ export function campfire({ lod = 2, size = 'medium', seed = 11 }) {
  * Velikosti log-normálně 1,5–5 cm × S, hustěji ke středu; žhnutí „dýchá“ (applyChar coal). LOD0 bez uhlí.
  */
 export function coalBed({ lod = 2, R = 0.42, S = 1, seed = 5, n = null }) {
-  const N = n ?? [0, 10, 28, 44, 110][Math.min(lod, 4)];
+  const N = n ?? Math.round([0, 10, 28, 70, 380][Math.min(lod, 4)] * Math.max(0.6, S));
   if (!N) return null;
   const r = mulberry32(seed);
   const g = blob(0.5, [0, 0, 1, 2, 3][Math.min(lod, 4)], seed, 0.45, [1.3, 0.55, 1]);

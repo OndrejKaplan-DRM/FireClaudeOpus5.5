@@ -114,6 +114,17 @@ vec3 sootColor(float T){
   vec4 b = texture(tBB, vec2(u0 * (255.0/256.0) + 0.5/256.0, 0.5));
   return a.rgb * exp2(b.a * uBB.z) * uPreExp;
 }
+// Výstup efektu: ve vlastním potrubí FireLab (HDR cíl) beze změny; při kreslení přímo na plátno hostitele
+// (TONE_MAPPING od three.js, např. xEngine) tónová křivka a sRGB.
+vec4 fxOut(vec4 c){
+#ifdef TONE_MAPPING
+  // předvynásobená barva i aditivní emise: křivka na celý příspěvek (dělení malou alfou by přepálilo okraje)
+  c.rgb = linearToOutputTexel(vec4(toneMapping(c.rgb), 1.0)).rgb;
+  return c;
+#else
+  return c;
+#endif
+}
 float n3(vec3 p){ return texture(tNoise, p).r; }
 float w3(vec3 p){ return texture(tNoise, p).g; }
 float fbm3(vec3 p){ return (0.5*n3(p) + 0.25*n3(p*2.03+0.17) + 0.125*n3(p*4.07+0.41)) / 0.875; }

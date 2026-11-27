@@ -205,6 +205,17 @@ vec3 sootColor(float T){
   vec4 b = texture(tBB, vec2(u0 * (255.0/256.0) + 0.5/256.0, 0.5));
   return a.rgb * exp2(b.a * uBB.z) * uPreExp;
 }
+// V\xFDstup efektu: ve vlastn\xEDm potrub\xED FireLab (HDR c\xEDl) beze zm\u011Bny; p\u0159i kreslen\xED p\u0159\xEDmo na pl\xE1tno hostitele
+// (TONE_MAPPING od three.js, nap\u0159. xEngine) t\xF3nov\xE1 k\u0159ivka a sRGB.
+vec4 fxOut(vec4 c){
+#ifdef TONE_MAPPING
+  // p\u0159edvyn\xE1soben\xE1 barva i aditivn\xED emise: k\u0159ivka na cel\xFD p\u0159\xEDsp\u011Bvek (d\u011Blen\xED malou alfou by p\u0159ep\xE1lilo okraje)
+  c.rgb = linearToOutputTexel(vec4(toneMapping(c.rgb), 1.0)).rgb;
+  return c;
+#else
+  return c;
+#endif
+}
 float n3(vec3 p){ return texture(tNoise, p).r; }
 float w3(vec3 p){ return texture(tNoise, p).g; }
 float fbm3(vec3 p){ return (0.5*n3(p) + 0.25*n3(p*2.03+0.17) + 0.125*n3(p*4.07+0.41)) / 0.875; }
@@ -669,7 +680,7 @@ void main(){
     float life = smoothstep(0.0, 0.12, age) * (1.0 - smoothstep(0.55, 1.0, age));
     vec3 em = sootColor(T) * a.r * uFlameLum * vC.a * life * vC.rgb;
     float al = a.b * a.a * life * 0.5 * vC.a;
-    fragColor = vec4(em * soft, al * soft);
+    fragColor = fxOut(vec4(em * soft, al * soft));
   } else if (vP.w > 2.5) {
     // ohniv\xFD chuchvalec (ohniv\xE1 koule, horn\xED \u010D\xE1st velk\xFDch po\u017E\xE1r\u016F): maska z kou\u0159ov\xE9ho listu, emise Planck
     float T = vG.w * (0.82 + 0.3 * a.g) ;
@@ -677,7 +688,7 @@ void main(){
     float d = clamp(a.r * 1.6, 0.0, 1.0);
     vec3 em = sootColor(T) * d * uFlameLum * vC.a * life;
     float al = (1.0 - exp(-a.r * vC.r * 3.0)) * life * soft;
-    fragColor = vec4(em * soft, al);
+    fragColor = fxOut(vec4(em * soft, al));
   } else {
     // kou\u0159: R = hustota, G = propustnost ke sv\u011Btlu shora, B = okraj
     float tau = vC.a;
@@ -689,7 +700,7 @@ void main(){
     vec3 glow = vG.rgb * (0.35 + 0.65 * (1.0 - a.g)) * uPreExp;
     vec3 c = alb * (lit + glow);
     if (vP.w > 1.5) c += bbColor(900.0 + 250.0 * (1.0 - age)) * uFlameLum * 0.012 * (1.0 - age) * (1.0 - age); // \u017Ehnouc\xED kou\u0159 u paty
-    fragColor = vec4(c * al, al);
+    fragColor = fxOut(vec4(c * al, al));
   }
 }`
 );
@@ -971,7 +982,7 @@ void main(){
   float f = exp(-dot(p, p) * 2.5);
   // \xD72,5: bodov\xFD zdroj pod pixel oko vn\xEDm\xE1 jasn\u011Bji (osln\u011Bn\xED, Purkyn\u011B/Stiles\u2013Crawford) \u2013 um\u011Bleck\xE9 \u26052, D-021
   vec3 c = bbColor(vT) * f * vA * uLum * 2.5;
-  o = vec4(c, 0.0);
+  o = fxOut(vec4(c, 0.0));
 }`
 );
 var SparkSystem = class extends BaseSystem {
@@ -1398,7 +1409,7 @@ void main(){
 #endif
     t += dt;
   }
-  fragColor = vec4(col, 1.0 - trans);
+  fragColor = fxOut(vec4(col, 1.0 - trans));
 }`
 );
 var _vp = new THREE4.Vector4();
@@ -1525,9 +1536,14 @@ var FireLights = class {
     this.setTier(tier);
   }
   setTier(tier) {
-    for (const l of this.pool) this.scene.remove(l);
+    for (const l of this.pool) if (l.isObject3D) this.scene.remove(l);
     this.pool = [];
+    this.virtual = tier.lightObjects === false;
     for (let i = 0; i < tier.lights; i++) {
+      if (this.virtual) {
+        this.pool.push({ intensity: 0, position: new THREE5.Vector3(), color: new THREE5.Color(), userData: {} });
+        continue;
+      }
       const L = new THREE5.PointLight(16755302, 0, 0, 2);
       if (tier.shadows && i < 1) {
         L.castShadow = true;
@@ -1594,7 +1610,7 @@ var FireLights = class {
       L.intensity = q.I * PRE.value;
       const c2 = bbRGB(q.T * 1.28);
       L.color.setRGB(c2[0], c2[1], c2[2]);
-      this.active.push({ on: true, x: q.x, y: q.y, z: q.z, I: q.I, r: q.r, c: c2, k: q.k || 0 });
+      this.active.push({ on: true, x: q.x, y: q.y, z: q.z, I: q.I, r: q.r, c: c2, k: q.k || 0, T: q.T });
     }
     return this.active;
   }
@@ -1776,6 +1792,7 @@ var Debris = class {
     this.mesh.castShadow = true;
     this.mesh.frustumCulled = false;
     scene.add(this.mesh);
+    if (cap <= 0) this.mesh.visible = false;
     this.s = new Float32Array(Math.max(cap, 1) * 16);
     this._m = new THREE7.Matrix4();
     this._q = new THREE7.Quaternion();
@@ -1888,6 +1905,8 @@ void main(){
   vec3 em = bbColor(850.0 + 250.0 * n2) * rim * uFlameK * 0.3;
   if (uCrater > 0.0) col *= mix(1.0, 0.5, smoothstep(0.5, 0.0, r) * uCrater);
   gl_FragColor = vec4(col + em, a * 0.92);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
 }`
 );
 var Scorch = class {
@@ -3849,7 +3868,7 @@ function campfire({ lod = 2, size = "medium", seed = 11 }) {
   return grp;
 }
 function coalBed({ lod = 2, R = 0.42, S = 1, seed = 5, n = null }) {
-  const N = n ?? [0, 10, 28, 44, 110][Math.min(lod, 4)];
+  const N = n ?? Math.round([0, 10, 28, 70, 380][Math.min(lod, 4)] * Math.max(0.6, S));
   if (!N) return null;
   const r = mulberry32(seed);
   const g2 = blob(0.5, [0, 0, 1, 2, 3][Math.min(lod, 4)], seed, 0.45, [1.3, 0.55, 1]);

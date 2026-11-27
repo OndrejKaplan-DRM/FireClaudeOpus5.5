@@ -16,9 +16,12 @@ export class FireLights {
     this.setTier(tier);
   }
   setTier(tier) {
-    for (const l of this.pool) this.scene.remove(l);
+    for (const l of this.pool) if (l.isObject3D) this.scene.remove(l);
     this.pool = [];
+    // lightObjects === false: virtuální světla (jen seznam pro podsvícení kouře a pro hostitele – xEngine svítí po vrcholech)
+    this.virtual = tier.lightObjects === false;
     for (let i = 0; i < tier.lights; i++) {
+      if (this.virtual) { this.pool.push({ intensity: 0, position: new THREE.Vector3(), color: new THREE.Color(), userData: {} }); continue; }
       const L = new THREE.PointLight(0xffaa66, 0, 0, 2);
       if (tier.shadows && i < 1) {
         L.castShadow = true; L.shadow.mapSize.set(1024, 1024); L.shadow.bias = -0.002; L.shadow.normalBias = 0.02; L.shadow.radius = 6;
@@ -53,7 +56,7 @@ export class FireLights {
       if (!q) { L.intensity = 0; L.userData.I = 0; continue; }
       L.position.set(q.x, q.y, q.z); L.userData.I = q.I; L.intensity = q.I * PRE.value;
       const c = bbRGB(q.T * 1.28); L.color.setRGB(c[0], c[1], c[2]); // barevná teplota sazového plamene (viz sootColor)
-      this.active.push({ on: true, x: q.x, y: q.y, z: q.z, I: q.I, r: q.r, c, k: q.k || 0 });
+      this.active.push({ on: true, x: q.x, y: q.y, z: q.z, I: q.I, r: q.r, c, k: q.k || 0, T: q.T });
     }
     return this.active;
   }
