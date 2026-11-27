@@ -19,7 +19,7 @@
                            │ debris, decal, shared (šum 3D, LUT Planck, PRE)  │
                            └───────────────────────▲──────────────────────────┘
 ┌─ src/engine ─────────────────────────────────────┴────────────────────────────────────────────────────────┐
-│ app (smyčka, scénáře, expozice, API window.__fire), pipeline (HDR řetězec), tiers (T0–T3), env, rng       │
+│ app (smyčka, scénáře, expozice, API window.__fire), pipeline (HDR řetězec), tiers (T0–T5), env, rng       │
 └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -31,7 +31,7 @@
    `Explosion.update` (ohnivá koule, rázová vlna z tabulky R(t), prach, trosky, záblesk),
    světla se sloučí do pevného bazénu, systémy částic integrují pohyb ve vzduchu (vítr + vztlak + strhávání).
 4. `App.updateExposure()` – oko: měření osvětlení u pozorovatele → cílová expozice (adaptace 0,25 s dolů / 0,9 s nahoru),
-   lokální adaptace plamene `flameLum = min(12 000, klíč / expozice)`.
+   lokální adaptace plamene `flameLum = klíč/ex · (ex/0,25)^0,4` (částečná, D-020) a `lumRef = 16/ex` pro výbuchy, jiskry, žhnutí.
 5. `App.renderFrame` – **před-expozice** (`shared.PRE`): všechna světla a emise se násobí expozicí, aby HalfFloat HDR nepřetekl.
 6. `Pipeline.render` – neprůhledná scéna → (T2+) kopie lineární hloubky → průhledné efekty (měkké částice, ořez objemů)
    → (T2+) heat haze do polovičního bufferu → bloom (dual filter) → ACES + sRGB + viněta (+ zrno).
@@ -51,9 +51,17 @@
 | R, LB, I, I0 | `spread` | mapa časů příchodu, přízemní/korunový požár |
 
 ## Stupně kvality (src/engine/tiers.js)
-Jediné místo s rozpočty. T0 = sprity z vypečeného atlasu bez post-procesu; T1 = + 2 levné objemy, bloom;
-T2 = objemy 48 kroků, měkké částice, heat haze; T3 = 96 kroků, stín od ohně, ~40 k částic, LOD 3.
-Automatika: `guessTier` podle názvu GPU (T460/Intel HD 5xx → T0, RTX 40xx → T3).
+Jediné místo s rozpočty. T0 = sprity z vypečeného atlasu bez post-procesu; T1 = + 2 levné objemy (32 kroků), bloom;
+T2 = 6 objemů × 64 kroků, měkké částice, heat haze; T3 = 16 × 112 kroků, stín od ohně, LOD 3;
+T4 Ultra = 24 × 160 kroků, 64 k částic; T5 Kino = 32 × 192 kroků, LOD 4, pro snímky a videa.
+`smokeMul`/`emberMul` škálují hustotu emise kouře a uhlíků (stejná fyzika, víc menších částic).
+Automatika: `guessTier` podle názvu GPU (T460/Intel HD 5xx → T0, RTX 4060 → T3, 4070–4080 → T4, 4090/5080/5090 → T5).
+
+## Objemový plamen v2 (src/fx/volume.js, D-020, D-021)
+Pole `fieldFlame` vrací (svítivá hustota, T, saze). Obálka (Heskestad L, tvar `uShapeK` kužel/sloup podle L/D), domain-warp
+šum advektovaný časem letu 2(√((z+z0)L) − √(z0 L)), přerušovaná zóna, plášť sazí velkých požárů se světelnými skvrnami, chladné
+kapsy. Integrace emise–absorpce: κe = 2,7·f_v·hustota·T/1500, κs = saze·σ; zdroj Planck s posunem barvy sazí. Šum je antialiasovaný
+podle stopy vzorku (`gFpq`), krok ≤ 0,6/κ, chvění IGN + zlatý řez v čase.
 
 ## Assety
 Každý model je funkce `build({lod, seed})` → `THREE.Group`. LOD 0–4 míří na ~1e2–1e6 △ u velkých modelů.
@@ -61,6 +69,9 @@ Spalitelné materiály mají `applyChar` (uniformy `uChar`, `uGlow`; instancovan
 Porost (`InstancedFlora`) má 2 instancované LOD (blízko/daleko) přeskládávané po 0,25 s.
 
 ## Integrace do jiného enginu
+- **xEngine** (Ondřejův engine): `integrations/xengine/fire-system.js` – systém jádra `fx.fire` (D-024), předvolby ohňů a výbuchů
+  v `presets.js`, zkušební stránka `demo.js` se skutečným jádrem a vykreslením xEngine, test `npm run test:xengine`.
+  Návod `integrations/xengine/README.md`, návrh pro xEngine `integrations/xengine/NAVRH.md`.
 - **Three.js**: importuj `src/fx/world.js` (FXWorld), `src/engine/pipeline.js` (nebo vlastní post-proces s před-expozicí),
   zdroje `fx.addSource({...})`, výbuchy `fx.addExplosion({...})`.
 - **Jiný engine**: `dataset/presets/*.json` (fyzikální parametry zdrojů), `dataset/flipbooks/*` (atlas + kanály),
@@ -72,3 +83,5 @@ Porost (`InstancedFlora`) má 2 instancované LOD (blízko/daleko) přeskládáv
 - `tools/test.mjs` – všechny scénáře v headless Chrome (swiftshader), snímky + mřížka + report.
 - `tools/seq.mjs` – časová řada jednoho scénáře; `tools/probe.mjs` – jeden snímek + statistiky; `tools/assets-sheet.mjs` – galerie modelů.
 - `tools/bake.mjs` – dataset.
+- `tools/look.mjs` (snímek s úpravou stavu JS), `tools/shot.mjs` (libovolná kamera), `tools/sweep.mjs` (mřížka scénář × parametr).
+- `tools/build-xengine.mjs` + `tools/test-xengine.mjs` – integrace s xEngine (klon v `XENGINE`, výchozí `/home/claude/ondrejkaplan-drm/xengine`).

@@ -43,12 +43,12 @@
   },
   {
    "k": "Tepelný výkon Q",
-   "v": "848.7 kW",
+   "v": "848.8 kW",
    "src": "model scénáře"
   },
   {
    "k": "Výška plamene L",
-   "v": "2.81 m",
+   "v": "2.52 m",
    "src": "Heskestad ★5"
   },
   {
@@ -63,12 +63,12 @@
   },
   {
    "k": "Pulzace plamene",
-   "v": "1.8 Hz",
+   "v": "1.5 Hz",
    "src": "Cetegen & Ahmed ★4"
   },
   {
    "k": "Optická tl. kouře τ",
-   "v": "4.96",
+   "v": "4.98",
    "src": "Mulholland σs ★3"
   },
   {
@@ -83,7 +83,7 @@
   },
   {
    "k": "Svítivost",
-   "v": "5539.4 cd",
+   "v": "5539.9 cd",
    "src": "odhad ★2"
   },
   {
@@ -105,18 +105,18 @@
     0.25,
     0
    ],
-   "D": 0.66,
-   "Q_W": 848702,
-   "L_m": 2.815,
+   "D": 0.95,
+   "Q_W": 848780,
+   "L_m": 2.519,
    "T_K": 1100,
-   "puff_Hz": 1.85,
-   "smoke_tau": 4.963,
+   "puff_Hz": 1.54,
+   "smoke_tau": 4.978,
    "smoke_rgb": [
-    0.035,
-    0.033,
-    0.032
+    0.05,
+    0.047,
+    0.045
    ],
-   "light_cd": 5539.4
+   "light_cd": 5539.9
   },
   {
    "fuel": "rubber",
@@ -132,9 +132,9 @@
    "puff_Hz": 1.22,
    "smoke_tau": 3.311,
    "smoke_rgb": [
-    0.035,
-    0.033,
-    0.032
+    0.05,
+    0.047,
+    0.045
    ],
    "light_cd": 1958.1
   }

@@ -1,30 +1,42 @@
 # TODO — co se právě dělá
 
-Stav k 2026-11-26 ráno: **iterace 1 hotová** (vše níže zaškrtnuté je v `main` a v artefaktu FireLab).
+Stav k 2026-11-27: **iterace 2 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
 
-## Hotovo (iterace 1)
-- [x] Řídicí dokumenty (CLAUDE, ARCHITECTURE, DECISIONS, TODO, README)
-- [x] Build esbuild → `dist/index.html` (1 soubor, offline, ~0,7 MB)
-- [x] Fyzika: Planck/CIE, paliva, Heskestad, McCaffrey, AGA, louže, saze/ventilace, Kinney–Graham, CCPS, Gurney, Byram, Anderson, Van Wagner, Thomas, Kawagoe (+ `tools/test-physics.mjs`, 24 kontrol)
-- [x] Efekty: objemový plamen + ohnivá koule, flipbook atlas pečený z pole, řazený billboard systém (jazyky, kouř, ohnivé chuchvalce), jiskry/uhlíky, heat haze, rázová vlna, trosky, spáleniště, světla ohně, materiál ohořelosti
-- [x] Před-expozice + adaptace oka + lokální adaptace plamene (D-010), sazová barva plamene (D-011)
-- [x] 18 modelů s LOD 0–4, procedurální textury
-- [x] 18 scénářů, vítr 4 třídy + směr, kyslík, denní doba
-- [x] Prohlížeč: seznamy, kamera, HUD, záložky Fyzika / Technika / Ovládání / Export, časová osa HRR se skokem, galerie atlasu, klávesy
-- [x] Testy: `npm test` (všechny scénáře, snímky + mřížka), `tools/seq.mjs`, `tools/assets-sheet.mjs`
-- [x] Dataset: `npm run bake`
+## Hotovo (iterace 2 – „víc skutečného života“ + xEngine)
+- [x] **Plamen v2** (objem): emise–absorpce sazí v rovnováze (κ = 2,7·f_v), teplota svítivých zón `Tlum` (Koseki), horké proužky,
+      chladné sazové kapsy, plášť kouře velkých louží se „světelnými skvrnami“, sloupový tvar pro L/D < 3, přerušovaná zóna,
+      advekce s virtuálním počátkem (bez vodorovných „plástů“), antialiasovaný šum (oktávy pod stopou pixelu/kroku → střed),
+      krok omezený optickou tloušťkou, modrá zóna jen tam, kde nesvítí saze. D-020, D-021.
+- [x] **Adaptace oka**: částečná (β = 0,4) + zisk podle optické tloušťky zdroje; výbuchy, jiskry a žhnutí na původním klíči
+      (vzhled sudu beze změny). D-020.
+- [x] **Kouř v2**: hustota emise podle stupně (`smokeMul`), náběh krytí 0,3 s (žádná mezera nad plamenem), podsvícení ohněm
+      stíněné vlastním sloupcem (svítí jen spodek sloupce), světlo v barvě svítivých zón. D-022.
+- [x] **Uhlíky v2**: log-normální velikost, pádová rychlost a odpor z fyziky, T podle obtékání (880 + 150√v, strop 1 340 K),
+      popel (poklesy jasu), dohoření; praskání dřeva (výstřely drobných jisker). D-023.
+- [x] **Lože žhavého uhlí** (instancované, „dýchající“), **aligátoří trhliny** na polenech, dýchání žhnutí všech ohořelých ploch.
+      Trojúhelníky ohnišť +20 % (LOD3 60 → 73 k, LOD4 614 → 736 k).
+- [x] **Šíření**: žhnoucí lože za čelem (emise, skvrny, dýchání), doutnání – světlý líný kouř za čelem.
+- [x] **Stupně T4 Ultra a T5 Kino** (víc kroků paprsku, jemnější okraj, víc částic, kouře a uhlíků); UI je prochází všechny.
+- [x] **xEngine**: systém jádra `fx.fire` (`integrations/xengine/`), světlo přes systém `light` (po vrcholech, low ≤ 1),
+      vrstva 0, tónová křivka hostitele, události `fire:*`, reakce na `combat:explode`, `heatFlux()` pro poškození.
+      Test `npm run test:xengine` (skutečné jádro a vykreslení xEngine z klonu). D-024.
+- [x] three 0.170 → 0.187 (stejná verze jako xEngine).
+- [x] Nástroje: `tools/look.mjs` (snímek s úpravou stavu), `tools/shot.mjs`, `tools/sweep.mjs` (mřížka scénář × parametr).
 
 ## Známé slabiny (priorita shora)
-1. **T0 jazyky plamene** (sprity) jsou ještě trochu „pilovité“ – atlas jazyka by chtěl víc velkých vln a méně šumu na okraji.
-2. **Lesní a křovinný požár** vypadá dobře zdálky; zblízka chybí hořící kmeny a padající větve, korunový požár je jen velké jazyky.
-3. **Dům**: plameny z oken jsou jen sprity tlačené ven; chybí zhroucení střechy a lámání skel (zvuk/praskání).
-4. **Svíčka na T2+**: bloom kolem plamene je výrazný (realistické pro fotoaparát, oko vidí méně) – zvážit menší bloom pro malé zdroje.
-5. **Výkon**: CPU strana změřená (`tools/perf-cpu.mjs` → `dataset/physics/perf_cpu.json`): krok simulace 0,02–0,4 ms (T0) až 0,03–2,9 ms (T3, 1 t TNT). GPU čas ze sandboxu (swiftshader) nevypovídá – reálné měření na T460 a RTX 4060 chybí (stačí otevřít `dist/index.html` a záložku Technika).
-6. Heat haze je jen T2+ a jednoduchý (šum); rázová vlna lomí obraz jen jako prstenec.
+1. **Zrno objemu na statickém snímku**: jeden paprsek na pixel s chvěním; v pohybu se slije, na snímku je vidět. Chce časovou
+   akumulaci (TAA jen pro vrstvu efektů) – hlavně pro T4/T5.
+2. **Velké louže (nafta)** jsou lepší, ale pořád trochu „kompaktní“; chybí velké odtržené jazyky v horní třetině a výraznější
+   černý plášť. Kouř nad nimi je fyzikálně tmavý (v noci skoro neviditelný) – správně, ale méně efektní.
+3. **Pneumatiky ve dne**: plamen u paty malý, sloup kouře hezký. Chce víc plamene po obvodu hromady (víc zdrojů).
+4. **Výbuchy kromě sudu**: granát a acetylen jsou fyzikálně v pořádku, ale chybí prachové výtrysky ze země, kondenzační
+   prstenec u 1 t TNT a dohořívání.
+5. **Dům**: kouř je hodně podsvícený do červena, chybí zhroucení střechy, čouzení fasády nad okny.
+6. **Les zblízka**: hořící kmeny, padající větve, korunový požár jen velkými jazyky.
+7. **Výkon** na skutečném T460 a RTX 4060 nezměřen (sandbox = swiftshader). Záložka Technika v prohlížeči ukáže časy.
+8. xEngine: integrace ověřená jen na zkušební stránce se záznamníkem světla – ve skutečné hře (level, buňky, `cellOf`) ještě ne.
 
 ## Nápady (neschváleno)
-- WebGPU větev (compute částice, 3D textura hustoty kouře → objemový kouř)
-- Procedurální zvuk (praskání, hukot, výbuch s doběhem podle vzdálenosti – 343 m/s)
-- 2D řez simulace tekutin pro kouř v místnostech / chodbách (FPS interiéry)
-- Hasicí efekty (voda → pára = bílý kouř, prášek)
-- Napojení na xEngine (smlouva dat: preset JSON → zdroj ohně)
+- Objemový kouř pro T4/T5 (3D textura hustoty, 6směrové osvětlení), WebGPU compute částic
+- Procedurální zvuk (praskání, hukot, výbuch se zpožděním 343 m/s)
+- Hasicí efekty (voda → pára, prášek)

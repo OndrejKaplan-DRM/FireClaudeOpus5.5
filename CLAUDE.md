@@ -10,7 +10,7 @@ Cizí data se nepoužívají (povolené by byly jen CC0 šablony – zatím žá
 
 ## Jak spustit
 ```bash
-npm install            # three 0.170, esbuild, (playwright je v systému globálně)
+npm install            # three 0.187 (stejná jako xEngine), esbuild, (playwright je v systému globálně)
 npm run build          # → dist/index.html (jeden soubor, vše vložené)
 npm run dev            # watch build + http server na :8765
 npm test               # headless smoke test všech scénářů (Chrome + swiftshader) → /tmp/firetest_T0/sheet.png
@@ -18,12 +18,15 @@ npm run test:physics   # korelace proti literatuře (Node, 1 s)
 npm run test:ui        # kliky na záložky, atlas, assety, časovou osu
 npm run perf           # CPU cena simulace všech scénářů na T0–T3 → dataset/physics/perf_cpu.json
 npm run bake           # dataset/: flipbooky PNG, GLB modely, náhledy, presety JSON (~25 min)
+npm run test:xengine   # integrace s xEngine (jádro + vykreslení z klonu, systém fx.fire)
+node tools/look.mjs <scn> <tier> <s> "x,y,z" "tx,ty,tz" out.png "<js>"   # snímek s úpravou stavu
+node tools/sweep.mjs <tier> "scn1,scn2" "a.flameKey=v" "40,100" out.png [s]  # mřížka scénář × parametr
 node tools/seq.mjs <scn> <tier> <t1,t2,..> out.png [cam]   # časová řada snímků
 node tools/subcases.mjs <scn> <tier> out.png               # vítr 0–3 a kyslík v mřížce
 node tools/probe.mjs <scn> <tier> <s> [cam] [out] [query]   # jeden snímek + statistiky
 ```
 Prohlížeč: otevři `dist/index.html` dvojklikem (funguje z `file://`).
-Parametry URL: `?scn=<id>&tier=0..3&wind=0..3&o2=0..1&t=<s>&ui=0`.
+Parametry URL: `?scn=<id>&tier=0..5&wind=0..3&o2=0..1&t=<s>&ui=0`.
 
 ## Mapa kódu (detail v ARCHITECTURE.md)
 - `src/physics/` – čisté funkce bez Three.js (palivo, plamen, kouř, vítr, výbuch, šíření). Testovatelné v Node.
@@ -39,13 +42,18 @@ Parametry URL: `?scn=<id>&tier=0..3&wind=0..3&o2=0..1&t=<s>&ui=0`.
 ## Konvence
 - Jednotky **SI** všude (m, s, kg, W, K, Pa). Kód v angličtině, dokumenty a UI česky.
 - Fyzika: každý vzorec má v komentáři zdroj a míru jistoty (★1–5). Nevymýšlet čísla bez označení.
-- Stupně kvality **T0–T3** (`src/engine/tiers.js`). T0 = ThinkPad T460 (Intel HD 520).
-  T3 = herní PC ČR ~35 000 Kč (RTX 4060 třída, 8 GB VRAM). Každý efekt musí mít cestu pro T0.
+- Stupně kvality **T0–T5** (`src/engine/tiers.js`). T0 = ThinkPad T460 (Intel HD 520).
+  T3 = herní PC ČR ~35 000 Kč (RTX 4060 třída, 8 GB VRAM), T4 Ultra (4070–4080), T5 Kino (4090/5090). Každý efekt musí mít cestu pro T0.
 - Determinismus: všechny generátory berou `seed`; stejný seed = stejný model / flipbook.
 - Rozpočty (částice, objemy, △) se kontrolují v `tiers.js`; nikdy je neobcházet natvrdo v efektu.
 - Po každé ucelené změně: `npm run build && npm test`, zápis do `TODO.md`, rozhodnutí do `DECISIONS.md`.
 
 ## Pasti (ověřené)
+- `__fire.settle()` musí končit krokem simulace (uniformy zdrojů se počítají v `FireSource.update` z `flameLum`) – jinak testy první
+  scény kreslí se zastaralým jasem (iterace 1 to měla, D-020).
+- Jas plamene (`flameLum`) a výbuchů/jisker (`lumRef`) jsou dvě různé věci: sud se Ondřejovi líbí, nesahat na `lumRef` bez srovnání.
+- GLSL: `patch` je vyhrazené slovo (WebGL2) – proměnná se tak jmenovat nesmí.
+- xEngine: vrstva kamery 1 patří zbrani → efekty `setFxLayer(0)`; ve scéně xEngine nesmí být světlo three.js (D-022 hostitele).
 - Před-expozice: světla se nastavují až těsně před kreslením (`lights.applyPre`), jinak testy bez smyčky vidí intenzitu × 1.
 - `pipeline.depthTexture` se při změně velikosti vyrábí znovu – materiály ji berou každý snímek z `FXWorld.update`, ne při stavbě.
 - Testy: `?noloop=1`, simulace přes `window.__fire.ff()`, snímek přes `__fire.shot()` (toDataURL ve stejné úloze).

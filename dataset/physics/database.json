@@ -1,6 +1,7 @@
 {
  "FUELS": {
   "paraffin": {
+   "fv": 5,
    "name": "Parafín (svíčka)",
    "dHc": 42000000,
    "rho": 900,
@@ -15,6 +16,7 @@
    "conf": 4
   },
   "woodDry": {
+   "fv": 0.6,
    "name": "Dřevo suché (smrk/buk)",
    "dHc": 15000000,
    "rho": 500,
@@ -29,6 +31,8 @@
    "conf": 4
   },
   "woodResin": {
+   "fv": 1.2,
+   "Tlum": 1300,
    "name": "Louč (smolné dřevo)",
    "dHc": 18000000,
    "rho": 600,
@@ -43,6 +47,8 @@
    "conf": 3
   },
   "straw": {
+   "fv": 0.4,
+   "Tlum": 1300,
    "name": "Sláma (balík)",
    "dHc": 14000000,
    "rho": 120,
@@ -57,6 +63,8 @@
    "conf": 3
   },
   "diesel": {
+   "fv": 2,
+   "Tlum": 1380,
    "name": "Nafta",
    "dHc": 44400000,
    "mInf": 0.045,
@@ -73,6 +81,8 @@
    "conf": 4
   },
   "gasoline": {
+   "fv": 1.5,
+   "Tlum": 1400,
    "name": "Benzín",
    "dHc": 43700000,
    "mInf": 0.055,
@@ -89,6 +99,8 @@
    "conf": 4
   },
   "rubber": {
+   "fv": 4,
+   "Tlum": 1350,
    "name": "Pryž (pneumatika, SBR)",
    "dHc": 27000000,
    "rho": 1150,
@@ -103,6 +115,8 @@
    "conf": 3
   },
   "vehicle": {
+   "fv": 1.8,
+   "Tlum": 1360,
    "name": "Osobní auto (plasty, pryž, palivo)",
    "dHc": 25000000,
    "rho": 0,
@@ -117,6 +131,8 @@
    "conf": 3
   },
   "houseContents": {
+   "fv": 1.4,
+   "Tlum": 1350,
    "name": "Obsah domu (dřevo, PU pěna, plasty)",
    "dHc": 20000000,
    "rho": 0,
@@ -131,6 +147,7 @@
    "conf": 3
   },
   "forestLitter": {
+   "fv": 0.5,
    "name": "Lesní hrabanka + podrost (borovice)",
    "dHc": 18600000,
    "rho": 0,
@@ -150,6 +167,7 @@
    "tr": 90
   },
   "crown": {
+   "fv": 0.5,
    "name": "Koruny jehličnanů",
    "dHc": 18600000,
    "rho": 0,
@@ -169,6 +187,7 @@
    "tr": 35
   },
   "brush": {
+   "fv": 0.4,
    "name": "Suché křoví (keře, tráva)",
    "dHc": 18000000,
    "rho": 0,
@@ -188,6 +207,7 @@
    "tr": 40
   },
   "steelSpark": {
+   "fv": 0,
    "name": "Ocelová jiskra (broušení)",
    "dHc": 0,
    "rho": 7850,
@@ -280,6 +300,8 @@
     "spark": 400,
     "haze": 0
    },
+   "smokeMul": 1,
+   "emberMul": 0.5,
    "sortSmoke": false,
    "softParticles": false,
    "volumes": 0,
@@ -310,11 +332,15 @@
     "spark": 1200,
     "haze": 0
    },
+   "smokeMul": 1.5,
+   "emberMul": 1,
    "sortSmoke": true,
    "softParticles": false,
    "volumes": 2,
-   "volumeSteps": 24,
+   "volumeSteps": 32,
    "volumeScale": 0.5,
+   "volumeDetail": 0,
+   "flameEdge": 0.2,
    "bloom": 3,
    "haze": false,
    "shadows": false,
@@ -340,11 +366,15 @@
     "spark": 3000,
     "haze": 600
    },
+   "smokeMul": 2.5,
+   "emberMul": 1.5,
    "sortSmoke": true,
    "softParticles": true,
    "volumes": 6,
-   "volumeSteps": 48,
+   "volumeSteps": 64,
    "volumeScale": 0.75,
+   "volumeDetail": 1,
+   "flameEdge": 0.14,
    "bloom": 5,
    "haze": true,
    "shadows": false,
@@ -370,11 +400,15 @@
     "spark": 9000,
     "haze": 1500
    },
+   "smokeMul": 4,
+   "emberMul": 2.5,
    "sortSmoke": true,
    "softParticles": true,
    "volumes": 16,
-   "volumeSteps": 96,
+   "volumeSteps": 112,
    "volumeScale": 1,
+   "volumeDetail": 2,
+   "flameEdge": 0.1,
    "bloom": 6,
    "haze": true,
    "shadows": true,
@@ -386,6 +420,74 @@
    "flameLight": "shadow",
    "grain": true,
    "frameBudgetMs": 16.7
+  },
+  {
+   "id": 4,
+   "name": "T4 · Ultra (silné herní GPU)",
+   "hw": "RTX 4070 Super – 4080 / RX 7900, 12–16 GB, 1440p",
+   "renderScale": 1,
+   "maxPixelRatio": 2,
+   "msaa": 0,
+   "particles": {
+    "flame": 22000,
+    "smoke": 26000,
+    "spark": 16000,
+    "haze": 2500
+   },
+   "smokeMul": 6,
+   "emberMul": 3.5,
+   "sortSmoke": true,
+   "softParticles": true,
+   "volumes": 24,
+   "volumeSteps": 160,
+   "volumeScale": 1,
+   "volumeDetail": 2,
+   "flameEdge": 0.08,
+   "bloom": 6,
+   "haze": true,
+   "shadows": true,
+   "lights": 10,
+   "debris": 2000,
+   "lod": 3,
+   "treeMax": 12000,
+   "flipbookRes": 256,
+   "flameLight": "shadow",
+   "grain": true,
+   "frameBudgetMs": 16.7
+  },
+  {
+   "id": 5,
+   "name": "T5 · Kino (RTX 4090/5090, snímky a videa)",
+   "hw": "RTX 4090 / 5090, 24–32 GB, 4K",
+   "renderScale": 1,
+   "maxPixelRatio": 2,
+   "msaa": 0,
+   "particles": {
+    "flame": 32000,
+    "smoke": 40000,
+    "spark": 24000,
+    "haze": 4000
+   },
+   "smokeMul": 8,
+   "emberMul": 5,
+   "sortSmoke": true,
+   "softParticles": true,
+   "volumes": 32,
+   "volumeSteps": 192,
+   "volumeScale": 1,
+   "volumeDetail": 2,
+   "flameEdge": 0.07,
+   "bloom": 6,
+   "haze": true,
+   "shadows": true,
+   "lights": 12,
+   "debris": 3000,
+   "lod": 4,
+   "treeMax": 16000,
+   "flipbookRes": 256,
+   "flameLight": "shadow",
+   "grain": true,
+   "frameBudgetMs": 33
   }
  ]
 }

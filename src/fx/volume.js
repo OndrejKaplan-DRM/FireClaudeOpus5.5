@@ -49,9 +49,10 @@ float octv(vec3 q, float amp, float cell){
 }
 float fbmD(vec3 q, float s){ // fbm s počtem oktáv podle stupně; s = měřítko frekvence vůči základu
   float c = 16.0 * s;
-  float v = octv(q, 0.5, c) + octv(q * 2.03 + 0.17, 0.25, c * 2.03) + octv(q * 4.07 + 0.41, 0.125, c * 4.07), w = 0.875;
-  if (uDetail > 0.5) { v += octv(q * 8.13 + 0.73, 0.0625, c * 8.13); w += 0.0625; }
-  if (uDetail > 1.5) { v += octv(q * 16.3 + 0.29, 0.03125, c * 16.3); w += 0.03125; }
+  // persistence ~0,45: jemné oktávy slabší – plamen má ostré plochy, ne „srst“ (iterace 2)
+  float v = octv(q, 0.5, c) + octv(q * 2.03 + 0.17, 0.26, c * 2.03) + octv(q * 4.07 + 0.41, 0.115, c * 4.07), w = 0.875;
+  if (uDetail > 0.5) { v += octv(q * 8.13 + 0.73, 0.05, c * 8.13); w += 0.05; }
+  if (uDetail > 1.5) { v += octv(q * 16.3 + 0.29, 0.022, c * 16.3); w += 0.022; }
   return v / w;
 }
 // ohnuté pole (domain warp) – skládá plamen do tenkých zvlněných plátů
@@ -60,7 +61,7 @@ vec4 flameNoise(vec3 w, float tt){
   vec3 wv = vec3(n3(q * 0.5 + 0.11), n3(q * 0.5 + 0.43), n3(q * 0.5 + 0.77)) - 0.5;
   vec3 wq = q + wv * uFlame2.w * 1.6;
   float n1 = fbmD(wq, 1.0);
-  float n2 = fbmD(wq * 2.2 + vec3(5.2, 1.3, 2.8), 2.2);
+  float n2 = fbmD(wq * 1.7 + vec3(5.2, 1.3, 2.8), 1.7);
   float n4 = n3(wq * 0.7 + vec3(9.1, 2.0, 4.4) - vec3(0.0, uTime * 0.2, 0.0)); // světelné skvrny pláště
   return vec4(n1, n2, n4, wv.x);
 }

@@ -5,25 +5,25 @@
     "lod": 0,
     "tris": 176,
     "file": "candle_L0.glb",
-    "kB": 12
+    "kB": 13
    },
    {
     "lod": 1,
     "tris": 1380,
     "file": "candle_L1.glb",
-    "kB": 40
+    "kB": 41
    },
    {
     "lod": 2,
     "tris": 12624,
     "file": "candle_L2.glb",
-    "kB": 287
+    "kB": 288
    },
    {
     "lod": 3,
     "tris": 135808,
     "file": "candle_L3.glb",
-    "kB": 2951
+    "kB": 2952
    },
    {
     "lod": 4,
@@ -38,25 +38,25 @@
     "lod": 0,
     "tris": 94,
     "file": "torch_L0.glb",
-    "kB": 172
+    "kB": 171
    },
    {
     "lod": 1,
     "tris": 436,
     "file": "torch_L1.glb",
-    "kB": 180
+    "kB": 179
    },
    {
     "lod": 2,
     "tris": 2552,
     "file": "torch_L2.glb",
-    "kB": 228
+    "kB": 227
    },
    {
     "lod": 3,
     "tris": 30144,
     "file": "torch_L3.glb",
-    "kB": 831
+    "kB": 830
    },
    {
     "lod": 4,
@@ -71,28 +71,28 @@
     "lod": 0,
     "tris": 228,
     "file": "campfireS_L0.glb",
-    "kB": 366
+    "kB": 365
    },
    {
     "lod": 1,
-    "tris": 904,
+    "tris": 1024,
     "file": "campfireS_L1.glb",
-    "kB": 428
+    "kB": 435
    },
    {
     "lod": 2,
-    "tris": 4480,
+    "tris": 5840,
     "file": "campfireS_L2.glb",
-    "kB": 761
+    "kB": 777
    },
    {
     "lod": 3,
-    "tris": 30200,
+    "tris": 37760,
     "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
-    "tris": 292340,
+    "tris": 365300,
     "note": "generuje se za běhu (D-007)"
    }
   ]
@@ -103,28 +103,28 @@
     "lod": 0,
     "tris": 428,
     "file": "campfire_L0.glb",
-    "kB": 384
+    "kB": 383
    },
    {
     "lod": 1,
-    "tris": 1704,
+    "tris": 1904,
     "file": "campfire_L1.glb",
-    "kB": 503
+    "kB": 512
    },
    {
     "lod": 2,
-    "tris": 8416,
+    "tris": 10656,
     "file": "campfire_L2.glb",
-    "kB": 1130
+    "kB": 1150
    },
    {
     "lod": 3,
-    "tris": 60392,
+    "tris": 72992,
     "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
-    "tris": 613940,
+    "tris": 735540,
     "note": "generuje se za běhu (D-007)"
    }
   ]
@@ -139,24 +139,24 @@
    },
    {
     "lod": 1,
-    "tris": 2264,
+    "tris": 2584,
     "file": "bonfire_L1.glb",
-    "kB": 555
+    "kB": 566
    },
    {
     "lod": 2,
-    "tris": 11328,
+    "tris": 14928,
     "file": "bonfire_L2.glb",
-    "kB": 1403
+    "kB": 1428
    },
    {
     "lod": 3,
-    "tris": 81992,
+    "tris": 102152,
     "note": "generuje se za běhu (D-007)"
    },
    {
     "lod": 4,
-    "tris": 831220,
+    "tris": 1025780,
     "note": "generuje se za běhu (D-007)"
    }
   ]
@@ -460,19 +460,19 @@
     "lod": 0,
     "tris": 824,
     "file": "car_L0.glb",
-    "kB": 293
+    "kB": 294
    },
    {
     "lod": 1,
     "tris": 2304,
     "file": "car_L1.glb",
-    "kB": 334
+    "kB": 335
    },
    {
     "lod": 2,
     "tris": 18704,
     "file": "car_L2.glb",
-    "kB": 712
+    "kB": 713
    },
    {
     "lod": 3,
@@ -524,25 +524,25 @@
     "lod": 0,
     "tris": 24,
     "file": "pine_L0.glb",
-    "kB": 218
+    "kB": 217
    },
    {
     "lod": 1,
     "tris": 60,
     "file": "pine_L1.glb",
-    "kB": 222
+    "kB": 221
    },
    {
     "lod": 2,
     "tris": 1132,
     "file": "pine_L2.glb",
-    "kB": 322
+    "kB": 321
    },
    {
     "lod": 3,
     "tris": 12936,
     "file": "pine_L3.glb",
-    "kB": 1429
+    "kB": 1428
    },
    {
     "lod": 4,
@@ -557,25 +557,25 @@
     "lod": 0,
     "tris": 112,
     "file": "bush_L0.glb",
-    "kB": 243
+    "kB": 242
    },
    {
     "lod": 1,
     "tris": 352,
     "file": "bush_L1.glb",
-    "kB": 266
+    "kB": 265
    },
    {
     "lod": 2,
     "tris": 1392,
     "file": "bush_L2.glb",
-    "kB": 363
+    "kB": 362
    },
    {
     "lod": 3,
     "tris": 2992,
     "file": "bush_L3.glb",
-    "kB": 513
+    "kB": 512
    },
    {
     "lod": 4,

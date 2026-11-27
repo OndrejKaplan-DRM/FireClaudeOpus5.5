@@ -195,7 +195,7 @@ export class FireSource {
     // opticky tlustý plamen (τ_D = κ·D/2 ≫ 1) má jas černého tělesa po celé ploše; oko se na takový zdroj adaptuje
     // víc než na tenký jazyk svíčky → zisk (1 + 0,6(τ−1))^−0,6 (umělecké ★2, D-020); platí pro objem i sprity
     const tauD = kE * D * 0.5;
-    this.gainVol = Math.pow(1 + 0.6 * Math.max(0, tauD - 1), -0.6);
+    this.gainVol = Math.pow(1 + 0.6 * Math.max(0, tauD - 1), -(w.gainExp ?? 0.6));
     const Tvis = (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop - 60; // barva spritů podle svítivých zón
     const kSpr = this.gainVol * w.flameLum / Math.max(w.lumRef, 1e-6); // sprity sdílejí uniformu lumRef s výbuchy
     // --- objem

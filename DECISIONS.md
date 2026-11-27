@@ -100,3 +100,50 @@ Formát: **D-xxx · datum · rozhodnutí** — proč, alternativy, důsledky, ji
 - Rámec claude.ai neumí `<a download>`. Artefakt deklaruje `downloads` a ukládá přes `claude.use('downloads').save()`.
   Přípona .glb není na seznamu povolených → model se zabalí do ZIP (vlastní minimální zapisovač, metoda store, CRC32).
   Z `dist/index.html` otevřeného z disku se stahuje přímo.
+
+## Iterace 2 (2026-11-27)
+
+### D-020 · 2026-11-27 · Jas plamene: emise–absorpce sazí, částečná adaptace a zisk podle optické tloušťky
+- Objem už nenormalizuje hustotu ručně: zdrojová funkce je Planck (sootColor) a svítivost řídí κ = 2,7·f_v [1/m] z objemového
+  podílu sazí paliva (`fv` v `fuels.js`, ppm; svíčka 5, dřevo 0,6, nafta 2, pryž 4) ★3. Tenký plamen svíčky je proto průsvitný,
+  louže nafty opticky tlustá.
+- Opticky tlustý plamen má po celé ploše jas černého tělesa a s pevným klíčem byl bílý. Oko se na velký jasný zdroj adaptuje:
+  (1) klíč 100 a částečná adaptace `flameLum = klíč/ex · (ex/0,25)^0,4` (Hood & Finkelstein: adaptace ~L^0,3–0,5 ★3),
+  (2) zisk zdroje `(1 + 0,6(τ_D − 1))^−0,6`, τ_D = κ·D/2 (umělecké ★2). Výbuchy, jiskry a žhnutí používají původní klíč 16/ex
+  (`lumRef`) – sud, který se Ondřejovi líbil, vypadá stejně.
+- Barva objemu jde z teploty svítivých zón `Tlum` (Koseki 1989: maxima 1 100–1 250 °C ve velkých loužích ★3), ne z efektivní
+  teploty záření `Tflame` (ta zůstává pro světlo a sálání).
+- Zjištěno při ladění: `__fire.settle()` neobnovoval uniformy zdrojů → testy první scény sady vykreslovaly se zastaralým jasem.
+  Opraveno (settle končí krokem 1/240 s); starší náhledy z iterace 1 byly u první scény jasnější, než by byly v prohlížeči.
+
+### D-021 · 2026-11-27 · Antialiasovaný šum objemu a krok podle optické tloušťky
+- Jemné oktávy fbm byly menší než stopa vzorku (pixel ve vzdálenosti t nebo krok paprsku) → „srst“ a třpyt. Oktáva se nyní plynule
+  nahradí střední hodnotou, když je stopa ≥ její buňka (`octv`), což i šetří čtení textury.
+- Krok paprsku ≤ 0,6/κ (jinak první zásah povrchu skáče o celý krok → třpytivý povrch); okraj ≥ krok.
+- Advekce s časem letu 2√(zL) má virtuální počátek z0 = 0,15 L – bez něj se šum u paty nekonečně stlačuje do vodorovných pásů.
+
+### D-022 · 2026-11-27 · Kouř: hustota emise podle stupně, náběh krytí v sekundách, stínění podsvícení
+- `smokeMul` (T0 1 … T5 8): víc menších částic, τ každé ∝ (budget·mul)^−0,7 → celková τ sloupce zůstává podle fyziky (D-015).
+- Krytí částice naběhne za 0,3 s (ne 8 % života – při životě 28 s vznikla 2 s mezera mezi plamenem a kouřem).
+- Podsvícení kouře ohněm: E = I/(d² + r²/4) · 0,05 · exp(−k·(d − r/2)·0,6), k = τ/2b je extinkce vlastního sloupce. Svítí jen
+  spodek sloupce jako na nočních fotografiích. Světlo ohně má barvu svítivých zón (Tlum − 40 K), ne efektivní T (byla moc červená).
+
+### D-023 · 2026-11-27 · Uhlíky jako firebrandy
+- Průměr log-normálně (medián 1,6 mm, σ_ln 0,65; Manzello ★3), ρ = 250 kg/m³, pádová rychlost v_t = √(4ρgd/3ρ_a C_D) a relaxační
+  čas τ = v_t/g → malé uhlíky vynese sloup, velké padají zpět. Teplota se blíží T_eq = 880 + 150·√v_rel (strop 1 340 K;
+  Urban 2019, Kim 2021: 900–1 300 K ★2). Popel: náhodné poklesy jasu ~0,4 s; posledních 25 % života dohoření.
+- Praskání dřeva: výstřel 6–24 drobných jisker (0,3–0,9 mm, 1 400–1 550 K) z jednoho bodu lože; jen dřevo a sláma.
+- Bodový zdroj pod pixel se kreslí ×2,5 jasněji (oslnění – umělecké ★2), jinak by uhlíky na snímku zmizely.
+
+### D-024 · 2026-11-27 · Napojení na xEngine: systém `fx.fire`, ne kopie kódu
+- Adaptér žije ve FireLab (`integrations/xengine/`), xEngine se nemění (zápis do něj jen s rolí a Ondřejovým slovem). Hra ho
+  zaregistruje jako systém jádra (fáze `late`, tedy před vykreslením), simulace ohně (čas, HRR) běží ve `step` (pevný krok),
+  vzhled ve `frame`.
+- D-022 xEngine: ve scéně žádné světlo three.js. Světla FireLab jsou „virtuální“ (`lightObjects: false`) a most je předává systému
+  `light` hostitele (`addLight`, úroveň `setLight` po 1/64, `moveLight` jen po posunu > 0,5 m). Low ≤ 1 světlo efektu,
+  žádný MeshStandardMaterial (trosky vypnuté), mid 2 a high 4 světla.
+- Vrstva 1 kamery xEngine patří zbrani → `setFxLayer(0)`. Expozici dělá hostitel: před-expozice 1 a shadery FireLab volají `fxOut`
+  (tónová křivka a sRGB z three.js jen při kreslení přímo na plátno; ve vlastním HDR potrubí FireLab beze změny).
+- Stupně: xEngine 1 low → FireLab T0, 2 mid → T1, 3 high → T2 (bez hloubky, oparu a bloomu, protože hostitel kreslí přímo).
+- Gameplay dostává `heatFlux(x,y,z)` (bodový zdroj χr·Q/4πR², Modak ★3) a události `fire:ignited`, `fire:out`, `fire:exploded`;
+  na `combat:explode` (Aréna A-3) reaguje, jen když ji někdo deklaroval (jádro je přísné na události).

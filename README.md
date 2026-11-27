@@ -1,7 +1,8 @@
 # FireLab — ohňové assety a efekty pro 3D FPS engine
 
 Procedurální, fyzikálně podložená knihovna ohně, kouře a výbuchů pro Three.js (WebGL2) s prohlížečem,
-ve kterém se vše předvádí, měří a exportuje. Od ThinkPadu T460 (Intel HD 520) po herní PC s RTX 4060.
+ve kterém se vše předvádí, měří a exportuje. Od ThinkPadu T460 (Intel HD 520) po RTX 4090/5090 (stupně T0–T5).
+Napojení na xEngine: `integrations/xengine/` (systém jádra `fx.fire`).
 
 **Otevři `dist/index.html`** (jeden soubor, běží offline z disku).
 
@@ -24,6 +25,7 @@ npm install && npm run build      # dist/index.html
 npm run test:physics              # korelace proti literatuře
 npm test                          # všechny scénáře headless
 npm run bake                      # přegenerovat dataset/
+npm run test:xengine              # integrace s xEngine (potřebuje klon xEngine, viz integrations/xengine/README.md)
 ```
 
 Dokumentace: `CLAUDE.md` (pro AI), `ARCHITECTURE.md` (moduly), `DECISIONS.md` (laboratorní deník), `TODO.md` (stav).

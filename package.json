@@ -9,7 +9,8 @@
     "bake": "node tools/bake.mjs",
     "test:physics": "node tools/test-physics.mjs",
     "test:ui": "node tools/test-ui.mjs",
-    "perf": "node tools/perf-cpu.mjs"
+    "perf": "node tools/perf-cpu.mjs",
+    "test:xengine": "node tools/test-xengine.mjs"
   },
   "repository": {
     "type": "git",
