@@ -77,13 +77,13 @@
     "lod": 1,
     "tris": 1024,
     "file": "campfireS_L1.glb",
-    "kB": 435
+    "kB": 436
    },
    {
     "lod": 2,
     "tris": 5840,
     "file": "campfireS_L2.glb",
-    "kB": 777
+    "kB": 778
    },
    {
     "lod": 3,
@@ -103,7 +103,7 @@
     "lod": 0,
     "tris": 428,
     "file": "campfire_L0.glb",
-    "kB": 383
+    "kB": 384
    },
    {
     "lod": 1,
@@ -179,7 +179,7 @@
     "lod": 2,
     "tris": 12304,
     "file": "tire_L2.glb",
-    "kB": 416
+    "kB": 417
    },
    {
     "lod": 3,
@@ -200,7 +200,7 @@
     "lod": 0,
     "tris": 600,
     "file": "tirePile_L0.glb",
-    "kB": 104
+    "kB": 105
    },
    {
     "lod": 1,
@@ -504,7 +504,7 @@
     "lod": 2,
     "tris": 8176,
     "file": "house_L2.glb",
-    "kB": 1090
+    "kB": 1091
    },
    {
     "lod": 3,
