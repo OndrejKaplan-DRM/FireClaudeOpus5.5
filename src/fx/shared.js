@@ -10,6 +10,8 @@ let _noise = null, _bb = null;
 export const PRE = { value: 1 };
 /** Jas plamene po lokální adaptaci [cd/m² při 1500 K] – sdílený všemi emisními materiály. */
 export const FLAMEK = { value: 12000 };
+/** Globální čas efektů [s] (dýchání žhavých uhlíků, mihotání) – jediná uniforma pro všechny materiály. */
+export const GTIME = { value: 0 };
 
 /** Periodický 3D gradientní šum (vlastní implementace Perlinova principu) + Worley, perioda = textura. */
 export function noiseTexture(N = 64, seed = 7) {
@@ -87,11 +89,13 @@ export function sharedUniforms() {
     uBB: { value: new THREE.Vector3(bb.userData.Tmin, bb.userData.Tmax, BB_GAMMA) },
     uPreExp: PRE,
     uFlameK: FLAMEK,
+    uGTime: GTIME,
   };
 }
 
 export const GLSL_COMMON = /* glsl */`
 uniform highp sampler3D tNoise;
+uniform float uGTime;
 uniform sampler2D tBB;
 uniform vec3 uBB;
 uniform float uPreExp;

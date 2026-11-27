@@ -95,7 +95,7 @@ export function campfire({ lod = 2, size = 'medium', seed = 11 }) {
   }
   grp.add(mergeByMaterial(parts, 'stones'));
   // polena (týpí) s kůrou, ohořelá
-  const { m: bark, u } = charMat('bark', { scale: 8 });
+  const { m: bark, u } = charMat('bark', { scale: 8, alligator: [14, 20] });
   u.uCharBase.value = 0; u.uCharH.value = 0.6 * S;
   const n = noise3(seed + 9);
   const logs = [];
@@ -125,8 +125,38 @@ export function campfire({ lod = 2, size = 'medium', seed = 11 }) {
   const ashM = new THREE.MeshStandardMaterial({ color: 0x3a3836, roughness: 1, name: 'ash' });
   const au = applyChar(ashM, { scale: 25 }); au.uChar.value = 0.9; au.uGlow.value = 0.6;
   const am = mesh(ash, ashM, { name: 'ash' }); am.position.y = 0.006; grp.add(am);
-  grp.userData = { char: u, ashChar: au, flameAt: new THREE.Vector3(0, 0.05, 0), D: 0.75 * S };
+  const coals = coalBed({ lod, R: 0.42 * S, S, seed: seed + 17 }); if (coals) grp.add(coals);
+  grp.userData = { char: u, ashChar: au, coals, flameAt: new THREE.Vector3(0, 0.05, 0), D: 0.75 * S };
   return grp;
+}
+
+/**
+ * Lože žhavého uhlí: instancované zuhelnatělé kusy (1 volání kreslení), každý s vlastním žhnutím (atribut aChar).
+ * Velikosti log-normálně 1,5–5 cm × S, hustěji ke středu; žhnutí „dýchá“ (applyChar coal). LOD0 bez uhlí.
+ */
+export function coalBed({ lod = 2, R = 0.42, S = 1, seed = 5, n = null }) {
+  const N = n ?? [0, 10, 28, 44, 110][Math.min(lod, 4)];
+  if (!N) return null;
+  const r = mulberry32(seed);
+  const g = blob(0.5, [0, 0, 1, 2, 3][Math.min(lod, 4)], seed, 0.45, [1.3, 0.55, 1]);
+  const aChar = new THREE.InstancedBufferAttribute(new Float32Array(N * 2), 2);
+  g.setAttribute('aChar', aChar);
+  const m = new THREE.MeshStandardMaterial({ color: 0x141210, roughness: 0.95, name: 'coal' });
+  applyChar(m, { instanced: true, scale: 30, coal: true });
+  const im = new THREE.InstancedMesh(g, m, N); im.name = 'coals'; im.castShadow = false; im.receiveShadow = true;
+  const M = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), sc = new THREE.Vector3();
+  for (let i = 0; i < N; i++) {
+    const a = r() * Math.PI * 2, rr = R * Math.pow(r(), 0.75);
+    const sz = 0.03 * S * Math.exp((r() - 0.5) * 1.1);
+    p.set(Math.cos(a) * rr, 0.006 + sz * 0.2, Math.sin(a) * rr);
+    e.set((r() - 0.5) * 0.6, r() * 6.28, (r() - 0.5) * 0.6); q.setFromEuler(e);
+    sc.set(sz, sz * (0.7 + 0.5 * r()), sz * (0.8 + 0.4 * r()));
+    im.setMatrixAt(i, M.compose(p, q, sc));
+    aChar.setXY(i, 1, (0.45 + 0.55 * r()) * (1 - 0.45 * rr / R));
+  }
+  im.instanceMatrix.needsUpdate = true;
+  im.userData.char = m.userData.char;
+  return im;
 }
 
 // ------------------------------------------------------------------------------------------- pneumatika

@@ -346,7 +346,8 @@ uniform float uLum;
 void main(){
   vec2 p = vUv * 2.0 - 1.0;
   float f = exp(-dot(p, p) * 2.5);
-  vec3 c = bbColor(vT) * f * vA * uLum;
+  // ×2,5: bodový zdroj pod pixel oko vnímá jasněji (oslnění, Purkyně/Stiles–Crawford) – umělecké ★2, D-021
+  vec3 c = bbColor(vT) * f * vA * uLum * 2.5;
   o = vec4(c, 0.0);
 }`;
 
@@ -366,9 +367,10 @@ export class SparkSystem extends BaseSystem {
     this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.layers.set(LAYER_FX); this.mesh.renderOrder = 6;
   }
   /** Jiskra/uhlík: T0 [K], chladnutí τc [s], průměr d [m]. */
-  spawn({ x, y, z, vx, vy, vz, life, T, tauC = 0.6, size = 0.002, drag = 1.5, grav = 1, buoy = 0, ox, oz, pq = 0, pz0 = 0, seed, R0 = 0 }) {
+  spawn({ x, y, z, vx, vy, vz, life, T, tauC = 0.6, size = 0.002, drag = 1.5, grav = 1, buoy = 0, ox, oz, pq = 0, pz0 = 0, seed, R0 = 0, ember = false, vt = 1 }) {
     const o = this.alloc(); if (o < 0) return;
     const d = this.d;
+    d[o + F.type] = ember ? 1 : 0; d[o + F.tau0] = vt;
     d[o + F.px] = x; d[o + F.py] = y; d[o + F.pz] = z; d[o + F.vx] = vx; d[o + F.vy] = vy; d[o + F.vz] = vz;
     d[o + F.life] = life; d[o + F.T0] = T; d[o + F.dT] = tauC; d[o + F.s0] = size; d[o + F.drag] = drag; d[o + F.grav] = grav; d[o + F.buoy] = buoy;
     d[o + F.seed] = seed ?? Math.random(); d[o + F.ox] = ox ?? x; d[o + F.oz] = oz ?? z; d[o + F.pq] = pq; d[o + F.pz0] = pz0; d[o + F.glowR] = R0;
@@ -376,15 +378,32 @@ export class SparkSystem extends BaseSystem {
   update(dt, air, camera) {
     this.integrate(dt, air);
     const d = this.d, n = this.n, PS = this.aPS.array, V = this.aV.array, T = this.aT.array;
+    const kT = 1 - Math.exp(-dt / 0.4);
     for (let i = 0; i < n; i++) {
-      const o = i * STRIDE, age = d[o + F.age];
-      // radiační + konvektivní chladnutí → exponenciála k ~600 K
-      const Tk = 600 + (d[o + F.T0] - 600) * Math.exp(-age / d[o + F.dT]);
-      // mihotání žhavých uhlíků (rotace, odhalování žhavé strany)
-      const flick = 1 + 0.25 * Math.sin(age * 23 + d[o + F.seed] * 40);
-      PS[i * 4] = d[o]; PS[i * 4 + 1] = d[o + 1]; PS[i * 4 + 2] = d[o + 2]; PS[i * 4 + 3] = d[o + F.s0];
+      const o = i * STRIDE, age = d[o + F.age], a01 = age / d[o + F.life], sd = d[o + F.seed];
+      let Tk, sz = d[o + F.s0];
+      if (d[o + F.type] === 1) {
+        // žhavý uhlík (firebrand): povrch hoří s přístupem vzduchu – T roste s rychlostí obtékání
+        // T_eq ≈ 880 + 150·√v_rel [K], strop ~1 340 K (Urban 2019, Kim 2021: 900–1 300 K) ★2
+        const vx = d[o + F.vx], vy = d[o + F.vy], vz = d[o + F.vz];
+        const vrel = d[o + F.tau0] + 0.3 * Math.sqrt(vx * vx + vy * vy + vz * vz);
+        const Teq = Math.min(1340, 880 + 150 * Math.sqrt(vrel));
+        d[o + F.T0] += (Teq - d[o + F.T0]) * kT;
+        // popel: vrstva popela občas zakryje povrch a pak se odloupne (hluboké poklesy na ~0,5 s)
+        const slot = Math.floor(age * 2.5 + sd * 17), hsh = (Math.sin(slot * 127.1 + sd * 311.7) * 43758.5453) % 1;
+        const ash = Math.abs(hsh) < 0.18 ? 0.82 : 1;
+        // dohoření: posledních 25 % života chladne a zmenšuje se
+        const burn = a01 > 0.75 ? 1 - (a01 - 0.75) * 4 : 1;
+        Tk = (700 + (d[o + F.T0] - 700) * burn) * ash * (1 + 0.04 * Math.sin(age * 31 + sd * 40));
+        sz *= 0.55 + 0.45 * burn;
+      } else {
+        // jiskra: radiační + konvektivní chladnutí → exponenciála k ~600 K
+        Tk = 600 + (d[o + F.T0] - 600) * Math.exp(-age / d[o + F.dT]);
+        Tk *= (1 + 0.25 * Math.sin(age * 23 + sd * 40)) * (1 - Math.max(0, a01 - 0.85) * 2);
+      }
+      PS[i * 4] = d[o]; PS[i * 4 + 1] = d[o + 1]; PS[i * 4 + 2] = d[o + 2]; PS[i * 4 + 3] = sz;
       V[i * 4] = d[o + F.vx]; V[i * 4 + 1] = d[o + F.vy]; V[i * 4 + 2] = d[o + F.vz];
-      T[i] = Tk * flick * (1 - Math.max(0, age / d[o + F.life] - 0.85) * 2);
+      T[i] = Tk;
     }
     this.geo.instanceCount = n;
     const h = camera.isPerspectiveCamera ? Math.tan((camera.fov * Math.PI) / 360) * 2 : 1;

@@ -12,7 +12,10 @@ import { flameTilt, WIND_CLASSES } from '../physics/wind.js';
 import { shockTable, shockRadiusAt } from '../physics/blast.js';
 import { mulberry32, fbm1 } from '../engine/rng.js';
 import { bbRGB } from './lights.js';
-import { FLAMEK, PRE } from './shared.js';
+import { FLAMEK, PRE, GTIME } from './shared.js';
+
+/** Normální rozdělení N(0,1) z generátoru r (Box–Muller). */
+const gauss = (r) => Math.sqrt(-2 * Math.log(Math.max(r(), 1e-9))) * Math.cos(6.2831853 * r());
 
 export const FLAME_LUM = 20000; // jas plamene [cd/m²] při 1500 K a ε = 1 (po vizuální kompresi teploty) – viz DECISIONS D-010
 
@@ -68,7 +71,7 @@ export class FXWorld {
   addScorch(opts) { const d = new Scorch(this.scene, opts); this.decals.push(d); return d; }
 
   update(dt, camera) {
-    this.time += dt;
+    this.time += dt; GTIME.value = this.time;
     const a = this.air; a.time = this.time;
     a.gustNow = a.gust * this.gustNoise(this.time * 0.35);
     this.lights.begin();
@@ -296,19 +299,39 @@ export class FireSource {
       }
     }
     // --- žhavé uhlíky a jiskry
-    const qk = Math.sqrt(ph.Q / 1e5);
-    const rE = f.embers * 10 * qk * m.embers, rS = f.sparks * 4 * qk * m.sparks;
+    const qk = Math.sqrt(ph.Q / 1e5), eMul = w.tier.emberMul ?? 1;
+    const rE = f.embers * 10 * qk * m.embers * eMul, rS = f.sparks * 4 * qk * m.sparks * eMul;
     this.demand.spark = (rE * 4 + rS * 1);
     if (w.layers.sparks) {
       this.acc.ember += rE * w.budgetScale.spark * dt;
       while (this.acc.ember >= 1) {
         this.acc.ember -= 1;
         const [x, y, z] = this.footprintPoint();
+        // velikost uhlíků log-normálně (Manzello: medián ~1–2 mm, ojediněle cm) ★3; zuhelnatělé dřevo ρ ≈ 250 kg/m³
+        const dm = Math.min(0.012, Math.max(0.0006, 0.0016 * Math.exp(0.65 * gauss(r))));
+        const vt = Math.sqrt((4 * 250 * 9.81 * dm) / (3 * 1.2 * 1.0)); // pádová rychlost (C_D ≈ 1) ★4
         w.sp.spawn({
-          x, y: y + L * r() * 0.6, z, vx: (r() - 0.5) * 0.6, vy: 1 + r() * Math.min(6, L * 1.5), vz: (r() - 0.5) * 0.6,
-          life: 2 + 5 * r(), T: 1050 + 220 * r(), tauC: 1.8 + 3 * r(), size: 0.0015 + 0.004 * r(), drag: 0.4 + r(), grav: 0.35,
-          ox: this.pos.x, oz: this.pos.z, pq: ph.Qc, pz0: this.pos.y + ph.z0, seed: r(), R0: D / 2,
+          x, y: y + L * r() * 0.5, z, vx: (r() - 0.5) * 0.8, vy: 0.5 + r() * Math.min(5, L * 1.2), vz: (r() - 0.5) * 0.8,
+          life: Math.min(14, 1.5 + dm * 1600 * (0.6 + 0.8 * r())), T: 1000 + 200 * r(), size: dm * 1.2, drag: vt / 9.81, grav: 1,
+          ox: this.pos.x, oz: this.pos.z, pq: ph.Qc, pz0: this.pos.y + ph.z0, seed: r(), R0: D / 2, ember: true, vt,
         });
+      }
+      // praskání dřeva: vlhkost a pryskyřice v pórech → výstřel 6–24 drobných jisker z jednoho bodu (jen dřevo, sláma)
+      if (f.sparks >= 0.2 && f.embers > 0.3) {
+        this.acc.pop = (this.acc.pop || 0) + 0.25 * qk * m.sparks * Math.min(1.5, eMul) * dt;
+        if (this.acc.pop >= 1 && r() < 0.5) {
+          this.acc.pop = 0;
+          const [px, py, pz] = this.footprintPoint(), cnt = Math.round((6 + 18 * r()) * Math.min(1.5, eMul) * w.budgetScale.spark);
+          const ay = 0.6 + 0.4 * r(), az = r() * 6.283;
+          for (let k = 0; k < cnt; k++) {
+            const a = az + (r() - 0.5) * 2.2, el = ay + (r() - 0.5) * 0.7, sp = 3 + 6 * r();
+            const dm = 0.0003 + 0.0006 * r(), vt = Math.sqrt((4 * 300 * 9.81 * dm) / 3.6);
+            w.sp.spawn({
+              x: px, y: py + L * 0.08 * r() + 0.02, z: pz, vx: Math.cos(a) * Math.cos(el) * sp, vy: Math.sin(el) * sp, vz: Math.sin(a) * Math.cos(el) * sp,
+              life: 0.5 + 1.1 * r(), T: 1400 + 150 * r(), tauC: 0.5 + 0.5 * r(), size: dm, drag: vt / 9.81, grav: 1, seed: r(),
+            });
+          }
+        }
       }
       this.acc.spark += rS * w.budgetScale.spark * dt;
       while (this.acc.spark >= 1) {

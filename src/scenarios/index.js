@@ -11,7 +11,7 @@ import { bleveFireball, heFireball, blastSummary, gasTNT, gurneySphere } from '.
 import { arrivalTimes, headROS, byram, lengthToBreadth, crownInitiation } from '../physics/spread.js';
 import { mulberry32 } from '../engine/rng.js';
 import { fbm2 } from '../assets/textures.js';
-import { PRE } from '../fx/shared.js';
+import { PRE, FLAMEK, sharedUniforms, GLSL_COMMON } from '../fx/shared.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 export const fmtW = (q) => (q >= 1e6 ? (q / 1e6).toFixed(2) + ' MW' : q >= 1e3 ? (q / 1e3).toFixed(1) + ' kW' : q.toFixed(0) + ' W');
@@ -417,9 +417,26 @@ function landscapeFire(ctx, o) {
   // spálená plocha – textura překrytá přes zem
   const cv = document.createElement('canvas'); cv.width = nx; cv.height = ny; const cg = cv.getContext('2d'); const img = cg.createImageData(nx, ny);
   const tex = new THREE.CanvasTexture(cv); tex.magFilter = THREE.LinearFilter;
-  const burnPlane = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 }));
+  // žhnoucí lože za čelem: emise z kanálu G textury (zbytková žhavost), skvrnitá (šum) a „dýchající“ (uGTime)
+  const bpMat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
+  bpMat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, sharedUniforms());
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nout vec3 vBpW;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvBpW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nin vec3 vBpW;\n' + GLSL_COMMON)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+  {
+    vec4 tx = texture(map, vMapUv);
+    float gl = clamp((tx.r * 255.0 - 12.0) / 120.0, 0.0, 1.0);          // zbytková žhavost buňky (zapsaná v R)
+    float n = n3(vBpW * 0.35 + vec3(0.0, uGTime * 0.05, 0.0)), n2 = n3(vBpW * 1.3 + 0.37);
+    float patchy = smoothstep(0.42, 0.68, n * 0.7 + n2 * 0.3);
+    float Tk = 800.0 + 330.0 * gl * (0.6 + 0.6 * n2);
+    totalEmissiveRadiance += bbColor(Tk) * gl * patchy * uFlameK * 0.22;
+  }`);
+  };
+  bpMat.customProgramCacheKey = () => 'burnPlane';
+  const burnPlane = new THREE.Mesh(new THREE.PlaneGeometry(size, size), bpMat);
   burnPlane.rotation.x = -Math.PI / 2; burnPlane.position.y = 0.02; ctx.add(burnPlane);
-  let lastTex = -10;
+  let lastTex = -10, smAcc = 0;
   return {
     flora,
     update(dt, t) {
@@ -456,6 +473,20 @@ function landscapeFire(ctx, o) {
         flora.setChar(i, Math.min(1, a * 1.5), a < 1.5 ? Math.min(1, a * 3) * (1 - a / 1.5) : 0);
       }
       flora.update(ctx.camera, t);
+      // doutnání za čelem: světlý, líně stoupající kouř (vysoké albedo, malý vztlak), náhodné buňky do 3 tr po průchodu
+      {
+        const smN = Math.min(burnt, 400), rate = smN * 0.04 * (ctx.tier.smokeMul ?? 1) * ctx.fx.budgetScale.smoke;
+        smAcc += rate * dt;
+        let guard = 0;
+        while (smAcc >= 1 && guard++ < 40) {
+          const k = (r() * nx * ny) | 0, ta = arr.T[k];
+          if (ta === Infinity || t < ta + fuel.tr || t > ta + fuel.tr * 4) { smAcc -= 0.05; continue; }
+          smAcc -= 1;
+          const [x, z] = cellCenter(k), w = 1 - (t - ta - fuel.tr) / (fuel.tr * 3);
+          ctx.fx.bb.spawnSmoke({ x: x + (r() - 0.5) * cell, y: 0.15, z: z + (r() - 0.5) * cell, vx: 0, vy: 0.4 + 0.5 * r(), vz: 0,
+            life: 7 + 6 * r(), s0: 0.5 + 0.6 * r(), s1: 3 + 3 * r(), tau: 0.25 * w * fuelMap[k] / Math.sqrt(ctx.tier.smokeMul ?? 1), albedo: [0.62, 0.62, 0.64], drag: 1.2, buoy: 0.3, seed: r() });
+        }
+      }
       if (t - lastTex > 2) {
         lastTex = t;
         for (let k = 0; k < nx * ny; k++) {
