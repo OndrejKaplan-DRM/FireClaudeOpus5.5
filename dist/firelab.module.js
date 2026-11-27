@@ -198,6 +198,17 @@ vec3 bbColor(float T){
 }
 // Sazov\xFD plamen: spektr\xE1ln\xED emisivita saz\xED \u03B5 \u221D \u03BB^\u22121,39 (Hottel\u2013Broughton) posouv\xE1 barevnou teplotu o ~+28 %
 // (sv\xED\u010Dka: T saz\xED ~1 450 K, nam\u011B\u0159en\xE1 CCT ~1 850 K). Jas podle skute\u010Dn\xE9 T, barva podle posunut\xE9. \u2605\u2605\u2605\u2605
+// Plamen (objem, jazyky) pou\u017E\xEDv\xE1 men\u0161\xED kompresi jasu (\u03B3 0,45): kontrast hork\xFDch a chladn\xFDch m\xEDst jako na fotk\xE1ch
+// (1 250 \xD7 1 400 K: 2,6\xD7 m\xEDsto 1,9\xD7), iterace 4 podle m\u011B\u0159en\xED 20 fotek (docs/REFERENCE.md). V\xFDbuchy z\u016Fst\xE1vaj\xED na BB_GAMMA.
+// Barva nav\xEDc kalibrovan\xE1 na fotky: hork\xE1 m\xEDsta \u017Elut\u0161\xED, chladn\xE1 \u010Derven\u011Bj\u0161\xED, ne\u017E d\xE1v\xE1 samotn\xFD posun saz\xED
+// (fotky: odst\xEDn 12\u201320\xB0 v tmav\u0161\xEDch, 36\u201348\xB0 v nejjasn\u011Bj\u0161\xEDch \u010D\xE1stech plamene; \u010Dist\xFD Planck \xD7 1,28 jen 18\u201330\xB0) \u26052 um\u011Bleck\xE9
+vec3 sootColorG(float T, float g){
+  float u0 = clamp((T - uBB.x) / (uBB.y - uBB.x), 0.0, 1.0);
+  float u1 = clamp((T * 1.28 + (T - 1250.0) * 1.6 - uBB.x) / (uBB.y - uBB.x), 0.0, 1.0);
+  vec4 a = texture(tBB, vec2(u1 * (255.0/256.0) + 0.5/256.0, 0.5));
+  vec4 b = texture(tBB, vec2(u0 * (255.0/256.0) + 0.5/256.0, 0.5));
+  return a.rgb * exp2(b.a * g) * uPreExp;
+}
 vec3 sootColor(float T){
   float u0 = clamp((T - uBB.x) / (uBB.y - uBB.x), 0.0, 1.0);
   float u1 = clamp((T * 1.28 - uBB.x) / (uBB.y - uBB.x), 0.0, 1.0);
@@ -291,7 +302,7 @@ var FINAL = (
   `
 precision highp float; in vec2 vUv; out vec4 o;
 uniform sampler2D tMain, tBloom, tHaze;
-uniform float exposure, bloomStrength, useBloom, useHaze, grain, time, vignette;
+uniform float exposure, bloomStrength, useBloom, useHaze, grain, time, vignette, tone;
 uniform vec2 res;
 vec3 aces(vec3 x){ // Hill / Narkowicz \u2013 ACES fit
   const mat3 m1 = mat3(0.59719, 0.07600, 0.02840, 0.35458, 0.90834, 0.13383, 0.04823, 0.01566, 0.83777);
@@ -299,6 +310,10 @@ vec3 aces(vec3 x){ // Hill / Narkowicz \u2013 ACES fit
   vec3 v = m1 * x; vec3 a = v * (v + 0.0245786) - 0.000090537; vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
   return clamp(m2 * (a / b), 0.0, 1.0);
 }
+// Filmick\xE1 k\u0159ivka po kan\xE1lech (Hable): jasn\xE1 oran\u017Eov\xE1 p\u0159ejde do syt\u011B \u017Elut\xE9 (\u010Derven\xFD kan\xE1l se nasyt\xED prvn\xED) jako na fotk\xE1ch
+// plamene; ACES fit m\xEDsto toho rychle b\u011Bl\xE1. tone: 0 = ACES, 1 = Hable po kan\xE1lech, mezi = sm\u011Bs (iterace 4, REFERENCE.md)
+vec3 hable(vec3 x){ const float A = 0.15, B = 0.50, C = 0.10, D = 0.20, E = 0.02, F = 0.30; return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F; }
+vec3 filmic(vec3 x){ const float W = 11.2; return clamp(hable(x * 2.0) / hable(vec3(W)), 0.0, 1.0); }
 vec3 toSRGB(vec3 c){ return mix(c * 12.92, 1.055 * pow(c, vec3(1.0/2.4)) - 0.055, step(0.0031308, c)); }
 float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + time * 0.0) * 43758.5453); }
 void main(){
@@ -308,7 +323,7 @@ void main(){
   if (useBloom > 0.5) c += texture(tBloom, vUv).rgb * bloomStrength;
   c *= exposure;
   vec2 q = vUv - 0.5; c *= 1.0 - vignette * dot(q, q) * 1.6;
-  c = aces(c);
+  c = mix(aces(c), filmic(c), tone);
   c = toSRGB(c);
   if (grain > 0.0) c += (h(vUv * res + fract(time) * 91.0) - 0.5) * grain;
   o = vec4(c, 1.0);
@@ -370,6 +385,7 @@ var Pipeline = class {
       grain: { value: 0 },
       time: { value: 0 },
       vignette: { value: 0.35 },
+      tone: { value: 0 },
       res: { value: new THREE2.Vector2() }
     });
     this.taa = fsPass(TAA, { tCur: { value: null }, tDist: { value: null }, tHist: { value: null }, invVP: { value: new THREE2.Matrix4() }, prevVP: { value: new THREE2.Matrix4() }, camPos: { value: new THREE2.Vector3() }, texel: { value: new THREE2.Vector2() }, blend: { value: 0.12 } });
@@ -555,6 +571,7 @@ var Pipeline = class {
     f.useHaze.value = this.haze ? 1 : 0;
     f.exposure.value = 1;
     f.bloomStrength.value = this.bloomStrength;
+    f.tone.value = this.tone ?? 0;
     f.grain.value = t.grain ? 0.012 : 0;
     f.time.value = time;
     r.setRenderTarget(null);
@@ -774,7 +791,7 @@ void main(){
     // plamen: R = intenzita, G = teplotn\xED v\xE1ha, B = saze, A = pokryt\xED
     float T = (vG.w > 0.0 ? vG.w : 1250.0) * (0.8 + 0.25 * clamp(a.g * 1.25, 0.0, 1.0));
     float life = smoothstep(0.0, 0.12, age) * (1.0 - smoothstep(0.55, 1.0, age));
-    vec3 em = sootColor(T) * a.r * uFlameLum * vC.a * life * vC.rgb;
+    vec3 em = sootColorG(T, 0.45) * a.r * uFlameLum * vC.a * life * vC.rgb;
     float al = a.b * a.a * life * 0.5 * vC.a;
     fragColor = fxOut(vec4(em * soft, al * soft));
   } else if (vP.w > 2.5) {
@@ -974,7 +991,7 @@ var BillboardSystem = class extends BaseSystem {
       v.sort();
       for (let i = 0; i < n; i++) this.order[i] = v[i] & 1048575;
     } else for (let i = 0; i < n; i++) this.order[i] = i;
-    const PS = this.aPS.array, P = this.aP.array, C = this.aC.array, G = this.aG.array, V2 = this.aV.array;
+    const PS = this.aPS.array, P = this.aP.array, C = this.aC.array, G = this.aG.array, V3 = this.aV.array;
     for (let j = 0; j < n; j++) {
       const i = this.order[j], o = i * STRIDE;
       const age = d[o + F.age], life = d[o + F.life], a01 = age / life;
@@ -990,9 +1007,9 @@ var BillboardSystem = class extends BaseSystem {
       P[j * 4 + 1] = d[o + F.rot];
       P[j * 4 + 2] = frame;
       P[j * 4 + 3] = type;
-      V2[j * 3] = d[o + F.vx];
-      V2[j * 3 + 1] = d[o + F.vy];
-      V2[j * 3 + 2] = d[o + F.vz];
+      V3[j * 3] = d[o + F.vx];
+      V3[j * 3 + 1] = d[o + F.vy];
+      V3[j * 3 + 2] = d[o + F.vz];
       if (type === PTYPE.FLAME) {
         C[j * 4] = d[o + F.cr];
         C[j * 4 + 1] = d[o + F.cg];
@@ -1048,7 +1065,7 @@ var SP_VS = (
   /* glsl */
   `
 in vec4 iPS; in vec4 iV; in float iT;
-out vec2 vUv; out float vT; out float vA;
+out vec2 vUv; out float vT; out float vA; out float vB;
 uniform float uPx;  // velikost pixelu ve sv\u011Bt\u011B na 1 m vzd\xE1lenosti
 uniform float uShutter;
 void main(){
@@ -1067,7 +1084,7 @@ void main(){
   vec4 mv = vec4(mix(c.xyz, c2.xyz, 0.5) + vec3(off, 0.0), 1.0);
   vA *= s / (l + s);
   gl_Position = projectionMatrix * mv;
-  vUv = q + 0.5; vT = iT;
+  vUv = q + 0.5; vT = iT; vB = iV.w;
 }`
 );
 var SP_FS = (
@@ -1075,11 +1092,13 @@ var SP_FS = (
   `
 precision highp float; precision highp sampler3D;
 ${GLSL_COMMON}
-in vec2 vUv; in float vT; in float vA; out vec4 o;
+in vec2 vUv; in float vT; in float vA; in float vB; out vec4 o;
 uniform float uLum;
 void main(){
   vec2 p = vUv * 2.0 - 1.0;
   float f = exp(-dot(p, p) * 2.5);
+  // ho\u0159\xEDc\xED oharek (vB > 0): \u017Ehnou jen praskliny mezi zuhelnat\u011Bl\xFDmi \u0161upinami (alig\xE1to\u0159\xED k\u016F\u017Ee), ne cel\xFD povrch \u26053 (fotky)
+  if (vB > 0.5) f *= 0.25 + 0.75 * smoothstep(0.35, 0.75, n3(vec3(p * 1.6, fract(vB) * 37.0)));
   // \xD72,5: bodov\xFD zdroj pod pixel oko vn\xEDm\xE1 jasn\u011Bji (osln\u011Bn\xED, Purkyn\u011B/Stiles\u2013Crawford) \u2013 um\u011Bleck\xE9 \u26052, D-021
   vec3 c = bbColor(vT) * f * vA * uLum * 2.5;
   o = fxOut(vec4(c, 0.0));
@@ -1088,6 +1107,8 @@ void main(){
 var SparkSystem = class extends BaseSystem {
   constructor(capacity) {
     super(capacity);
+    this.trail = null;
+    this.trailMul = 1;
     const g2 = QUAD.clone();
     g2.instanceCount = 0;
     const mk = (n) => {
@@ -1119,12 +1140,14 @@ var SparkSystem = class extends BaseSystem {
     this.mesh.renderOrder = 6;
   }
   /** Jiskra/uhlík: T0 [K], chladnutí τc [s], průměr d [m]. */
-  spawn({ x, y, z, vx, vy, vz, life, T, tauC = 0.6, size = 2e-3, drag = 1.5, grav = 1, buoy = 0, ox, oz, pq = 0, pz0 = 0, seed, R0 = 0, ember = false, vt = 1 }) {
+  spawn({ x, y, z, vx, vy, vz, life, T, tauC = 0.6, size = 2e-3, drag = 1.5, grav = 1, buoy = 0, ox, oz, pq = 0, pz0 = 0, seed, R0 = 0, ember = false, vt = 1, brand = 0, smokeRGB = null }) {
     const o = this.alloc();
     if (o < 0) return;
     const d = this.d;
-    d[o + F.type] = ember ? 1 : 0;
+    d[o + F.type] = brand > 0 ? 2 : ember ? 1 : 0;
     d[o + F.tau0] = vt;
+    d[o + F.cr] = brand;
+    d[o + F.cg] = smokeRGB ? smokeRGB[0] : 0.22;
     d[o + F.px] = x;
     d[o + F.py] = y;
     d[o + F.pz] = z;
@@ -1147,12 +1170,58 @@ var SparkSystem = class extends BaseSystem {
   }
   update(dt, air, camera) {
     this.integrate(dt, air);
-    const d = this.d, n = this.n, PS = this.aPS.array, V2 = this.aV.array, T = this.aT.array;
+    const d = this.d, n = this.n, PS = this.aPS.array, V3 = this.aV.array, T = this.aT.array;
     const kT = 1 - Math.exp(-dt / 0.4);
     for (let i = 0; i < n; i++) {
       const o = i * STRIDE, age = d[o + F.age], a01 = age / d[o + F.life], sd = d[o + F.seed];
       let Tk, sz = d[o + F.s0];
-      if (d[o + F.type] === 1) {
+      const ty = d[o + F.type];
+      if (ty === 2 && this.trail) {
+        const flaming = a01 < d[o + F.cr], vx = d[o + F.vx], vy = d[o + F.vy], vz = d[o + F.vz];
+        d[o + F.extra] += dt * (flaming ? 45 : 7) * this.trailMul;
+        while (d[o + F.extra] >= 1) {
+          d[o + F.extra] -= 1;
+          const k = Math.random(), x = d[o] - vx * dt * k, y = d[o + 1] - vy * dt * k, z = d[o + 2] - vz * dt * k;
+          if (flaming && Math.random() < 0.82) {
+            this.trail.spawnFlame({
+              x,
+              y,
+              z,
+              vx: vx * 0.15,
+              vy: 0.4 + Math.max(0, vy) * 0.1,
+              vz: vz * 0.15,
+              life: 0.1 + 0.12 * Math.random(),
+              s0: sz * 2.2,
+              s1: sz * 3.5,
+              T: 1250 + 120 * Math.random(),
+              lum: 0.8,
+              drag: 0.08,
+              buoy: 1.5,
+              stretch: 1.6,
+              seed: Math.random()
+            });
+          } else {
+            const g2 = d[o + F.cg];
+            this.trail.spawnSmoke({
+              x,
+              y,
+              z,
+              vx: vx * 0.1,
+              vy: 0.25,
+              vz: vz * 0.1,
+              life: 1.2 + Math.random(),
+              s0: sz * 1.5,
+              s1: sz * 10 + 0.04,
+              tau: flaming ? 0.5 : 0.25,
+              albedo: [g2, g2 * 0.96, g2 * 0.92],
+              drag: 0.25,
+              buoy: 0.6,
+              seed: Math.random()
+            });
+          }
+        }
+      }
+      if (ty === 1 || ty === 2) {
         const vx = d[o + F.vx], vy = d[o + F.vy], vz = d[o + F.vz];
         const vrel = d[o + F.tau0] + 0.3 * Math.sqrt(vx * vx + vy * vy + vz * vz);
         const Teq = Math.min(1340, 880 + 150 * Math.sqrt(vrel));
@@ -1170,9 +1239,10 @@ var SparkSystem = class extends BaseSystem {
       PS[i * 4 + 1] = d[o + 1];
       PS[i * 4 + 2] = d[o + 2];
       PS[i * 4 + 3] = sz;
-      V2[i * 4] = d[o + F.vx];
-      V2[i * 4 + 1] = d[o + F.vy];
-      V2[i * 4 + 2] = d[o + F.vz];
+      V3[i * 4] = d[o + F.vx];
+      V3[i * 4 + 1] = d[o + F.vy];
+      V3[i * 4 + 2] = d[o + F.vz];
+      V3[i * 4 + 3] = d[o + F.type] === 2 ? 1 + sd * 0.99 : 0;
       T[i] = Tk;
     }
     this.geo.instanceCount = n;
@@ -1320,6 +1390,7 @@ uniform vec4 uFlame2;        // x: \u03BA sv\xEDtiv\xFDch saz\xED p\u0159i 1 500
 uniform float uFlowL;        // d\xE9lka plamene [m] pro advekci s urychlen\xEDm u \u221D \u221Az
 uniform float uDetail;       // 0..2 po\u010Det jemn\xFDch okt\xE1v (stupn\u011B kvality)
 uniform float uShapeK;       // tvar ob\xE1lky: 1 ku\u017Eel, ~2 sloup velk\xE9 lou\u017Ee
+uniform float uTongues;      // po\u010Det samostatn\xFDch jazyk\u016F (0 = jen ob\xE1lka \u2013 sv\xED\u010Dka, lou\u010D)
 uniform float uPixAng;       // \xFAhel jednoho pixelu [rad] (stopa vzorku = t\xB7uPixAng)
 
 // Advekce s urychlen\xEDm (McCaffrey: v souvisl\xE9 z\xF3n\u011B u \u221D \u221Az): sou\u0159adnice \u0161umu = \u010Das letu od paty.
@@ -1333,6 +1404,7 @@ vec3 flowQ(vec3 w, float tt){
 // Antialiasovan\xFD \u0161um: okt\xE1va men\u0161\xED ne\u017E stopa vzorku (pixel ve vzd\xE1lenosti t, nebo krok paprsku) se plynule
 // nahrad\xED st\u0159edn\xED hodnotou \u2192 \u017E\xE1dn\xE1 \u201Esrst\u201C z podvzorkovan\xFDch okt\xE1v, a z\xE1rove\u0148 levn\u011Bji (m\xE9n\u011B \u010Dten\xED textury).
 float gFpq = 0.0; // stopa vzorku v jednotk\xE1ch q (nastavuje main p\u0159ed vol\xE1n\xEDm pole)
+float gBlue = 1.0;   // maska modr\xE9 z\xF3ny (lamin\xE1rn\xED plamen: jen tenk\xFD pl\xE1t na pl\xE1\u0161ti)
 float octv(vec3 q, float amp, float cell){
   float wk = 1.0 - smoothstep(0.35, 1.0, gFpq * cell);
   return amp * (wk > 0.001 ? mix(0.5, n3(q), wk) : 0.5);
@@ -1352,8 +1424,9 @@ vec4 flameNoise(vec3 w, float tt){
   vec3 wq = q + wv * uFlame2.w * 1.6;
   float n1 = fbmD(wq, 1.0);
   float n2 = fbmD(wq * 1.7 + vec3(5.2, 1.3, 2.8), 1.7);
-  float n4 = n3(wq * 0.7 + vec3(9.1, 2.0, 4.4) - vec3(0.0, uTime * 0.2, 0.0)); // sv\u011Bteln\xE9 skvrny pl\xE1\u0161t\u011B
-  return vec4(n1, n2, n4, wv.x);
+  // n\xEDzk\xE1 frekvence: d\u011Bl\xED plamen na 3\u20137 samostatn\xFDch jazyk\u016F s mezerami (fotky: jazyky s ostrou hranou, ne \u201Esrst\u201C)
+  float nL = 0.62 * n3(wq * 0.42 + vec3(9.1, 2.0, 4.4)) + 0.38 * n3(wq * 0.86 + vec3(3.3, 7.7, 1.9));
+  return vec4(n1, n2, nL, wv.x);
 }
 vec4 flameNoiseLoop(vec3 w){
   if (uLoopT <= 0.0) return flameNoise(w, uTime);
@@ -1361,6 +1434,27 @@ vec4 flameNoiseLoop(vec3 w){
   vec4 a = flameNoise(w, ph * uLoopT);
   vec4 b = flameNoise(w + vec3(0.37, 0.0, 0.11) * uTurb.y * 6.0, (ph - 1.0) * uLoopT);
   return mix(a, b, smoothstep(0.0, 1.0, ph));
+}
+
+// Samostatn\xE9 jazyky (iterace 4 podle fotek): plamen t\xE1bor\xE1ku nen\xED jedna ob\xE1lka, ale 3\u20137 jazyk\u016F z mezer v palivu,
+// dole spl\xFDvaj\xED, naho\u0159e se rozch\xE1zej\xED a ka\u017Ed\xFD m\xE1 vlastn\xED v\xFD\u0161ku a mihot\xE1n\xED. Pracuje v normovan\xE9 rovin\u011B (1 = polom\u011Br).
+float tongues(vec2 q2, float y, float nL, float n2){
+  float best = -10.0;
+  for (int i = 0; i < 7; i++) {
+    if (float(i) >= uTongues) break;
+    float fi = float(i);
+    float h1 = fract(sin(fi * 12.9898 + uSeed * 78.233) * 43758.5453);
+    float h2 = fract(sin(fi * 39.3468 + uSeed * 11.135) * 24634.6345);
+    float h3 = fract(sin(fi * 73.156 + uSeed * 52.235) * 13758.937);
+    float ang = 6.2832 * (fi / uTongues + 0.25 * h1);
+    float H = (0.7 + 0.45 * h3) * (1.0 + 0.2 * sin(6.2832 * uPuff.x * (0.6 + 0.5 * h1) * uTime + fi * 2.1) + 0.25 * (nL - 0.5));
+    float yy = y / max(H, 0.05);
+    if (yy > 1.0) continue;
+    vec2 c = (0.25 + 0.4 * h2) * vec2(cos(ang), sin(ang)) * (1.0 - 0.7 * yy) + vec2(n2 - 0.5, nL - 0.5) * 0.5 * yy;
+    float ri = (0.26 + 0.16 * h2) * pow(1.0 - yy, 0.45) * (1.0 + 0.5 * exp(-yy * 6.0));
+    best = max(best, ri - length(q2 - c));
+  }
+  return best;
 }
 
 // vrac\xED (sv\xEDtiv\xE1 hustota 0..1, teplota [K], saze bez emise 0..1)
@@ -1377,7 +1471,7 @@ vec3 fieldFlame(vec3 p){
   if (prof + amp - length(vec2(rx, rz)) < 0.0) return vec3(0.0, uTamb, 0.0);
   vec3 w = p * uScale;
   vec4 N = flameNoiseLoop(w);
-  float n1 = N.x, n2 = N.y, n4 = N.z;
+  float n1 = N.x, n2 = N.y, nL = N.z;
   // vln\u011Bn\xED osy (jazyk) \u2013 velk\xE9 m\u011B\u0159\xEDtko z ohybov\xE9ho pole
   float wob = (n2 - 0.5) * uTurb.w * y + N.w * uTurb.w * y * 0.6;
   float ax = axBase + wob;
@@ -1386,26 +1480,42 @@ vec3 fieldFlame(vec3 p){
   float r = length(d2);
   // pulzace: toroidn\xED v\xEDry stoupaj\xEDc\xED rychlost\xED ~ U (Cetegen & Ahmed)
   float puff = sin(6.2832 * (uPuff.x * uTime - tof(w.y) / max(uFlowL, 0.01) * 0.8)) * uPuff.y;
-  float dd = prof * (1.0 + 0.25 * puff * y) - r + (n1 - 0.5) * uTurb.x * (0.35 + 1.4 * y) + (n2 - 0.5) * uTurb.x * 0.45;
-  // p\u0159eru\u0161ovan\xE1 z\xF3na (McCaffrey \u03B7 0,08\u20130,2): odtrh\xE1v\xE1n\xED plam\xE9nk\u016F
-  dd -= smoothstep(0.38, 0.95, y) * smoothstep(0.46, 0.66, n2) * 0.34;
+  // jazyky: velk\xE9 m\u011B\u0159\xEDtko (nL) d\u011Bl\xED ob\xE1lku, jemn\xE9 okt\xE1vy jen vln\xED okraj (iterace 4 podle fotek)
+  float dd = prof * (1.0 + 0.25 * puff * y) - r + (nL - 0.5) * uTurb.x * (0.5 + 2.0 * y) * 1.3;
+  if (uTongues > 0.5) {
+    // ob\xE1lka dr\u017E\xED jen spojenou patu, v\xFD\u0161 jsou samostatn\xE9 jazyky
+    float tg = tongues(d2, y, nL, n2) + (nL - 0.5) * uTurb.x * (0.2 + 0.6 * y);
+    dd = max(dd - smoothstep(0.06, 0.32, y) * 0.8, tg);
+  }
+  dd += (n1 - 0.5) * uTurb.x * (0.12 + 0.3 * y) + (n2 - 0.5) * uTurb.x * 0.1;
+  // p\u0159eru\u0161ovan\xE1 z\xF3na (McCaffrey \u03B7 0,08\u20130,2): odtrh\xE1v\xE1n\xED cel\xFDch jazyk\u016F, ne vl\xE1ken
+  // lamin\xE1rn\xED plamen (sv\xED\u010Dka, mal\xFD knot): hladk\xE1 kapka bez odtrh\xE1v\xE1n\xED (Re < ~2000)
+  float lam = 1.0 - smoothstep(0.03, 0.08, uTurb.x);
+  dd -= smoothstep(0.45, 0.98, y) * smoothstep(0.45, 0.6, nL + 0.3 * (n2 - 0.5)) * 0.3 * (1.0 - lam);
   // velk\xE9 po\u017E\xE1ry: p\u0159eru\u0161ovan\xE1 z\xF3na za\u010D\xEDn\xE1 n\xED\u017E (\u03B7 \u2248 0,4 L) a trh\xE1 sloup na samostatn\xE9 jazyky s tmav\xFDmi mezerami
-  dd -= (uShapeK - 1.0) * smoothstep(0.28, 0.85, y) * smoothstep(0.44, 0.6, n1 + 0.3 * (n2 - 0.5)) * 0.45;
+  dd -= (uShapeK - 1.0) * smoothstep(0.28, 0.85, y) * smoothstep(0.44, 0.6, nL + 0.3 * (n1 - 0.5)) * 0.45;
   // nedostatek kysl\xEDku: odtr\u017Een\xE9 l\xEDn\xE9 jazyky
   dd -= uLift * smoothstep(0.55, 0.8, n2) * 0.4 * y;
   float edge = uFlame2.z;
-  float dens = smoothstep(0.0, edge, dd);
+  // plamenn\xFD pl\xE1t: saze vznikaj\xED v tenk\xE9 vrstv\u011B u \u010Dela plamene \u2192 jasn\u011Bj\u0161\xED lem a ostr\xE1 hranice (limb brightening)
+  float dens = smoothstep(0.0, edge, dd) * (1.0 + 0.8 * exp(-max(dd, 0.0) / 0.1));
   float core = smoothstep(0.1, 0.5, dd);
   // zat\xED\u017Een\xED sazemi kol\xEDs\xE1 (pruhy hust\xFDch a \u0159\xEDdk\xFDch saz\xED) \u2192 pr\u016Fhledn\xE9 mezery mezi jazyky
   float big = clamp(uShapeK - 1.0, 0.0, 1.0);
-  dens *= mix(0.35 + 0.9 * smoothstep(0.3, 0.7, n1 + 0.15 * (n2 - 0.5)), smoothstep(0.4, 0.62, n1 + 0.2 * (n2 - 0.5)), big * 0.7);
+  dens *= mix(mix(0.8 + 0.2 * smoothstep(0.3, 0.7, n1), 1.0, lam), smoothstep(0.4, 0.62, nL + 0.2 * (n2 - 0.5)), big * 0.7);
+  // sv\xED\u010Dka: tmav\xE9 j\xE1dro par paliva nad knotem (ku\u017Eel do ~30 % v\xFD\u0161ky) a sv\xEDtiv\xE1 z\xF3na a\u017E nad modr\xFDm kalichem \u26053 (Faraday; fotky)
+  gBlue = mix(1.0, step(0.0, dd) * exp(-max(dd, 0.0) / 0.07), lam);
+  float inner = prof * 0.7 * (1.0 - y / 0.4);
+  dens *= mix(1.0, (0.08 + 0.92 * smoothstep(inner - 0.04, inner + 0.15, r)) * (0.04 + 0.96 * smoothstep(0.06, 0.34, y)), lam);
   // teplota: reak\u010Dn\xED z\xF3na na pl\xE1\u0161ti; hork\xE9 prou\u017Eky; u paty velk\xFDch po\u017E\xE1r\u016F chladn\xE9 tmav\xE9 j\xE1dro par paliva
-  float zone = smoothstep(0.0, 0.16, dd) * (1.0 - 0.5 * core * exp(-y * 4.0) * (0.4 + uFlame2.y));
-  float hotStreak = smoothstep(0.38, 0.78, n2);
-  float T = uTamb + (uTpeak - uTamb) * pow(zone, 0.8) * mix(0.66 - 0.06 * big, 1.04, hotStreak) * (1.0 - 0.42 * pow(y, 1.5));
+  // okraje a tenk\xE9 \u0161pi\u010Dky chladn\u011Bj\u0161\xED (oran\u017Eov\xE9), tlust\xE9 \u010D\xE1sti hork\xE9 (\u017Elut\xE9) \u2013 jako na fotk\xE1ch
+  float zone = smoothstep(0.0, 0.22, dd) * (1.0 - 0.5 * core * exp(-y * 4.0) * (0.4 + uFlame2.y));
+  float hotStreak = mix(smoothstep(0.38, 0.78, 0.55 * nL + 0.45 * n2), 0.8, lam);
+  float T = uTamb + (uTpeak - uTamb) * pow(zone, 0.8) * mix(0.66 - 0.06 * big, 1.04, hotStreak) * (1.0 - mix(0.3, 0.12, lam) * pow(y, 1.5));
+  T *= mix(1.0, 0.8 + 0.2 * smoothstep(0.03, 0.28, y), lam);
   // velk\xE9 sazov\xE9 po\u017E\xE1ry (Steinhaus, Takahashi): vn\u011Bj\u0161\xED vrstva saz\xED, sv\u011Btlo pror\xE1\u017Eej\xED jen \u201Eluminous zones\u201C
   float shell = uFlame2.y * (1.0 - core) * smoothstep(0.15, 0.55, y + 0.25 * n1);
-  float lumPatch = smoothstep(0.52, 0.64, n4);
+  float lumPatch = smoothstep(0.52, 0.64, 0.5 * n1 + 0.5 * nL + 0.03);
   dens *= mix(1.0, 0.15 + 0.85 * lumPatch, shell);
   // saze: nad \u0161pi\u010Dkou dohas\xEDnaj\xEDc\xED plamen a pl\xE1\u0161\u0165
   float soot = uSoot * smoothstep(0.35, 0.95, y) * smoothstep(-0.12, 0.08, dd) * (1.0 - core * 0.5);
@@ -1508,10 +1618,11 @@ void main(){
       float ks = f.z * uSigmaSoot;
       float k = ke + ks + 1e-5;
       float a = exp(-k * dt);
-      col += trans * (1.0 - a) * (ke / k) * sootColor(f.y) * uIntensity;
+      col += trans * (1.0 - a) * (ke / k) * sootColorG(f.y, 0.45) * uIntensity;
       // modr\xE1 z\xF3na (CH*, C2*): jen u paty a jen tam, kde nesv\xEDt\xED saze (jinak modr\xE1 + oran\u017Eov\xE1 = r\u016F\u017Eov\xE1)
       float edgeB = smoothstep(0.0, 0.25, f.x) * (1.0 - smoothstep(0.3, 0.9, f.x)) * (1.0 - smoothstep(0.08, 0.3, ke * dt));
-      col += trans * vec3(0.04, 0.12, 1.0) * uBlue * exp(-p.y * 30.0) * edgeB * uIntensity * uPreExp * 0.22 * (dt / max(uFlowL * 0.25, 1e-3));
+      float lamB = 1.0 - smoothstep(0.03, 0.08, uTurb.x);
+      col += trans * vec3(0.04, 0.12, 1.0) * uBlue * exp(-p.y * mix(30.0, 20.0, lamB)) * mix(1.0, 0.3, lamB) * gBlue * edgeB * uIntensity * uPreExp * 0.22 * (dt / max(uFlowL * 0.25, 1e-3));
       dW += trans * (1.0 - a) * t;
       trans *= a;
     }
@@ -1556,6 +1667,7 @@ function createVolumeMaterial({ ball = false, depth = null, steps = 48, mrt = fa
     uCamPos: { value: new THREE4.Vector3() },
     uPixAng: { value: 15e-4 },
     uShapeK: { value: 1 },
+    uTongues: { value: 0 },
     tDepth: { value: depth },
     uDepthRes: { value: new THREE4.Vector2(1, 1) },
     uFlame2: { value: new THREE4.Vector4(1.35, 0, 0.12, 0.6) },
@@ -1842,7 +1954,8 @@ function bakeAtlas(renderer, { res = 128, seed = 3, steps = 48 } = {}) {
     uFlowL: { value: 1.3 },
     uDetail: { value: 2 },
     uShapeK: { value: 1 },
-    uPixAng: { value: 5e-4 }
+    uPixAng: { value: 5e-4 },
+    uTongues: { value: 3 }
   };
   const m = new THREE6.ShaderMaterial({ vertexShader: "void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }", fragmentShader: src, uniforms: u, glslVersion: THREE6.GLSL3, depthTest: false, depthWrite: false });
   const g2 = new THREE6.BufferGeometry();
@@ -1912,6 +2025,7 @@ var Debris = class {
     this._q = new THREE7.Quaternion();
     this._e = new THREE7.Euler();
     this._v = new THREE7.Vector3();
+    this._sv = new THREE7.Vector3();
     this._c = new THREE7.Color();
   }
   dispose() {
@@ -1988,7 +2102,7 @@ var Debris = class {
       this.mesh.setColorAt(i, this._c);
       this._e.set(s[b + 6], s[b + 7], s[b + 8]);
       this._q.setFromEuler(this._e);
-      m.compose(this._v.set(s[b], s[b + 1], s[b + 2]), this._q, new THREE7.Vector3(sz, sz, sz));
+      m.compose(this._v.set(s[b], s[b + 1], s[b + 2]), this._q, this._sv.set(sz, sz, sz));
       this.mesh.setMatrixAt(i, m);
     }
     this.mesh.count = this.n;
@@ -2327,12 +2441,12 @@ function poolFire(fuel, D) {
 }
 function spillFire(fuel, volumeL, depthMM = 1.5) {
   const f = FUELS[fuel];
-  const V2 = volumeL / 1e3, A = V2 / (depthMM / 1e3);
+  const V3 = volumeL / 1e3, A = V3 / (depthMM / 1e3);
   const D = Math.sqrt(4 * A / Math.PI);
   const p = poolFire(f, D);
   const thin = 0.5;
   const mdot = p.mdot * thin, Q = mdot * f.dHc;
-  const mass = V2 * f.rho;
+  const mass = V3 * f.rho;
   return { A, D, mdot, Q, L: flameHeight(Q, D), duration: mass / mdot, mass };
 }
 function ventilation(o2) {
@@ -2529,6 +2643,9 @@ var FXWorld = class {
     const depth = this.pipeline.depthTexture;
     this.bb = new BillboardSystem(tier.particles.flame + tier.particles.smoke, this.atlasRT.texture, { depth, sort: tier.sortSmoke });
     this.sp = new SparkSystem(tier.particles.spark);
+    this._flowOut = [0, 0, 0];
+    this.sp.trail = this.bb;
+    this.sp.trailMul = Math.sqrt(tier.emberMul ?? 1);
     this.scene.add(this.bb.mesh, this.sp.mesh);
     this.hz = tier.particles.haze ? new HazeSystem(tier.particles.haze) : null;
     if (this.hz) this.scene.add(this.hz.mesh);
@@ -2628,6 +2745,13 @@ var FXWorld = class {
     for (const e of this.explosions) if (e.dead) e.dispose();
     this.explosions = this.explosions.filter((e) => !e.dead);
     for (const d of this.decals) d.update(dt);
+    const flows = this.explosions.filter((e) => e.mf);
+    a.extraUp = flows.length ? (x, y, z) => {
+      const o = this._flowOut;
+      o[0] = o[1] = o[2] = 0;
+      for (const e of flows) e.flow(x, y, z, o);
+      return o;
+    } : null;
     const lights = this.lights.end(camera);
     this.bb.mesh.visible = this.layers.flame || this.layers.smoke;
     const dtex = this.pipeline.depthTexture;
@@ -2712,6 +2836,42 @@ var FireSource = class {
     const I = flameLuminousIntensity(Q, T) * this.o.mult.light;
     return { Q, L, U, tilt, T, fp, Qc, z0, tau: sm.tau, b: sm.b, smoke: col, I, vent };
   }
+  /** Hořící oharek z ohniště (scénáře: rozvalení hranice, zřícení střechy). sc = měřítko rychlosti. */
+  spawnBrand(sc = 1, at = null) {
+    const w = this.w, r = this.rnd, ph = this.ph, L = ph?.L ?? 1, D = this.D ?? 0.5;
+    const [x, y, z] = at ?? this.footprintPoint();
+    const dm = Math.min(0.035, Math.max(5e-3, 0.012 * Math.exp(0.55 * gauss(r))));
+    const vt = Math.sqrt(4 * 300 * 9.81 * dm / 3.6);
+    const a = r() * 6.283, sp = (1 + 2.5 * r()) * sc, up = (2 + 4 * r()) * sc * Math.min(1.6, 0.6 + L * 0.3);
+    w.sp.spawn({
+      x: x + (r() - 0.5) * D * 0.3,
+      y: y + L * (0.1 + 0.3 * r()),
+      z: z + (r() - 0.5) * D * 0.3,
+      vx: Math.cos(a) * sp,
+      vy: up,
+      vz: Math.sin(a) * sp,
+      life: 3 + 5 * r() + dm * 120,
+      T: 1050 + 200 * r(),
+      size: dm,
+      drag: vt / 9.81,
+      grav: 1,
+      seed: r(),
+      ox: this.pos.x,
+      oz: this.pos.z,
+      pq: ph ? ph.Qc * 0.5 : 0,
+      pz0: this.pos.y + (ph?.z0 ?? 0),
+      R0: D / 2,
+      ember: true,
+      vt,
+      brand: 0.25 + 0.4 * r(),
+      smokeRGB: [0.2 + 0.1 * r()]
+    });
+  }
+  /** Dávka oharků najednou (zřícení, rozvalení) – n kusů, rychlost × sc. */
+  brandBurst(n, sc = 1.5, at = null) {
+    const k = Math.round(n * Math.sqrt(this.w.tier.emberMul ?? 1) * this.w.budgetScale.spark);
+    for (let i = 0; i < k; i++) this.spawnBrand(sc * (0.6 + 0.8 * this.rnd()), at);
+  }
   footprintPoint() {
     const r = this.rnd, fp = this.o.footprint, D = this.D, k = this.fpScale;
     let x, z;
@@ -2755,10 +2915,17 @@ var FireSource = class {
     const push = this.o.push || [0, 0, 0];
     const cw = Math.cos(w.air.dir), sw = Math.sin(w.air.dir);
     const lean = Math.tan(Math.min(ph.tilt.theta, 1.3));
-    const flick = 0.8 + 0.2 * this.fl(gt * ph.fp * 0.6) + 0.12 * this.fl(gt * 0.4 + 9);
+    const flareRate = { straw: 0.25, woodDry: 0.14, woodResin: 0.18, forestLitter: 0.2, brush: 0.2, houseContents: 0.1, vehicle: 0.08, rubber: 0.06, paraffin: 0 }[this.o.fuel] ?? 0.03;
+    this.flare = (this.flare || 0) * Math.exp(-dt / 0.45);
+    let flared = false;
+    if (r() < flareRate * dt) {
+      this.flare = Math.min(1, this.flare + 0.35 + 0.45 * r());
+      flared = true;
+    }
+    const flick = (0.8 + 0.2 * this.fl(gt * ph.fp * 0.6) + 0.12 * this.fl(gt * 0.4 + 9)) * (1 + 0.5 * this.flare);
     const kE = 2.7 * (f.fv ?? 0.6) * (0.7 + 0.6 * Math.min(1, ph.vent.sootMul - 0.5));
     const tauD = kE * D * 0.5;
-    this.gainVol = Math.pow(1 + 0.6 * Math.max(0, tauD - 1), -(w.gainExp ?? 0.6));
+    this.gainVol = tauD < 1 ? Math.min(2, Math.pow(1 / Math.max(tauD, 0.05), 0.5)) : Math.pow(1 + 0.6 * Math.max(0, tauD - 1), -(w.gainExp ?? 0.6));
     const Tvis = (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop - 60;
     const kSpr = this.gainVol * w.flameLum / Math.max(w.lumRef, 1e-6);
     const useVol = this.vol && w.layers.volume;
@@ -2767,9 +2934,9 @@ var FireSource = class {
       v.mesh.visible = w.layers.flame;
       const Rz = this.o.footprint.type === "rect" ? Math.max(this.o.footprint.d * this.fpScale, 0.1) / 2 : null;
       const Rx = this.o.footprint.type === "rect" ? Math.max(this.o.footprint.w * this.fpScale, 0.1) / 2 : D / 2;
-      v.place(this.pos, ph.L * (0.95 + 0.1 * flick), Math.max(Rx, 4e-3), ph.tilt.theta, w.air.dir, ph.tilt.drag, Rz);
+      v.place(this.pos, ph.L * (0.95 + 0.1 * flick + 0.2 * this.flare), Math.max(Rx, 4e-3), ph.tilt.theta, w.air.dir, ph.tilt.drag, Rz);
       const u = v.u, tier = w.tier;
-      u.uTpeak.value = (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop;
+      u.uTpeak.value = (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop + (w.tBoost ?? 50);
       u.uTamb.value = 700;
       u.uIntensity.value = w.flameLum * flick * this.gainVol;
       u.uFlame2.value.set(
@@ -2785,13 +2952,15 @@ var FireSource = class {
       const eddy = Math.max(D, ph.L * 0.3) * 0.42;
       const U = 1.75 * Math.pow(ph.Q / 1e3, 0.2);
       const bigK = Math.min(1, Math.max(0, (3 - ph.L / Math.max(D, 0.01)) * 0.5));
-      u.uTurb.value.set(this.o.turbAmp ?? 0.55 + 0.25 * ph.vent.lift + 0.3 * bigK, eddy, Math.max(U, 0.05), 0.25 + 0.1 * w.air.turb + 0.25 * ph.vent.lift);
+      u.uTurb.value.set(this.o.turbAmp ?? 0.55 + 0.25 * ph.vent.lift + 0.3 * bigK, eddy, Math.max(U, 0.05), (this.o.wobble ?? 0.25) + 0.1 * w.air.turb + 0.25 * ph.vent.lift);
       u.uFlowL.value = Math.max(ph.L, 0.01);
       u.uShapeK.value = this.o.shapeK ?? Math.min(2.2, Math.max(1, 1 + (3 - ph.L / Math.max(D, 0.01)) * 0.5));
+      u.uTongues.value = this.o.volTongues ?? (D < 0.12 ? 0 : Math.min(7, Math.max(3, Math.round(2.5 + D * 1.4))));
       u.uDetail.value = tier.volumeDetail ?? 1;
       const sc = v.mesh.scale, boxMax = Math.max(sc.x, sc.y, sc.z);
       u.uStepLen.value = Math.max(Math.min(eddy * 0.1, 0.6 / Math.max(kE, 0.1)), boxMax / tier.volumeSteps * 0.85);
-      u.uFlame2.value.z = Math.max(tier.flameEdge ?? 0.14, 1.3 * u.uStepLen.value / this._volR * 0.5);
+      const edgeM = tier.flameEdgeM ?? 0.05;
+      u.uFlame2.value.z = Math.max(Math.min(tier.flameEdge ?? 0.14, edgeM / this._volR), 1.3 * u.uStepLen.value / this._volR * 0.5);
       u.uPuff.value.set(ph.fp, this.o.puffAmp ?? 0.5);
       u.uShape.value.y = this.o.taper ?? 0.85;
       u.uShape.value.z = this.o.baseWide ?? 0.25;
@@ -2964,6 +3133,43 @@ var FireSource = class {
           }
         }
       }
+      if (f.embers > 0.3 && m.embers > 0) {
+        const eB = Math.sqrt(eMul) * w.budgetScale.spark;
+        this.acc.brand = (this.acc.brand || 0) + 0.45 * f.embers * qk * eB * dt;
+        let nb = 0;
+        while (this.acc.brand >= 1) {
+          this.acc.brand -= 1;
+          nb++;
+        }
+        if (flared && r() < 0.6) nb += 1 + Math.floor(r() * 2.5 * Math.min(2, qk));
+        for (let k = 0; k < nb; k++) this.spawnBrand(r() < 0.5 ? 1 : 0.6);
+      }
+      if (flared && (f.ys ?? 0) > 0.03 && w.layers.smoke !== false) {
+        const nS2 = Math.round((4 + 4 * r()) * Math.min(2, this.w.budgetScale.smoke * (w.tier.smokeMul ?? 1)));
+        for (let k = 0; k < nS2; k++) {
+          const [x, , z] = this.footprintPoint(), s02 = D * (0.25 + 0.2 * r());
+          w.bb.spawnSmoke({
+            x: x * 0.6 + this.pos.x * 0.4 + push[0] * 0.3,
+            y: this.pos.y + L * (0.75 + 0.35 * r()),
+            z: z * 0.6 + this.pos.z * 0.4 + push[2] * 0.3,
+            vx: (r() - 0.5) * 0.5,
+            vy: Math.max(1.2, L * ph.fp * 0.6),
+            vz: (r() - 0.5) * 0.5,
+            life: 4 + 3 * r(),
+            s0: s02,
+            s1: s02 * 5 + D,
+            tau: 3 + 3 * r(),
+            albedo: [0.05, 0.048, 0.046],
+            ox: this.pos.x,
+            oz: this.pos.z,
+            pq: ph.Qc,
+            pz0: this.pos.y + ph.z0,
+            drag: 0.5,
+            seed: r(),
+            R0: D / 2
+          });
+        }
+      }
       this.acc.spark += rS * w.budgetScale.spark * dt;
       while (this.acc.spark >= 1) {
         this.acc.spark -= 1;
@@ -2999,7 +3205,7 @@ var FireSource = class {
   }
 };
 function makeWilsonDome() {
-  const u = { ...sharedUniforms(), uA: { value: 0 }, uTime: { value: 0 }, uAmb: { value: new THREE9.Color() }, uSun: { value: new THREE9.Color() } };
+  const u = { ...sharedUniforms(), uA: { value: 0 }, uCov: { value: 0.35 }, uTime: { value: 0 }, uAmb: { value: new THREE9.Color() }, uSun: { value: new THREE9.Color() } };
   const mat = new THREE9.ShaderMaterial({
     glslVersion: THREE9.GLSL3,
     transparent: true,
@@ -3014,13 +3220,17 @@ function makeWilsonDome() {
     vertexShader: `out vec3 vW; out vec3 vN; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }`,
     fragmentShader: `precision highp float; precision highp sampler3D;
 ${GLSL_COMMON}
-in vec3 vW; in vec3 vN; out vec4 o; uniform float uA, uTime; uniform vec3 uAmb, uSun;
+in vec3 vW; in vec3 vN; out vec4 o; uniform float uA, uTime, uCov; uniform vec3 uAmb, uSun;
 void main(){
   vec3 v = normalize(cameraPosition - vW);
   float rim = pow(1.0 - abs(dot(normalize(vN), v)), 2.0);
-  float n = fbm3(vW * 0.035 + vec3(0.0, uTime * 0.05, 0.0));
-  float a = uA * (0.08 + 0.92 * rim) * smoothstep(0.35, 0.75, n) * smoothstep(0.0, 0.15, normalize(vN).y + 0.05);
-  vec3 c = (uAmb * 0.9 + uSun * 0.8) * 0.93 * uPreExp;
+  // mraky z vide\xED zkou\u0161ek: hladk\xFD b\xEDl\xFD pl\xE1\u0161\u0165 s jemn\xFDmi pruhy, jasn\u011Bj\u0161\xED lem, u zem\u011B \u0159id\u0161\xED (tepl\xFD vzduch nad ter\xE9nem)
+  vec3 nN = normalize(vN);
+  float n = 0.65 * fbm3(nN * 3.0 + vec3(0.0, uTime * 0.05, 0.0)) + 0.35 * fbm3(vW * 0.05);
+  // tenk\xFD pl\xE1\u0161\u0165: st\u0159ed pr\u016Fsvitn\xFD, jasn\xFD lem (del\u0161\xED dr\xE1ha paprsku v pl\xE1\u0161ti) \u2013 fotky Sailor Hat, Minor Scale
+  float a = uA * (0.04 + 0.96 * pow(rim, 0.75)) * mix(0.45, 1.0, smoothstep(uCov, uCov + 0.45, n)) * smoothstep(0.02, 0.3, nN.y) * (gl_FrontFacing ? 1.0 : 0.6);
+  // kondenz\xE1t (kapky ~\xB5m) m\xE1 albedo ~0,8 a na slunci z\xE1\u0159\xED b\xEDle jasn\u011Bji ne\u017E obloha
+  vec3 c = (uAmb * 1.1 + uSun * (0.8 + 0.9 * max(dot(nN, normalize(vec3(0.3, 1.0, 0.2))), 0.0))) * 1.6 * uPreExp;
   o = fxOut(vec4(c * a, a));
 }`
   });
@@ -3053,6 +3263,23 @@ var Explosion = class {
       this.wc = null;
     }
   }
+  /** Rychlostní pole houbového mraku v bodě (přičte do out): rotace kolem jádra prstence, stoupání klobouku, sloupec, přítok. */
+  flow(x, y, z, out) {
+    const m = this.mf, dx = x - m.x, dz = z - m.z, r = Math.sqrt(dx * dx + dz * dz) + 1e-3, ex = dx / r, ez = dz / r;
+    const pr = r - m.a, pz = y - m.zc, d = Math.sqrt(pr * pr + pz * pz) + 1e-3, c2 = 0.5 * m.a;
+    const Vc = 1.3 * m.w * m.k, sp = d < c2 ? Vc * d / c2 : Vc * (c2 / d) * Math.exp(-(d - c2) / (1.2 * c2));
+    let vr = sp * pz / d, vy = -0.6 * sp * pr / d;
+    vy += m.w * Math.exp(-(r * r) / (3.2 * m.a * m.a) - pz * pz / (1.7 * m.a * m.a));
+    if (y < m.zc) {
+      const rs = 0.26 * m.a + 2;
+      vy += 1.4 * m.w * m.k * Math.exp(-(r * r) / (rs * rs));
+    }
+    const hg = 0.08 * (m.zc - m.y0) + 2;
+    if (r > 0.12 * m.a) vr -= 0.55 * m.w * m.k * Math.min(1, m.a / r) * Math.exp(-Math.max(y - m.y0, 0) / hg);
+    out[0] += vr * ex;
+    out[1] += vy;
+    out[2] += vr * ez;
+  }
   wantsBall() {
     const fb = this.o.fireball;
     return fb && this.t < fb.t * 2.2 && this.w.tier.volumes > 0 && this.w.layers.volume;
@@ -3072,7 +3299,8 @@ var Explosion = class {
       if (o.dust && o.W > 0 && this.pos.y / Math.cbrt(o.W) < 0.5) {
         const k = Math.cbrt(o.W), nJ = Math.round(8 + 6 * Math.min(1, k / 4)), v0 = 12 * Math.pow(o.W, 1 / 6);
         const soil = (o.dustAlbedo || [0.32, 0.27, 0.2]).map((c2) => c2 * 0.7);
-        const per = Math.max(4, Math.round(12 * Math.min(1.5, w.tier.smokeMul ?? 1) * w.budgetScale.smoke));
+        const per = Math.max(5, Math.round(22 * Math.min(1.5, w.tier.smokeMul ?? 1) * w.budgetScale.smoke));
+        w.debris.burst(this.pos, { n: Math.round((50 + 60 * Math.min(4, k)) * Math.min(2, w.tier.smokeMul ?? 1)), speed: v0 * 1.3, size: 0.012 + 0.025 * Math.min(4, k), hot: 0, up: 0.7 }, r);
         for (let j = 0; j < nJ; j++) {
           const az = j / nJ * 6.283 + (r() - 0.5) * 0.5, el = 0.6 + 0.6 * r(), vj = v0 * (0.75 + 0.5 * r());
           for (let i = 0; i < per; i++) {
@@ -3085,9 +3313,9 @@ var Explosion = class {
               vy: Math.sin(e) * v,
               vz: Math.sin(a) * Math.cos(e) * v,
               life: 2.5 + 3 * r(),
-              s0: 0.12 * k + 0.12,
-              s1: (0.7 + 0.8 * r()) * k + 0.5,
-              tau: 1.8 + r(),
+              s0: 0.07 * k + 0.06,
+              s1: (0.5 + 0.7 * r()) * k + 0.35,
+              tau: 2.2 + r(),
               albedo: soil,
               drag: 0.9 + 0.9 * f,
               grav: 0.85,
@@ -3144,7 +3372,7 @@ var Explosion = class {
         while (this.smokeAcc >= 1) {
           this.smokeAcc -= 1;
           const u = r() * 2 - 1, a = r() * 6.283, s = Math.sqrt(1 - u * u), rr = R * (0.4 + 0.6 * r());
-          w.bb.spawnSmoke({ x: this.pos.x + Math.cos(a) * s * rr, y: yc + u * rr * 0.7, z: this.pos.z + Math.sin(a) * s * rr, vx: Math.cos(a) * s * 0.5, vy: o.smoke.buoy ?? 4, vz: Math.sin(a) * s * 0.5, life: o.smoke.life * (0.6 + 0.6 * r()), s0: R * 0.5, s1: R * (1.4 + r()), tau: o.smoke.tau ?? 2, albedo: o.smoke.albedo, drag: 1.2, buoy: o.smoke.buoyAcc ?? 1.5, seed: r() });
+          w.bb.spawnSmoke({ x: this.pos.x + Math.cos(a) * s * rr, y: yc + u * rr * 0.7, z: this.pos.z + Math.sin(a) * s * rr, vx: Math.cos(a) * s * 0.5, vy: o.smoke.buoy ?? 4, vz: Math.sin(a) * s * 0.5, life: o.smoke.life * (0.6 + 0.6 * r()), s0: R * 0.5, s1: R * (1.4 + r()), tau: o.smoke.tau ?? 2, albedo: o.smoke.albedo, drag: o.mushroom ? 1.5 : 1.2, buoy: o.mushroom ? 0.2 : o.smoke.buoyAcc ?? 1.5, seed: r() });
         }
       }
     }
@@ -3172,12 +3400,41 @@ var Explosion = class {
         });
       }
     }
+    if (o.mushroom && fb && o.W > 0) {
+      const E = 4184e3 * o.W, B = 9.81 * 0.35 * E / (1.2 * 1005 * 290), tt = Math.max(t - fb.t * 0.5, 0.05);
+      const zr = 1.8 * Math.pow(B * tt * tt, 0.25), y0 = this.pos.y;
+      const zc = Math.max(this.fbY ?? y0, y0 + zr), wv = 0.5 * zr / tt;
+      this.mf = { x: this.pos.x, z: this.pos.z, y0, zc, a: Math.max(fb.D * 0.45, 0.34 * (zc - y0)), w: Math.min(wv, 25), k: Math.exp(-t / 50) };
+      if (o.dust && t > fb.t * 1.5 && t < 30) {
+        const m = this.mf;
+        this.stemAcc = (this.stemAcc || 0) + dt * 32 * Math.min(1.5, w.tier.smokeMul ?? 1) * w.budgetScale.smoke * Math.exp(-t / 12);
+        while (this.stemAcc >= 1) {
+          this.stemAcc -= 1;
+          const a = r() * 6.283, rr = m.a * (0.15 + 1.2 * Math.sqrt(r()));
+          w.bb.spawnSmoke({
+            x: m.x + Math.cos(a) * rr,
+            y: 0.3 + r() * 1.5,
+            z: m.z + Math.sin(a) * rr,
+            vx: -Math.cos(a) * 2,
+            vy: 1 + 2 * r(),
+            vz: -Math.sin(a) * 2,
+            life: 18 + 12 * r(),
+            s0: 0.06 * m.a + 1,
+            s1: 0.35 * m.a + 3,
+            tau: 1.1 + 0.8 * r(),
+            albedo: (o.dustAlbedo || [0.32, 0.27, 0.2]).map((c2) => c2 * (0.6 + 0.25 * r())),
+            drag: 1,
+            seed: r()
+          });
+        }
+      }
+    }
     if (this.table) {
       const s = shockRadiusAt(this.table, t);
       this.shockR = s.R;
       this.shockPs = s.Ps;
       if (o.W >= 50 && fb) {
-        const hum = o.humidity ?? 0.6, on = s.Ps < 7e4 && s.Ps > 25e3 && s.R > fb.D * 0.6;
+        const hum = o.humidity ?? 0.6, wf = o.wilson ?? 1, on = s.Ps < (wf > 1 ? 8e4 : 7e4) && s.Ps > (wf > 1 ? 18e3 : 25e3) && s.R > fb.D * 0.6;
         if (on && !this.wc && !this.wcDone) {
           this.wc = makeWilsonDome();
           w.scene.add(this.wc.mesh);
@@ -3185,7 +3442,7 @@ var Explosion = class {
         }
         if (this.wc) {
           this.wcT += dt;
-          const fade = on ? Math.min(1, this.wcT / 0.05) : Math.max(0, (this.wcA ?? 1) - dt / 0.3);
+          const fade = on ? Math.min(1, this.wcT / 0.05) : Math.max(0, (this.wcA ?? 1) - dt / (wf > 1 ? 0.55 : 0.3));
           this.wcA = fade;
           const m = this.wc.mesh;
           m.position.copy(this.pos);
@@ -3193,8 +3450,9 @@ var Explosion = class {
           m.scale.setScalar(s.R * 0.95);
           const outside = Math.min(1, Math.max(0, (camera.position.distanceTo(this.pos) - s.R) / (0.15 * s.R)));
           const u = this.wc.u;
-          u.uA.value = fade * hum * 0.3 * outside;
+          u.uA.value = fade * hum * Math.min(0.8, 0.3 * wf) * outside;
           u.uTime.value = t;
+          u.uCov.value = wf > 1 ? 0.22 : 0.35;
           u.uAmb.value.copy(w.bb.mat.uniforms.uAmb.value);
           u.uSun.value.copy(w.bb.mat.uniforms.uSunCol.value);
           if (fade <= 0 && !on) {
@@ -3366,6 +3624,7 @@ var TIERS = [
     volumeScale: 0.5,
     volumeDetail: 0,
     flameEdge: 0.2,
+    flameEdgeM: 0.08,
     bloom: 3,
     haze: false,
     shadows: false,
@@ -3395,6 +3654,8 @@ var TIERS = [
     volumeScale: 0.75,
     volumeDetail: 1,
     flameEdge: 0.14,
+    flameEdgeM: 0.05,
+    volumeTAA: true,
     bloom: 5,
     haze: true,
     shadows: false,
@@ -3424,6 +3685,7 @@ var TIERS = [
     volumeScale: 1,
     volumeDetail: 2,
     flameEdge: 0.1,
+    flameEdgeM: 0.035,
     volumeTAA: true,
     bloom: 6,
     haze: true,
@@ -3454,6 +3716,7 @@ var TIERS = [
     volumeScale: 1,
     volumeDetail: 2,
     flameEdge: 0.08,
+    flameEdgeM: 0.03,
     volumeTAA: true,
     bloom: 6,
     haze: true,
@@ -3484,6 +3747,7 @@ var TIERS = [
     volumeScale: 1,
     volumeDetail: 2,
     flameEdge: 0.07,
+    flameEdgeM: 0.025,
     volumeTAA: true,
     bloom: 6,
     haze: true,
@@ -4011,9 +4275,10 @@ function candle({ lod = 2 }) {
     c2.height = 64;
     const g3 = c2.getContext("2d");
     const gr = g3.createLinearGradient(0, 64, 0, 0);
-    gr.addColorStop(0, "#1a1a1a");
-    gr.addColorStop(0.7, "#333");
-    gr.addColorStop(0.92, "#888");
+    gr.addColorStop(0, "#202020");
+    gr.addColorStop(0.55, "#3a3a3a");
+    gr.addColorStop(0.8, "#9a9a9a");
+    gr.addColorStop(0.94, "#e0e0e0");
     gr.addColorStop(1, "#fff");
     g3.fillStyle = gr;
     g3.fillRect(0, 0, 4, 64);
@@ -4748,7 +5013,7 @@ function strip(g2) {
 function pineGeometry(lod, seed = 1) {
   const n = noise3(seed), r = mulberry32(seed);
   const radial = segs(lod, 4, 7, 14, 40, 120), hs = segs(lod, 1, 3, 10, 30, 90);
-  const trunk = tube(new THREE16.Vector3(0, -0.02, 0), new THREE16.Vector3(0, 0.98, 0), 0.025, 4e-3, Math.max(4, radial >> 1), hs);
+  const trunk = tube(new THREE16.Vector3(0, -0.02, 0), new THREE16.Vector3(0, 0.98, 0), 0.016, 3e-3, Math.max(4, radial >> 1), hs);
   const layers = segs(lod, 2, 4, 7, 10, 14);
   const crowns = [];
   for (let i = 0; i < layers; i++) {
@@ -4935,7 +5200,7 @@ var ASSETS = [
 var assetById = (id) => ASSETS.find((a) => a.id === id);
 
 // src/scenarios/index.js
-import * as THREE17 from "three";
+import * as THREE18 from "three";
 
 // src/physics/spread.js
 function headROS(fuel, U) {
@@ -5021,8 +5286,126 @@ function arrivalTimes({ nx, ny, cell, fuel, fuelMap, ignitions, windDir, U, slop
   return { T, Rh, LB };
 }
 
-// src/scenarios/index.js
+// src/scenarios/forestDetail.js
+import * as THREE17 from "three";
 var V = (x, y, z) => new THREE17.Vector3(x, y, z);
+function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
+  const tid = Math.min(ctx.tier.id, 5);
+  const nTrunk = [2, 3, 5, 6, 8, 10][tid], nBranch = [0, 2, 3, 5, 6, 8][tid];
+  const r = mulberry32(seed);
+  const trunks = [];
+  for (let i = 0; i < nTrunk; i++) {
+    const s = ctx.fx.addSource({ pos: V(0, 0, 0), fuel: "woodResin", Q: 0, D: 0.45, footprint: { type: "disk" }, volume: true, seed: 400 + i, taper: 1, mult: { smoke: 0.5, embers: 0.8, haze: 0.1, light: 0.7 } });
+    s.enabled = false;
+    trunks.push({ s, item: -1 });
+  }
+  const bark = makeMaterial("bark");
+  applyChar(bark, { scale: 6, alligator: [6, 10] });
+  const charU = bark.userData.char;
+  const geo = new THREE17.CylinderGeometry(0.035, 0.055, 1, 6, 1);
+  geo.rotateZ(Math.PI / 2);
+  const branches = [];
+  for (let i = 0; i < nBranch; i++) {
+    const mesh2 = new THREE17.Mesh(geo, bark);
+    mesh2.visible = false;
+    mesh2.castShadow = true;
+    ctx.add(mesh2);
+    const s = ctx.fx.addSource({ pos: V(0, 0, 0), fuel: "woodResin", Q: 0, D: 0.3, footprint: { type: "disk" }, volume: false, seed: 500 + i, mult: { smoke: 0.5, embers: 1.5, haze: 0, light: 0.5 } });
+    s.enabled = false;
+    branches.push({ mesh: mesh2, s, on: false, p: V(0, 0, 0), v: V(0, 0, 0), w: V(0, 0, 0), len: 1, ground: false, tg: 0, life: 0 });
+  }
+  if (charU) {
+    charU.uChar.value = 0.85;
+    charU.uGlow.value = 0.7;
+  }
+  let lastScan = -1, cand = [], lastFx = ctx.fx.time, spawnAcc = 0;
+  return {
+    /** t = čas scénáře, crown = korunový režim, trBurn = doba hoření kmene [s scénáře] */
+    update(t, crown) {
+      const now = ctx.fx.time, dt = Math.min(0.1, now - lastFx);
+      lastFx = now;
+      const cp = ctx.camera.position, trB = fuel.tr * 1.3;
+      if (now - lastScan > 0.25 || lastScan < 0) {
+        lastScan = now;
+        cand = [];
+        for (let i = 0; i < flora.items.length; i++) {
+          const it = flora.items[i], ta = arr().T[it.cell];
+          if (ta === Infinity || t < ta || t > ta + trB) continue;
+          const d2 = (it.x - cp.x) ** 2 + (it.z - cp.z) ** 2;
+          if (d2 < 45 * 45) cand.push({ i, d2, ta });
+        }
+        cand.sort((a, b) => a.d2 - b.d2);
+      }
+      for (let k = 0; k < trunks.length; k++) {
+        const T = trunks[k], c2 = cand[k];
+        if (!c2) {
+          T.s.enabled = false;
+          continue;
+        }
+        const it = flora.items[c2.i], age = (t - c2.ta) / trB, env = Math.sin(Math.PI * Math.min(1, age)) ** 0.5;
+        const sc = Math.min(1.4, it.s / 14);
+        T.s.enabled = true;
+        T.s.pos.set(it.x + 0.15, 0.05, it.z);
+        T.s.o.Q = 16e4 * env * sc;
+        T.s.o.L = () => (1.6 + 3.6 * env) * sc;
+      }
+      if (branches.length) {
+        spawnAcc += dt * (crown ? 0.35 : 0.12) * Math.min(1, cand.length / 4);
+        while (spawnAcc >= 1) {
+          spawnAcc -= 1;
+          const b = branches.find((x) => !x.on), c2 = cand[Math.floor(r() * Math.min(cand.length, 8))];
+          if (!b || !c2 || c2.d2 > 35 * 35) break;
+          const it = flora.items[c2.i], a = r() * 6.283, rr = 0.8 + 1.6 * r();
+          b.on = true;
+          b.ground = false;
+          b.tg = 0;
+          b.len = 0.6 + 0.9 * r();
+          b.p.set(it.x + Math.cos(a) * rr, it.s * (crown ? 0.5 + 0.3 * r() : 0.15 + 0.15 * r()), it.z + Math.sin(a) * rr);
+          b.v.set(Math.cos(a) * 0.8, 0.5 * r(), Math.sin(a) * 0.8);
+          b.w.set((r() - 0.5) * 6, (r() - 0.5) * 3, (r() - 0.5) * 6);
+          b.mesh.scale.set(b.len, 1, 1);
+          b.mesh.rotation.set(r() * 6, r() * 6, r() * 6);
+          b.mesh.visible = true;
+          b.life = 14 + 10 * r();
+          b.s.enabled = true;
+        }
+      }
+      for (const b of branches) {
+        if (!b.on) continue;
+        if (!b.ground) {
+          b.v.y -= 9.81 * dt;
+          b.p.addScaledVector(b.v, dt);
+          b.mesh.rotation.x += b.w.x * dt;
+          b.mesh.rotation.y += b.w.y * dt;
+          b.mesh.rotation.z += b.w.z * dt;
+          if (b.p.y <= 0.06) {
+            b.p.y = 0.06;
+            b.ground = true;
+            b.mesh.rotation.set(0, b.mesh.rotation.y, 0);
+            b.s.brandBurst(6, 0.7, [b.p.x, 0.05, b.p.z]);
+          }
+        } else b.tg += dt;
+        b.mesh.position.copy(b.p);
+        const left = 1 - b.tg / b.life;
+        if (left <= 0) {
+          b.on = false;
+          b.mesh.visible = false;
+          b.s.enabled = false;
+          continue;
+        }
+        b.s.pos.set(b.p.x, b.p.y - 0.05, b.p.z);
+        b.s.o.Q = 3e4 * b.len * (b.ground ? Math.max(0.15, left) : 1);
+        b.s.o.L = () => (b.ground ? 0.5 : 0.8) * b.len * (0.4 + 0.6 * left);
+      }
+    },
+    dispose() {
+      geo.dispose();
+    }
+  };
+}
+
+// src/scenarios/index.js
+var V2 = (x, y, z) => new THREE18.Vector3(x, y, z);
 var fmtW = (q) => q >= 1e6 ? (q / 1e6).toFixed(2) + " MW" : q >= 1e3 ? (q / 1e3).toFixed(1) + " kW" : q.toFixed(0) + " W";
 var deg = (r) => (r * 180 / Math.PI).toFixed(0) + "\xB0";
 function fireRows(src, label = "") {
@@ -5048,14 +5431,14 @@ function blastRows(W, label = "TNT ekv.") {
 }
 function table(ctx, w = 1.2, d = 0.7) {
   const m = makeMaterial("woodPlank");
-  const g2 = new THREE17.BoxGeometry(w, 0.04, d);
+  const g2 = new THREE18.BoxGeometry(w, 0.04, d);
   g2.translate(0, -0.02, 0);
-  const t = new THREE17.Mesh(g2, m);
+  const t = new THREE18.Mesh(g2, m);
   t.receiveShadow = true;
   ctx.add(t);
-  const leg = new THREE17.BoxGeometry(0.05, 0.72, 0.05);
+  const leg = new THREE18.BoxGeometry(0.05, 0.72, 0.05);
   for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
-    const l = new THREE17.Mesh(leg, m);
+    const l = new THREE18.Mesh(leg, m);
     l.position.set(x * (w / 2 - 0.05), -0.4, z * (d / 2 - 0.05));
     ctx.add(l);
   }
@@ -5084,7 +5467,7 @@ var SCENARIOS = [
           while (acc >= 1) {
             acc -= 1;
             const sp = 14 + 24 * r(), ax = (r() - 0.5) * 0.5, ay = (r() - 0.5) * 0.35;
-            const d = V(dir.x + ax, dir.y + ay, dir.z + (r() - 0.5) * 0.3).normalize();
+            const d = V2(dir.x + ax, dir.y + ay, dir.z + (r() - 0.5) * 0.3).normalize();
             fx.sp.spawn({ x: at.x, y: at.y, z: at.z, vx: d.x * sp, vy: d.y * sp, vz: d.z * sp, life: 0.4 + r() * 1.2, T: 1700 + 250 * r(), tauC: 0.22 + 0.4 * r(), size: 3e-4 + 6e-4 * r(), drag: 0.25 + 0.35 * r(), grav: 1, seed: r() });
           }
           burst += dt * 14;
@@ -5125,7 +5508,7 @@ var SCENARIOS = [
       ctx.add(c2);
       const at = c2.userData.flameAt;
       const src = ctx.fx.addSource({
-        pos: V(at.x, at.y - 4e-3, at.z),
+        pos: V2(at.x, at.y - 4e-3, at.z),
         fuel: "paraffin",
         Q: 80,
         D: 0.016,
@@ -5133,11 +5516,12 @@ var SCENARIOS = [
         T: 1450,
         blue: 1,
         volume: true,
-        taper: 1.25,
+        taper: 0.9,
         baseWide: -0.1,
         neck: 0.55,
         puffAmp: 0.12,
-        turbAmp: 0.12,
+        turbAmp: 0.03,
+        wobble: 0.04,
         tongues: 3,
         lightH: 0.4,
         mult: { smoke: 0.4, embers: 0, sparks: 0, haze: 0.5 },
@@ -5158,7 +5542,7 @@ var SCENARIOS = [
             src.enabled = true;
             ctx.message("Sv\xED\u010Dka znovu zap\xE1lena.");
           }
-          c2.userData.wax.emissiveIntensity = out ? 0 : 4 * PRE.value;
+          c2.userData.wax.emissiveIntensity = out ? 0 : 14 * PRE.value;
           if (wisp > 0) {
             wisp -= dt;
             if (Math.random() < dt * 25) ctx.fx.bb.spawnSmoke({ x: at.x, y: at.y - 8e-3, z: at.z, vy: 0.15, life: 3, s0: 4e-3, s1: 0.06, tau: 0.6 * Math.max(wisp / 6, 0), albedo: [0.85, 0.85, 0.86], drag: 0.3 });
@@ -5183,7 +5567,7 @@ var SCENARIOS = [
       t.userData.char.uChar.value = 0.55;
       t.userData.char.uGlow.value = 0.8;
       const at = t.userData.flameAt;
-      const src = ctx.fx.addSource({ pos: V(at.x, at.y - 0.06, at.z), fuel: "woodResin", Q: 4e3, D: 0.065, volume: true, mult: { embers: 0.12, sparks: 0.08 }, taper: 0.9, seed: 3 });
+      const src = ctx.fx.addSource({ pos: V2(at.x, at.y - 0.06, at.z), fuel: "woodResin", Q: 4e3, D: 0.065, volume: true, mult: { embers: 0.12, sparks: 0.08 }, taper: 0.9, seed: 3 });
       return { update() {
       }, info: () => fireRows(src) };
     }
@@ -5202,7 +5586,7 @@ var SCENARIOS = [
       ctx.add(f);
       f.userData.char.uChar.value = 0.45;
       f.userData.char.uGlow.value = 0.7;
-      const src = ctx.fx.addSource({ pos: V(0, 0.04, 0), fuel: "woodDry", Q: (t) => 15e3 * (0.9 + 0.1 * Math.sin(t * 0.7)), D: 0.32, volume: true, seed: 4 });
+      const src = ctx.fx.addSource({ pos: V2(0, 0.04, 0), fuel: "woodDry", Q: (t) => 15e3 * (0.9 + 0.1 * Math.sin(t * 0.7)), D: 0.32, volume: true, seed: 4 });
       return { update() {
       }, info: () => fireRows(src) };
     }
@@ -5221,7 +5605,7 @@ var SCENARIOS = [
       ctx.add(f);
       f.userData.char.uChar.value = 0.5;
       f.userData.char.uGlow.value = 0.8;
-      const src = ctx.fx.addSource({ pos: V(0, 0.05, 0), fuel: "woodDry", Q: (t) => 2e5 * (0.92 + 0.08 * Math.sin(t * 0.5)), D: 0.8, volume: true, seed: 5 });
+      const src = ctx.fx.addSource({ pos: V2(0, 0.05, 0), fuel: "woodDry", Q: (t) => 2e5 * (0.92 + 0.08 * Math.sin(t * 0.5)), D: 0.8, volume: true, seed: 5 });
       return { update() {
       }, info: () => fireRows(src) };
     }
@@ -5240,7 +5624,7 @@ var SCENARIOS = [
       ctx.add(f);
       f.userData.char.uChar.value = 0.65;
       f.userData.char.uGlow.value = 1;
-      const src = ctx.fx.addSource({ pos: V(0, 0.08, 0), fuel: "woodDry", Q: (t) => 3e6 * (0.9 + 0.1 * Math.sin(t * 0.3)), D: 2.4, volume: true, seed: 6 });
+      const src = ctx.fx.addSource({ pos: V2(0, 0.08, 0), fuel: "woodDry", Q: (t) => 3e6 * (0.9 + 0.1 * Math.sin(t * 0.3)), D: 2.4, volume: true, seed: 6 });
       return { update() {
       }, info: () => fireRows(src) };
     }
@@ -5262,8 +5646,8 @@ var SCENARIOS = [
       const { W, D, H } = s.userData;
       const curve = { alpha: T2_ALPHA.ultrafast, Qpeak: 12e6, tPlateau: 600, tau: 400 };
       const tg = Math.sqrt(curve.Qpeak / curve.alpha);
-      const src = ctx.fx.addSource({ pos: V(0, H * 0.55, 0), fuel: "straw", Q: (t) => hrrCurve(t, curve), footprint: { type: "rect", w: W * 1.05, d: D * 1.05 }, scale: (t) => Math.min(1, 0.15 + Math.sqrt(t / tg)), volume: true, mult: { embers: 2 }, seed: 7 });
-      ctx.fx.addScorch({ pos: V(0, 0, 0), radius: Math.max(W, D) * 1, rate: 1 / 900, glow: 0.6, seed: 2 });
+      const src = ctx.fx.addSource({ pos: V2(0, H * 0.55, 0), fuel: "straw", Q: (t) => hrrCurve(t, curve), footprint: { type: "rect", w: W * 1.05, d: D * 1.05 }, scale: (t) => Math.min(1, 0.15 + Math.sqrt(t / tg)), volume: true, mult: { embers: 2 }, seed: 7 });
+      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: Math.max(W, D) * 1, rate: 1 / 900, glow: 0.6, seed: 2 });
       return {
         update(dt, t) {
           s.userData.char.uChar.value = Math.min(1, t / (tg + curve.tPlateau));
@@ -5288,9 +5672,9 @@ var SCENARIOS = [
       const p = tirePile({ lod: Math.max(0, ctx.lod - 1), n: 5 });
       ctx.add(p);
       const curve = { alpha: T2_ALPHA.medium, Qpeak: 15e5, tPlateau: 500, tau: 300 };
-      const src = ctx.fx.addSource({ pos: V(0, 0.25, 0), fuel: "rubber", Q: (t) => hrrCurve(t + 60, curve), D: 0.95, volume: true, seed: 8, mult: { smoke: 1.3 } });
-      const pool = ctx.fx.addSource({ pos: V(0, 0.01, 0), fuel: "rubber", Q: (t) => 3e5 * Math.min(1, t / 60), D: 1.5, start: 120, volume: false, seed: 9, mult: { smoke: 0.6, embers: 0 } });
-      ctx.fx.addScorch({ pos: V(0, 0, 0), radius: 1.6, rate: 1 / 200, glow: 0.3, seed: 3 });
+      const src = ctx.fx.addSource({ pos: V2(0, 0.25, 0), fuel: "rubber", Q: (t) => hrrCurve(t + 60, curve), D: 0.95, volume: true, seed: 8, mult: { smoke: 1.3 } });
+      const pool = ctx.fx.addSource({ pos: V2(0, 0.01, 0), fuel: "rubber", Q: (t) => 3e5 * Math.min(1, t / 60), D: 1.5, start: 120, volume: false, seed: 9, mult: { smoke: 0.6, embers: 0 } });
+      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: 1.6, rate: 1 / 200, glow: 0.3, seed: 3 });
       return { update(dt, t) {
         p.userData.char.uChar.value = Math.min(1, 0.2 + t / 900);
         p.userData.char.uGlow.value = 0.5;
@@ -5318,8 +5702,8 @@ var SCENARIOS = [
         const fade = t < sp.duration ? 1 : Math.max(0, 1 - (t - sp.duration) / 12);
         return sp.Q * k * fade;
       };
-      const src = ctx.fx.addSource({ pos: V(0, 0.01, 0), fuel: "diesel", Q, D: Dt, volume: true, seed: 10, start: 0.5 });
-      ctx.fx.addScorch({ pos: V(0, 0, 0), radius: sp.D * 0.6, rate: 1 / 60, seed: 4 });
+      const src = ctx.fx.addSource({ pos: V2(0, 0.01, 0), fuel: "diesel", Q, D: Dt, volume: true, seed: 10, start: 0.5 });
+      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: sp.D * 0.6, rate: 1 / 60, seed: 4 });
       return {
         update() {
         },
@@ -5342,12 +5726,12 @@ var SCENARIOS = [
       const c2 = car({ lod: ctx.lod });
       ctx.add(c2);
       const L2 = c2.userData.L / 2;
-      const eng = ctx.fx.addSource({ pos: V(L2 - 0.75, 0.75, 0), fuel: "vehicle", Q: (t) => hrrCurve(t, { alpha: T2_ALPHA.medium, Qpeak: 15e5, tPlateau: 600, tau: 400 }), footprint: { type: "rect", w: 1.1, d: 1.4 }, volume: true, seed: 11 });
-      const cab = ctx.fx.addSource({ pos: V(-0.2, 0.95, 0), fuel: "vehicle", start: 240, Q: (t) => hrrCurve(t, { alpha: T2_ALPHA.fast, Qpeak: 35e5, tPlateau: 400, tau: 500 }), footprint: { type: "rect", w: 2.2, d: 1.4 }, volume: true, seed: 12 });
+      const eng = ctx.fx.addSource({ pos: V2(L2 - 0.75, 0.75, 0), fuel: "vehicle", Q: (t) => hrrCurve(t, { alpha: T2_ALPHA.medium, Qpeak: 15e5, tPlateau: 600, tau: 400 }), footprint: { type: "rect", w: 1.1, d: 1.4 }, volume: true, seed: 11 });
+      const cab = ctx.fx.addSource({ pos: V2(-0.2, 0.95, 0), fuel: "vehicle", start: 240, Q: (t) => hrrCurve(t, { alpha: T2_ALPHA.fast, Qpeak: 35e5, tPlateau: 400, tau: 500 }), footprint: { type: "rect", w: 2.2, d: 1.4 }, volume: true, seed: 12 });
       const tires = [];
-      for (const wx of [-1.35, 1.35]) for (const wz of [-0.85, 0.85]) tires.push(ctx.fx.addSource({ pos: V(wx, 0.05, wz), fuel: "rubber", start: 480 + (wx > 0 ? 0 : 120), end: 1500, Q: (t) => 25e4 * Math.min(1, t / 90), D: 0.5, volume: false, seed: 20 + tires.length, mult: { smoke: 0.5 } }));
-      const fuel = ctx.fx.addSource({ pos: V(-1.5, 0.01, 0), fuel: "gasoline", start: 420, end: 600, Q: (t) => 8e5 * Math.min(1, t / 20) * Math.max(0, 1 - t / 180), D: 1.6, volume: false, seed: 30 });
-      ctx.fx.addScorch({ pos: V(0, 0, 0), radius: 3.2, rate: 1 / 1200, glow: 0.2, seed: 5 });
+      for (const wx of [-1.35, 1.35]) for (const wz of [-0.85, 0.85]) tires.push(ctx.fx.addSource({ pos: V2(wx, 0.05, wz), fuel: "rubber", start: 480 + (wx > 0 ? 0 : 120), end: 1500, Q: (t) => 25e4 * Math.min(1, t / 90), D: 0.5, volume: false, seed: 20 + tires.length, mult: { smoke: 0.5 } }));
+      const fuel = ctx.fx.addSource({ pos: V2(-1.5, 0.01, 0), fuel: "gasoline", start: 420, end: 600, Q: (t) => 8e5 * Math.min(1, t / 20) * Math.max(0, 1 - t / 180), D: 1.6, volume: false, seed: 30 });
+      ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: 3.2, rate: 1 / 1200, glow: 0.2, seed: 5 });
       return {
         update(dt, t) {
           const u = c2.userData.char;
@@ -5379,11 +5763,11 @@ var SCENARIOS = [
     build(ctx) {
       const b = barrel({ lod: ctx.lod });
       ctx.add(b);
-      const pre = ctx.fx.addSource({ pos: V(0.3, 0.01, 0.2), fuel: "gasoline", Q: 4e5, D: 0.7, end: 6, volume: true, seed: 40 });
+      const pre = ctx.fx.addSource({ pos: V2(0.3, 0.01, 0.2), fuel: "gasoline", Q: 4e5, D: 0.7, end: 6, volume: true, seed: 40 });
       const M = 25, fb = bleveFireball(M), film = () => ctx.controls.film;
       const Wburst = 0.05;
       let boom = false;
-      const vel = V(0, 0, 0);
+      const vel = V2(0, 0, 0);
       let spin = 0;
       return {
         update(dt, t) {
@@ -5391,7 +5775,7 @@ var SCENARIOS = [
             boom = true;
             const W = film() ? 4 : Wburst;
             ctx.fx.addExplosion({
-              pos: V(0, 0.4, 0),
+              pos: V2(0, 0.4, 0),
               W,
               seed: 3,
               flash: 2e6,
@@ -5404,9 +5788,9 @@ var SCENARIOS = [
             });
             for (let i = 0; i < 7; i++) {
               const a = i * 0.9, R = 2 + i % 3 * 2.2;
-              ctx.fx.addSource({ pos: V(Math.cos(a) * R, 0.01, Math.sin(a) * R), fuel: "gasoline", Q: 12e4, D: 0.4, start: 0.6, end: 12 + i * 3, volume: false, seed: 50 + i });
+              ctx.fx.addSource({ pos: V2(Math.cos(a) * R, 0.01, Math.sin(a) * R), fuel: "gasoline", Q: 12e4, D: 0.4, start: 0.6, end: 12 + i * 3, volume: false, seed: 50 + i });
             }
-            ctx.fx.addSource({ pos: V(0, 0.01, 0), fuel: "gasoline", Q: (q) => 6e6 * Math.max(0, 1 - q / 26), D: 3.5, start: 0.4, end: 26, volume: true, seed: 60 });
+            ctx.fx.addSource({ pos: V2(0, 0.01, 0), fuel: "gasoline", Q: (q) => 6e6 * Math.max(0, 1 - q / 26), D: 3.5, start: 0.4, end: 26, volume: true, seed: 60 });
             vel.set(1.5, film() ? 28 : 17, -1);
             spin = 6;
           }
@@ -5452,7 +5836,7 @@ var SCENARIOS = [
             boom = true;
             b.children[0].visible = false;
             b.children[2].visible = false;
-            ctx.fx.addExplosion({ pos: V(0, 0.4, 0), W, seed: 7, flash: 3e6, scorch: 0.9, dust: true, dustAlbedo: [0.3, 0.3, 0.25], fireball: { D: fb.D, t: fb.t, T: 3e3, soot: 0 }, smoke: { n: 60, life: 4, albedo: [0.75, 0.75, 0.77], tau: 0.25, buoy: 1.5 }, debris: { n: 24, speed: 30, size: 0.03, hot: 0.2, up: 0.5 }, sparks: { n: 80, speed: 25 } });
+            ctx.fx.addExplosion({ pos: V2(0, 0.4, 0), W, seed: 7, flash: 3e6, scorch: 0.9, dust: true, dustAlbedo: [0.3, 0.3, 0.25], fireball: { D: fb.D, t: fb.t, T: 3e3, soot: 0 }, smoke: { n: 60, life: 4, albedo: [0.75, 0.75, 0.77], tau: 0.25, buoy: 1.5 }, debris: { n: 24, speed: 30, size: 0.03, hot: 0.2, up: 0.5 }, sparks: { n: 80, speed: 25 } });
           }
         },
         info: () => [["Sm\u011Bs", "C\u2082H\u2082 : O\u2082 = 1 : 2,5, 50 l", ""], ["Hmotnost C\u2082H\u2082", (mC2H2 * 1e3).toFixed(0) + " g", ""], ["\xDA\u010Dinnost \u2192 TNT", "45 %", "odhad \u26052"], ...blastRows(W), ["Ohniv\xE1 koule", fb.D.toFixed(2) + " m / " + (fb.t * 1e3).toFixed(0) + " ms", "objem produkt\u016F \u26052"]]
@@ -5482,8 +5866,8 @@ var SCENARIOS = [
           if (!boom && t > 1.5) {
             boom = true;
             g2.visible = false;
-            ctx.fx.addExplosion({ pos: V(0, 0.05, 0), W, seed: 9, flash: 2e6, scorch: 1.4, dust: true, fireball: { D: fb.D, t: fb.t, T: 2600, soot: 1 }, smoke: { n: 140, life: 7, albedo: [0.11, 0.1, 0.095], tau: 1.6, buoy: 0.7, buoyAcc: 0.25 }, debris: { n: 160, speed: 300, size: 6e-3, hot: 0.9, up: 0.25, T: 1100 }, sparks: { n: 220, speed: 70 } });
-            ctx.fx.debris.burst(V(0, 0.05, 0), { n: 40, speed: 12, size: 0.05, hot: 0, up: 0.7 });
+            ctx.fx.addExplosion({ pos: V2(0, 0.05, 0), W, seed: 9, flash: 2e6, scorch: 1.4, dust: true, fireball: { D: fb.D, t: fb.t, T: 2600, soot: 1 }, smoke: { n: 140, life: 7, albedo: [0.11, 0.1, 0.095], tau: 1.6, buoy: 0.7, buoyAcc: 0.25 }, debris: { n: 160, speed: 300, size: 6e-3, hot: 0.9, up: 0.25, T: 1100 }, sparks: { n: 220, speed: 70 } });
+            ctx.fx.debris.burst(V2(0, 0.05, 0), { n: 40, speed: 12, size: 0.05, hot: 0, up: 0.7 });
           }
         },
         info: () => [["N\xE1pl\u0148", "180 g Composition B (RE 1,33)", "\u26054"], ...blastRows(W), ["Rychlost st\u0159epin", v.toFixed(0) + " m/s", "Gurney \u26054"], ["Ohniv\xE1 koule", fb.D.toFixed(2) + " m / " + (fb.t * 1e3).toFixed(0) + " ms", "\u26052"]]
@@ -5500,7 +5884,7 @@ var SCENARIOS = [
     duration: 60,
     loop: true,
     desc: "1 000 kg TNT v sudu na zemi. Ohniv\xE1 koule ~25 m (0,5 s), r\xE1zov\xE1 vlna (kondenzace a prach), stoupaj\xEDc\xED \u010Dern\xFD mrak (TNT m\xE1 nedostatek kysl\xEDku \u2192 saze), kr\xE1ter.",
-    cams: [{ name: "160 m", pos: [130, 8, 95], target: [0, 18, 0] }, { name: "400 m", pos: [330, 25, 230], target: [0, 40, 0] }, { name: "bl\xEDzko (60 m)", pos: [50, 4, 35], target: [0, 10, 0] }],
+    cams: [{ name: "160 m", pos: [130, 8, 95], target: [0, 30, 0] }, { name: "400 m", pos: [330, 25, 230], target: [0, 60, 0] }, { name: "bl\xEDzko (60 m)", pos: [50, 4, 35], target: [0, 12, 0] }],
     build(ctx) {
       const d = tntDrum({ lod: ctx.lod });
       ctx.add(d);
@@ -5511,7 +5895,7 @@ var SCENARIOS = [
           if (!boom && t > 2) {
             boom = true;
             d.visible = false;
-            ctx.fx.addExplosion({ pos: V(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70 });
+            ctx.fx.addExplosion({ pos: V2(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, wilson: 2.5 });
           }
         },
         info: () => [...blastRows(W), ["Ohniv\xE1 koule", fb.D.toFixed(0) + " m / " + fb.t.toFixed(2) + " s", "\u26052"], ["Rychlost \u010Dela v 10 m", "\u2248 " + (343 * Math.sqrt(1 + 6 * blastSummary(W, [10])[0].Ps / (7 * 101325))).toFixed(0) + " m/s", "Rankine\u2013Hugoniot \u26055"]]
@@ -5582,7 +5966,7 @@ var SCENARIOS = [
       { id: "D", label: "Pr\u016Fm\u011Br D [m]", type: "range", min: 0.05, max: 6, value: 1, log: true }
     ],
     build(ctx) {
-      const src = ctx.fx.addSource({ pos: V(0, 0.01, 0), fuel: "woodDry", Q: () => ctx.controls.Q * 1e3, D: () => ctx.controls.D, volume: true, seed: 90 });
+      const src = ctx.fx.addSource({ pos: V2(0, 0.01, 0), fuel: "woodDry", Q: () => ctx.controls.Q * 1e3, D: () => ctx.controls.D, volume: true, seed: 90 });
       return { update() {
         src.o.fuel = ctx.controls.fuel;
       }, info: () => fireRows(src) };
@@ -5630,11 +6014,13 @@ function landscapeFire(ctx, o) {
   };
   recompute(0);
   const I0 = crownInitiation(4, 100);
-  const poolN = [40, 70, 110, 180][ctx.tier.id];
+  const poolN = [40, 70, 110, 180, 240, 300][ctx.tier.id] ?? 180;
   const pool = [];
-  for (let i = 0; i < poolN; i++) pool.push(ctx.fx.addSource({ pos: V(0, 0, 0), fuel: o.fuel, Q: 0, D: cell, footprint: { type: "rect", w: cell, d: cell }, volume: i < 4, seed: 100 + i, mult: { smoke: 1, embers: 0.6, haze: 0.4, light: 1 } }));
+  for (let i = 0; i < poolN; i++) pool.push(ctx.fx.addSource({ pos: V2(0, 0, 0), fuel: o.fuel, Q: 0, D: cell, footprint: { type: "rect", w: cell, d: cell }, volume: i < 4, seed: 100 + i, mult: { smoke: 1, embers: 0.6, haze: 0.15, light: 1 } }));
   pool.forEach((s) => s.enabled = false);
-  const scorch = ctx.fx.addScorch({ pos: V(0, 0, 0), radius: 0.1, seed: 9 });
+  const detail = o.kind === "pine" ? forestDetail(ctx, { flora, arr: () => arr, fuel, seed: o.seed + 5 }) : null;
+  if (detail) ctx.addDisposable(detail);
+  const scorch = ctx.fx.addScorch({ pos: V2(0, 0, 0), radius: 0.1, seed: 9 });
   scorch.mesh.visible = false;
   let stats = { burning: 0, burnt: 0, crown: 0 };
   const cellCenter = (k) => [(k % nx + 0.5) * cell - size / 2, ((k / nx | 0) + 0.5) * cell - size / 2];
@@ -5643,9 +6029,9 @@ function landscapeFire(ctx, o) {
   cv.height = ny;
   const cg = cv.getContext("2d");
   const img = cg.createImageData(nx, ny);
-  const tex = new THREE17.CanvasTexture(cv);
-  tex.magFilter = THREE17.LinearFilter;
-  const bpMat = new THREE17.MeshStandardMaterial({ map: tex, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
+  const tex = new THREE18.CanvasTexture(cv);
+  tex.magFilter = THREE18.LinearFilter;
+  const bpMat = new THREE18.MeshStandardMaterial({ map: tex, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
   bpMat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, sharedUniforms());
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nout vec3 vBpW;").replace("#include <worldpos_vertex>", "#include <worldpos_vertex>\nvBpW = (modelMatrix * vec4(transformed, 1.0)).xyz;");
@@ -5660,7 +6046,7 @@ function landscapeFire(ctx, o) {
   }`);
   };
   bpMat.customProgramCacheKey = () => "burnPlane";
-  const burnPlane = new THREE17.Mesh(new THREE17.PlaneGeometry(size, size), bpMat);
+  const burnPlane = new THREE18.Mesh(new THREE18.PlaneGeometry(size, size), bpMat);
   burnPlane.rotation.x = -Math.PI / 2;
   burnPlane.position.y = 0.02;
   ctx.add(burnPlane);
@@ -5713,6 +6099,7 @@ function landscapeFire(ctx, o) {
         flora.setChar(i, Math.min(1, a * 1.5), a < 1.5 ? Math.min(1, a * 3) * (1 - a / 1.5) : 0);
       }
       flora.update(ctx.camera, t);
+      detail?.update(t, crownCell);
       {
         const smN = Math.min(burnt, 400), rate = smN * 0.04 * (ctx.tier.smokeMul ?? 1) * ctx.fx.budgetScale.smoke;
         smAcc += rate * dt;
@@ -5788,7 +6175,7 @@ function houseFire(ctx) {
     rm.tfo = start + tfo;
     const Qin = (t) => t < tfo ? alpha * t * t : rm.Qmax * Math.min(1, 0.6 + (t - tfo) / 120) * (t > tfo + 1500 ? Math.exp(-(t - tfo - 1500) / 400) : 1);
     rm.Qin = Qin;
-    const inside = ctx.fx.addSource({ pos: V(rm.x, 0.12, rm.z), fuel: "houseContents", start, Q: (t) => Math.min(Qin(t), rm.Qmax * 0.7), footprint: { type: "rect", w: rm.w * 0.6, d: rm.d * 0.6 }, scale: (t) => Math.min(1, 0.2 + t / tfo), L: () => Hw * 0.95, ventLocal: 0.35, volume: false, seed: 200 + k, mult: { smoke: 0.4, embers: 0.2, haze: 0 } });
+    const inside = ctx.fx.addSource({ pos: V2(rm.x, 0.12, rm.z), fuel: "houseContents", start, Q: (t) => Math.min(Qin(t), rm.Qmax * 0.7), footprint: { type: "rect", w: rm.w * 0.6, d: rm.d * 0.6 }, scale: (t) => Math.min(1, 0.2 + t / tfo), L: () => Hw * 0.95, ventLocal: 0.35, volume: false, seed: 200 + k, mult: { smoke: 0.4, embers: 0.2, haze: 0 } });
     srcs.push(inside);
     for (const w of rm.wins) {
       if (w.door) continue;
@@ -5796,7 +6183,7 @@ function houseFire(ctx) {
       const off = { S: [w.u, ud.D / 2], N: [-w.u, -ud.D / 2], E: [ud.W / 2, -w.u], W: [-ud.W / 2, w.u] }[wall];
       const share = w.w * w.h / rm.Ao;
       const s = ctx.fx.addSource({
-        pos: V(off[0] + n[0] * 0.25, w.y + w.h * 0.55, off[1] + n[2] * 0.25),
+        pos: V2(off[0] + n[0] * 0.25, w.y + w.h * 0.55, off[1] + n[2] * 0.25),
         fuel: "houseContents",
         start: start + tfo,
         Q: (t) => Math.max(0, Qin(t + tfo) - rm.Qmax * 0.6) * share * 0.9 + 2e5 * share,
@@ -5815,7 +6202,7 @@ function houseFire(ctx) {
   mkRoom(1, tStart[1]);
   const roofT = rooms[0].tfo + 600;
   const tc = 300;
-  const roof = ctx.fx.addSource({ pos: V(-1.5, Hw + 1.8, 0), fuel: "houseContents", start: roofT, Q: (t) => 6e6 * Math.min(1, t / 240) * (1 + (t > tc ? 1.3 * Math.exp(-(t - tc) / 45) : 0)), footprint: { type: "rect", w: 5, d: 4 }, scale: (t) => Math.min(1, 0.2 + t / 300), volume: true, seed: 230, mult: { embers: 2 } });
+  const roof = ctx.fx.addSource({ pos: V2(-1.5, Hw + 1.8, 0), fuel: "houseContents", start: roofT, Q: (t) => 6e6 * Math.min(1, t / 240) * (1 + (t > tc ? 1.3 * Math.exp(-(t - tc) / 45) : 0)), footprint: { type: "rect", w: 5, d: 4 }, scale: (t) => Math.min(1, 0.2 + t / 300), volume: true, seed: 230, mult: { embers: 2 } });
   let collapsed = false;
   const hole = (t) => t < roofT ? 0 : t < roofT + tc ? Math.min(1.8, (t - roofT) / 200 * 1.8) : 3.1 + Math.min(0.9, (t - roofT - tc) / 400);
   return {
@@ -5824,7 +6211,7 @@ function houseFire(ctx) {
       for (const u of [c2.roof, c2.wood]) u.uHole.value.set(-1.6, 0, hr, Hw - 0.3);
       if (!collapsed && t > roofT + tc && t < roofT + tc + 30) {
         collapsed = true;
-        const P = V(-1.6, Hw, 0), r = mulberry32(77), sp = ctx.fx.sp, em = ctx.tier.emberMul ?? 1;
+        const P = V2(-1.6, Hw, 0), r = mulberry32(77), sp = ctx.fx.sp, em = ctx.tier.emberMul ?? 1;
         for (let i = 0; i < 500 * em * ctx.fx.budgetScale.spark; i++) {
           const a = r() * 6.283, rr = 2.5 * Math.sqrt(r()), dm = 1e-3 + 6e-3 * r() ** 2, vt = Math.sqrt(4 * 250 * 9.81 * dm / 3.6);
           sp.spawn({
@@ -5866,7 +6253,8 @@ function houseFire(ctx) {
             seed: r()
           });
         }
-        ctx.fx.debris.burst(V(-1.6, Hw + 1.2, 0), { n: 50, speed: 5, size: 0.25, hot: 0.7, up: 0.2, T: 1050 }, r);
+        ctx.fx.debris.burst(V2(-1.6, Hw + 1.2, 0), { n: 50, speed: 5, size: 0.25, hot: 0.7, up: 0.2, T: 1050 }, r);
+        roof.brandBurst(45, 2.2, [P.x, Hw + 0.3, P.z]);
         ctx.fx.shake = Math.max(ctx.fx.shake, 0.15);
         ctx.message?.("Z\u0159\xEDcen\xED st\u0159echy nad ob\xFDv\xE1kem: krov pad\xE1 do \u017E\xE1ru, v\xFDtrysk jisker.");
       }

@@ -36,7 +36,7 @@ export class App {
     this.fx.env = this.env;
     this.objects = []; this.disposables = []; this.flora = [];
     this.timeScale = 1; this.paused = false; this.t = 0; this.wind = 0; this.windDir = 0; this.o2 = 1;
-    this.flameKey = 100; this.lodOverride = null; this.wire = false;
+    this.flameKey = 140; // γ 0,45 v plameni: chladnější místa tmavší, klíč vyrovná střed (iterace 4) this.lodOverride = null; this.wire = false;
     this.controlsVals = {};
     this.mode = 'scenario';
     this.frameMs = 16; this.cpuMs = 0; this._fpsAcc = []; this.shakeN = fbm1(3);

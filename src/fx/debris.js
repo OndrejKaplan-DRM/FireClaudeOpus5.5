@@ -28,7 +28,7 @@ export class Debris {
     scene.add(this.mesh);
     if (cap <= 0) this.mesh.visible = false; // hostitel bez osvětlených materiálů (xEngine low, D-022)
     this.s = new Float32Array(Math.max(cap, 1) * 16);
-    this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._e = new THREE.Euler(); this._v = new THREE.Vector3(); this._c = new THREE.Color();
+    this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._e = new THREE.Euler(); this._v = new THREE.Vector3(); this._sv = new THREE.Vector3(); this._c = new THREE.Color();
   }
   dispose() { this.scene.remove(this.mesh); this.mesh.geometry.dispose(); this.mat.dispose(); }
   clear() { this.n = 0; this.mesh.count = 0; }
@@ -76,7 +76,7 @@ export class Debris {
       const c = T > 700 ? blackbody(T).rgb.map((v) => v * Math.min(1, Math.exp((T - 1300) / 160))) : [0, 0, 0];
       this._c.setRGB(c[0], c[1], c[2]); this.mesh.setColorAt(i, this._c);
       this._e.set(s[b + 6], s[b + 7], s[b + 8]); this._q.setFromEuler(this._e);
-      m.compose(this._v.set(s[b], s[b + 1], s[b + 2]), this._q, new THREE.Vector3(sz, sz, sz));
+      m.compose(this._v.set(s[b], s[b + 1], s[b + 2]), this._q, this._sv.set(sz, sz, sz));
       this.mesh.setMatrixAt(i, m);
     }
     this.mesh.count = this.n;

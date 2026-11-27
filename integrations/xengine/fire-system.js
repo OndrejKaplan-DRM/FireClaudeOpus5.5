@@ -44,7 +44,7 @@ export function hostTier(quality) {
   return {
     ...base,
     particles: { ...base.particles, haze: 0 },
-    softParticles: false, haze: false, bloom: 0, shadows: false,
+    softParticles: false, haze: false, bloom: 0, shadows: false, volumeTAA: false, // hostitel kreslí přímo na plátno: bez hloubky a historie
     lights: q.lights, lightObjects: false, debris: q.debris,
   };
 }

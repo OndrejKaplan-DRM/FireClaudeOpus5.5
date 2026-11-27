@@ -36,7 +36,7 @@ export function candle({ lod = 2 }) {
   wax.emissive = new THREE.Color(1.0, 0.5, 0.18); wax.emissiveIntensity = 0;
   { // prosvícení jen u horního okraje (v ≈ 1 u knotu)
     const c = document.createElement('canvas'); c.width = 4; c.height = 64; const g = c.getContext('2d');
-    const gr = g.createLinearGradient(0, 64, 0, 0); gr.addColorStop(0, '#1a1a1a'); gr.addColorStop(0.7, '#333'); gr.addColorStop(0.92, '#888'); gr.addColorStop(1, '#fff');
+    const gr = g.createLinearGradient(0, 64, 0, 0); gr.addColorStop(0, '#202020'); gr.addColorStop(0.55, '#3a3a3a'); gr.addColorStop(0.8, '#9a9a9a'); gr.addColorStop(0.94, '#e0e0e0'); gr.addColorStop(1, '#fff');
     g.fillStyle = gr; g.fillRect(0, 0, 4, 64); wax.emissiveMap = new THREE.CanvasTexture(c); wax.emissiveMap.colorSpace = THREE.SRGBColorSpace;
   }
   const wick = tube(new THREE.Vector3(0, H - 0.005, 0), new THREE.Vector3(0.0012, H + 0.009, 0.0004), 0.0006, 0.0004, segs(lod, 4, 6, 8, 16, 32), segs(lod, 1, 2, 4, 8, 16));

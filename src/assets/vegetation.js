@@ -11,7 +11,7 @@ function strip(g) { const c = g.index ? g.toNonIndexed() : g; for (const k of Ob
 export function pineGeometry(lod, seed = 1) {
   const n = noise3(seed), r = mulberry32(seed);
   const radial = segs(lod, 4, 7, 14, 40, 120), hs = segs(lod, 1, 3, 10, 30, 90);
-  const trunk = tube(new THREE.Vector3(0, -0.02, 0), new THREE.Vector3(0, 0.98, 0), 0.025, 0.004, Math.max(4, radial >> 1), hs);
+  const trunk = tube(new THREE.Vector3(0, -0.02, 0), new THREE.Vector3(0, 0.98, 0), 0.016, 0.003, Math.max(4, radial >> 1), hs); // DBH ≈ 3 % výšky (borovice 15 m → 45 cm u paty) ★3
   const layers = segs(lod, 2, 4, 7, 10, 14);
   const crowns = [];
   for (let i = 0; i < layers; i++) {

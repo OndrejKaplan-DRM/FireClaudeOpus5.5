@@ -165,7 +165,7 @@ void main(){
     // plamen: R = intenzita, G = teplotní váha, B = saze, A = pokrytí
     float T = (vG.w > 0.0 ? vG.w : 1250.0) * (0.8 + 0.25 * clamp(a.g * 1.25, 0.0, 1.0));
     float life = smoothstep(0.0, 0.12, age) * (1.0 - smoothstep(0.55, 1.0, age));
-    vec3 em = sootColor(T) * a.r * uFlameLum * vC.a * life * vC.rgb;
+    vec3 em = sootColorG(T, 0.45) * a.r * uFlameLum * vC.a * life * vC.rgb;
     float al = a.b * a.a * life * 0.5 * vC.a;
     fragColor = fxOut(vec4(em * soft, al * soft));
   } else if (vP.w > 2.5) {
@@ -320,7 +320,7 @@ export class BillboardSystem extends BaseSystem {
 // ---------------------------------------------------------------------------------------------------
 const SP_VS = /* glsl */`
 in vec4 iPS; in vec4 iV; in float iT;
-out vec2 vUv; out float vT; out float vA;
+out vec2 vUv; out float vT; out float vA; out float vB;
 uniform float uPx;  // velikost pixelu ve světě na 1 m vzdálenosti
 uniform float uShutter;
 void main(){
@@ -339,16 +339,18 @@ void main(){
   vec4 mv = vec4(mix(c.xyz, c2.xyz, 0.5) + vec3(off, 0.0), 1.0);
   vA *= s / (l + s);
   gl_Position = projectionMatrix * mv;
-  vUv = q + 0.5; vT = iT;
+  vUv = q + 0.5; vT = iT; vB = iV.w;
 }`;
 const SP_FS = /* glsl */`
 precision highp float; precision highp sampler3D;
 ${GLSL_COMMON}
-in vec2 vUv; in float vT; in float vA; out vec4 o;
+in vec2 vUv; in float vT; in float vA; in float vB; out vec4 o;
 uniform float uLum;
 void main(){
   vec2 p = vUv * 2.0 - 1.0;
   float f = exp(-dot(p, p) * 2.5);
+  // hořící oharek (vB > 0): žhnou jen praskliny mezi zuhelnatělými šupinami (aligátoří kůže), ne celý povrch ★3 (fotky)
+  if (vB > 0.5) f *= 0.25 + 0.75 * smoothstep(0.35, 0.75, n3(vec3(p * 1.6, fract(vB) * 37.0)));
   // ×2,5: bodový zdroj pod pixel oko vnímá jasněji (oslnění, Purkyně/Stiles–Crawford) – umělecké ★2, D-021
   vec3 c = bbColor(vT) * f * vA * uLum * 2.5;
   o = fxOut(vec4(c, 0.0));
@@ -357,6 +359,7 @@ void main(){
 export class SparkSystem extends BaseSystem {
   constructor(capacity) {
     super(capacity);
+    this.trail = null; this.trailMul = 1; // BillboardSystem pro plamínky a kouř hořících oharků (nastaví FXWorld)
     const g = QUAD.clone(); g.instanceCount = 0;
     const mk = (n) => { const a = new THREE.InstancedBufferAttribute(new Float32Array(capacity * n), n); a.setUsage(THREE.DynamicDrawUsage); return a; };
     this.aPS = mk(4); this.aV = mk(4); this.aT = mk(1);
@@ -370,10 +373,12 @@ export class SparkSystem extends BaseSystem {
     this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.layers.set(LAYER_FX); this.mesh.renderOrder = 6;
   }
   /** Jiskra/uhlík: T0 [K], chladnutí τc [s], průměr d [m]. */
-  spawn({ x, y, z, vx, vy, vz, life, T, tauC = 0.6, size = 0.002, drag = 1.5, grav = 1, buoy = 0, ox, oz, pq = 0, pz0 = 0, seed, R0 = 0, ember = false, vt = 1 }) {
+  spawn({ x, y, z, vx, vy, vz, life, T, tauC = 0.6, size = 0.002, drag = 1.5, grav = 1, buoy = 0, ox, oz, pq = 0, pz0 = 0, seed, R0 = 0, ember = false, vt = 1, brand = 0, smokeRGB = null }) {
     const o = this.alloc(); if (o < 0) return;
     const d = this.d;
-    d[o + F.type] = ember ? 1 : 0; d[o + F.tau0] = vt;
+    d[o + F.type] = brand > 0 ? 2 : ember ? 1 : 0; d[o + F.tau0] = vt;
+    // oharek: podíl života s vlastním plamenem (cr), albedo kouře stopy (cg), akumulátor stopy (extra)
+    d[o + F.cr] = brand; d[o + F.cg] = smokeRGB ? smokeRGB[0] : 0.22;
     d[o + F.px] = x; d[o + F.py] = y; d[o + F.pz] = z; d[o + F.vx] = vx; d[o + F.vy] = vy; d[o + F.vz] = vz;
     d[o + F.life] = life; d[o + F.T0] = T; d[o + F.dT] = tauC; d[o + F.s0] = size; d[o + F.drag] = drag; d[o + F.grav] = grav; d[o + F.buoy] = buoy;
     d[o + F.seed] = seed ?? Math.random(); d[o + F.ox] = ox ?? x; d[o + F.oz] = oz ?? z; d[o + F.pq] = pq; d[o + F.pz0] = pz0; d[o + F.glowR] = R0;
@@ -385,7 +390,30 @@ export class SparkSystem extends BaseSystem {
     for (let i = 0; i < n; i++) {
       const o = i * STRIDE, age = d[o + F.age], a01 = age / d[o + F.life], sd = d[o + F.seed];
       let Tk, sz = d[o + F.s0];
-      if (d[o + F.type] === 1) {
+      const ty = d[o + F.type];
+      if (ty === 2 && this.trail) {
+        // hořící oharek (drobek dřeva, kus izolace, kapka paliva): vlastní plamínek v první části letu, pak jen doutná a kouří
+        // plamen kolem kusu ~ 2–4× jeho průměru, protažený proti směru letu (fotky táboráku na dlouhý čas) ★2
+        const flaming = a01 < d[o + F.cr], vx = d[o + F.vx], vy = d[o + F.vy], vz = d[o + F.vz];
+        d[o + F.extra] += dt * (flaming ? 45 : 7) * this.trailMul;
+        while (d[o + F.extra] >= 1) {
+          d[o + F.extra] -= 1;
+          const k = Math.random(), x = d[o] - vx * dt * k, y = d[o + 1] - vy * dt * k, z = d[o + 2] - vz * dt * k;
+          if (flaming && Math.random() < 0.82) {
+            this.trail.spawnFlame({
+              x, y, z, vx: vx * 0.15, vy: 0.4 + Math.max(0, vy) * 0.1, vz: vz * 0.15, life: 0.1 + 0.12 * Math.random(),
+              s0: sz * 2.2, s1: sz * 3.5, T: 1250 + 120 * Math.random(), lum: 0.8, drag: 0.08, buoy: 1.5, stretch: 1.6, seed: Math.random(),
+            });
+          } else {
+            const g = d[o + F.cg];
+            this.trail.spawnSmoke({
+              x, y, z, vx: vx * 0.1, vy: 0.25, vz: vz * 0.1, life: 1.2 + Math.random(), s0: sz * 1.5, s1: sz * 10 + 0.04,
+              tau: flaming ? 0.5 : 0.25, albedo: [g, g * 0.96, g * 0.92], drag: 0.25, buoy: 0.6, seed: Math.random(),
+            });
+          }
+        }
+      }
+      if (ty === 1 || ty === 2) {
         // žhavý uhlík (firebrand): povrch hoří s přístupem vzduchu – T roste s rychlostí obtékání
         // T_eq ≈ 880 + 150·√v_rel [K], strop ~1 340 K (Urban 2019, Kim 2021: 900–1 300 K) ★2
         const vx = d[o + F.vx], vy = d[o + F.vy], vz = d[o + F.vz];
@@ -405,7 +433,7 @@ export class SparkSystem extends BaseSystem {
         Tk *= (1 + 0.25 * Math.sin(age * 23 + sd * 40)) * (1 - Math.max(0, a01 - 0.85) * 2);
       }
       PS[i * 4] = d[o]; PS[i * 4 + 1] = d[o + 1]; PS[i * 4 + 2] = d[o + 2]; PS[i * 4 + 3] = sz;
-      V[i * 4] = d[o + F.vx]; V[i * 4 + 1] = d[o + F.vy]; V[i * 4 + 2] = d[o + F.vz];
+      V[i * 4] = d[o + F.vx]; V[i * 4 + 1] = d[o + F.vy]; V[i * 4 + 2] = d[o + F.vz]; V[i * 4 + 3] = d[o + F.type] === 2 ? 1 + sd * 0.99 : 0;
       T[i] = Tk;
     }
     this.geo.instanceCount = n;

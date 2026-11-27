@@ -1,6 +1,17 @@
 # TODO — co se právě dělá
 
-Stav k 2026-11-27 odpoledne: **iterace 3 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
+Stav k 2026-11-27 večer: **iterace 4 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
+
+## Hotovo (iterace 4 – fotky, oharky, TNT, les zblízka, TAA T2, xEngine pro všechny sešny)
+- [x] 39 referenčních fotografií (Commons), srovnání a statistiky barvy, `REFERENCE.md`. Obrázky mimo repo. D-028.
+- [x] Plamen podle fotek: jazyky, ostré okraje v metrech, barva podle fotek, zisk tenkých plamenů, vzplanutí. D-028.
+- [x] Svíčka: laminární kapka, tmavé jádro u knotu, modrý kalich jen v plášti, prosvícený vosk. D-029.
+- [x] Hořící oharky se stopou plamínku a kouře; sazové výrony; dávka oharků při zřícení střechy. D-030.
+- [x] 1 t TNT: houbový mrak (prstenec + prachový sloupec), výraznější Wilsonův dóm (Ondřej: b). Výbuchy zblízka: hroudy,
+      jemnější výtrysky. D-031.
+- [x] Les zblízka: hořící kmeny u kamery, padající hořící větve, tenčí kmeny; oprava – na T4/T5 les nehořel. D-032.
+- [x] Časová akumulace objemů i na T2.
+- [x] xEngine: `NAVRHY.md`, `MAPA.md`, `SVODNA.md`, `SESNA_A.md` (doplněno), `SESNA_B.md`. D-033.
 
 ## Hotovo (iterace 3 – Ondřejova volba: výbuchy + zrno, dům se zřícením)
 - [x] Časová akumulace objemů T3–T5 (reprojekce podle vzdálenosti, ořez okolím) – plamen bez zrna i na snímku. D-025.
@@ -32,15 +43,21 @@ Stav k 2026-11-27 odpoledne: **iterace 3 hotová** (vše zaškrtnuté je v `main
 - [x] Nástroje: `tools/look.mjs` (snímek s úpravou stavu), `tools/shot.mjs`, `tools/sweep.mjs` (mřížka scénář × parametr).
 
 ## Známé slabiny (priorita shora)
-1. **Zrno na T1/T2** zůstává (akumulace je jen T3+); na T2 by šla zapnout za cenu ~2 průchodů přes obrazovku – změřit.
+1. **Zrno na T1** zůstává (akumulace je T2+); cena akumulace na T2 nezměřena (odhad ~2 průchody přes obrazovku).
 2. **Velké louže (nafta)** jsou lepší, ale pořád trochu „kompaktní“; chybí velké odtržené jazyky v horní třetině a výraznější
    černý plášť. Kouř nad nimi je fyzikálně tmavý (v noci skoro neviditelný) – správně, ale méně efektní.
 3. **Pneumatiky ve dne**: plamen u paty malý, sloup kouře hezký. Chce víc plamene po obvodu hromady (víc zdrojů).
-4. **Výbuchy**: mrak 1 t TNT stoupá jako kompaktní koule (chybí „hřib“ se stonkem); granát zblízka bez rozstřiku hlíny na kameru.
+4. **Výbuchy**: hřib TNT je z kouřových částic – klobouk zblízka „hrudkovitý“, chybí sukně kondenzace pod kloboukem;
+   granát zblízka bez rozstřiku hlíny na kameru (čočka).
 5. **Dům**: kouř je hodně podsvícený do červena, chybí čouzení fasády nad okny; díra ve střeše nestíní (stínová mapa ji nevidí).
-6. **Les zblízka**: hořící kmeny, padající větve, korunový požár jen velkými jazyky.
-7. **Výkon** na skutečném T460 a RTX 4060 nezměřen (sandbox = swiftshader). Záložka Technika v prohlížeči ukáže časy.
-8. xEngine: integrace ověřená jen na zkušební stránce se záznamníkem světla a v Node – ve skutečné hře ji zapojí sešna A (`SESNA_A.md`).
+6. **Les zblízka**: koruny v blízkém LOD jsou ploché kužele (papírové), korunový požár jen velkými jazyky; plameny na kmenech
+   ve větru jako dlouhé šikmé pásy – chce to ohyb kolem kmene.
+7. **Svíčka** je oproti fotkám méně sytá (bělavé jádro) – záměrný kompromis mezi okem a fotoaparátem.
+8. **Křoví a les na T3+:** 26 M △ na snímek u křoví (6,4 M les) – stejné jako v iteraci 3 (ověřeno `tools/tri.mjs` na
+   předchozím commitu); nejspíš stíny bodových světel (6 stěn krychle × světla × instance porostu). Omezit vrhání stínů
+   porostu na blízký LOD a 1–2 světla.
+9. **Výkon** na skutečném T460 a RTX 4060 nezměřen (sandbox = swiftshader). Záložka Technika v prohlížeči ukáže časy.
+10. xEngine: integrace ověřená jen na zkušební stránce se záznamníkem světla a v Node – ve skutečné hře ji zapojí sešna A (`SESNA_A.md`).
 
 ## Nápady (neschváleno)
 - Objemový kouř pro T4/T5 (3D textura hustoty, 6směrové osvětlení), WebGPU compute částic

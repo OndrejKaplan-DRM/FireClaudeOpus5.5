@@ -7,6 +7,7 @@
                                 │ Q, L, θ, T, f, τ, barva     │ Ps(R), Us, ohnivá koule  │ časy příchodu ohně
 ┌─ src/scenarios ───────────────┴─────────────────────────────┴──────────────────────────┴──────────────────┐
 │ 18 use casů: build(ctx) → {update, info, controls}. Skládají assety + FireSource/Explosion z fyziky.      │
+│ forestDetail: hořící kmeny a padající větve u kamery (les zblízka)                                         │
 └───────▲────────────────────────────────▲──────────────────────────────────────────────▲────────────────────┘
         │ modely                          │ zdroje ohně, výbuchy                          │ UI, časová osa
 ┌─ src/assets ─────────┐   ┌─ src/fx ─────────────────────────────────────────┐   ┌─ src/ui ───────────────┐
@@ -23,19 +24,22 @@
 └────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+Spark kreslí i hořící oharky (typ 2); jejich plamínek a kouřová stopa jdou do Billboard (`sp.trail`).
+
 ## Tok jednoho snímku
 1. `App.step(dt)` – čas scénáře `t += dt × timeScale` (průběh požáru), efekty běží v reálném čase `dt`.
 2. `scenario.update(dtS, t)` – mění zdroje (výkon, ohořelost, šíření).
 3. `FXWorld.update(dt)` – rozpočty (poptávka zdrojů → škála), přidělení objemů podle důležitosti,
    `FireSource.update` spočítá fyziku (Q, L, náklon, T, pulzace, τ kouře, svítivost) a vypustí částice,
-   `Explosion.update` (ohnivá koule, rázová vlna z tabulky R(t), prach, trosky, záblesk),
+   `Explosion.update` (ohnivá koule, rázová vlna z tabulky R(t), prach, trosky, záblesk, u velkých náloží pole proudění
+   houbového mraku `flow` → `air.extraUp`),
    světla se sloučí do pevného bazénu, systémy částic integrují pohyb ve vzduchu (vítr + vztlak + strhávání).
 4. `App.updateExposure()` – oko: měření osvětlení u pozorovatele → cílová expozice (adaptace 0,25 s dolů / 0,9 s nahoru),
    lokální adaptace plamene `flameLum = klíč/ex · (ex/0,25)^0,4` (částečná, D-020) a `lumRef = 16/ex` pro výbuchy, jiskry, žhnutí.
 5. `App.renderFrame` – **před-expozice** (`shared.PRE`): všechna světla a emise se násobí expozicí, aby HalfFloat HDR nepřetekl.
 6. `Pipeline.render` – neprůhledná scéna → (T2+) kopie lineární hloubky → (T3+) objemy do vlastního cíle + časová akumulace
    (reprojekce, ořez okolím, D-025) a složení → průhledné efekty (měkké částice, ořez objemů)
-   → (T2+) heat haze do polovičního bufferu → bloom (dual filter) → ACES + sRGB + viněta (+ zrno).
+   → (T2+; T2 nově s akumulací objemů) heat haze do polovičního bufferu → bloom (dual filter) → ACES + sRGB + viněta (+ zrno).
 
 ## Fyzika → efekt (klíčové vazby)
 | Veličina | Zdroj | Kde se projeví |
@@ -72,7 +76,7 @@ Porost (`InstancedFlora`) má 2 instancované LOD (blízko/daleko) přeskládáv
 ## Integrace do jiného enginu
 - **xEngine** (Ondřejův engine): `integrations/xengine/fire-system.js` – systém jádra `fx.fire` (D-024), předvolby ohňů a výbuchů
   v `presets.js`, zkušební stránka `demo.js` se skutečným jádrem a vykreslením xEngine, test `npm run test:xengine`.
-  Návod `integrations/xengine/README.md`, návrh pro xEngine `integrations/xengine/NAVRH.md`.
+  Návod `integrations/xengine/README.md`, návrhy a návody pro sešny xEngine `integrations/xengine/{NAVRHY,MAPA,SVODNA,SESNA_A,SESNA_B}.md`.
 - **Three.js**: importuj `src/fx/world.js` (FXWorld), `src/engine/pipeline.js` (nebo vlastní post-proces s před-expozicí),
   zdroje `fx.addSource({...})`, výbuchy `fx.addExplosion({...})`.
 - **Jiný engine**: `dataset/presets/*.json` (fyzikální parametry zdrojů), `dataset/flipbooks/*` (atlas + kanály),

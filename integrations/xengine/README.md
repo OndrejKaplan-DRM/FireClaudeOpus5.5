@@ -1,5 +1,9 @@
 # FireLab × xEngine
 
+**Rozcestník pro sešny xEngine:** [`MAPA.md`](MAPA.md) kam sáhnout pro co · [`NAVRHY.md`](NAVRHY.md) návrhy F-1 až F-8
+a Ondřejova rozhodnutí · [`SVODNA.md`](SVODNA.md) svodná sešna · [`SESNA_A.md`](SESNA_A.md) sešna A (běh, zapojení) ·
+[`SESNA_B.md`](SESNA_B.md) sešna B (prefaby, generátor, validátor, tabulka předvoleb).
+
 Oheň, kouř, jiskry a výbuchy z FireLab jako jeden systém jádra xEngine (`fx.fire`). xEngine se kvůli tomu nemění:
 hra systém zaregistruje stejně jako ostatní a volá jeho metody.
 

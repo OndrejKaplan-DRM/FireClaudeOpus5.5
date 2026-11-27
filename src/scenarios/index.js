@@ -12,6 +12,7 @@ import { arrivalTimes, headROS, byram, lengthToBreadth, crownInitiation } from '
 import { mulberry32 } from '../engine/rng.js';
 import { fbm2 } from '../assets/textures.js';
 import { PRE, FLAMEK, sharedUniforms, GLSL_COMMON } from '../fx/shared.js';
+import { forestDetail } from './forestDetail.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 export const fmtW = (q) => (q >= 1e6 ? (q / 1e6).toFixed(2) + ' MW' : q >= 1e3 ? (q / 1e3).toFixed(1) + ' kW' : q.toFixed(0) + ' W');
@@ -94,7 +95,7 @@ export const SCENARIOS = [
       const at = c.userData.flameAt;
       const src = ctx.fx.addSource({
         pos: V(at.x, at.y - 0.004, at.z), fuel: 'paraffin', Q: 80, D: 0.016, L: () => 0.045, T: 1450, blue: 1.0, volume: true,
-        taper: 1.25, baseWide: -0.1, neck: 0.55, puffAmp: 0.12, turbAmp: 0.12, tongues: 3, lightH: 0.4,
+        taper: 0.9, baseWide: -0.1, neck: 0.55, puffAmp: 0.12, turbAmp: 0.03, wobble: 0.04, tongues: 3, lightH: 0.4,
         mult: { smoke: 0.4, embers: 0, sparks: 0, haze: 0.5 }, seed: 2,
       });
       let out = false, wisp = 0;
@@ -103,7 +104,7 @@ export const SCENARIOS = [
           const U = ctx.fx.air.windAt(0.1);
           if (U > 3.0 && !out) { out = true; src.enabled = false; wisp = 6; ctx.message('Vichr svíčku sfoukl (vítr u plamene > 3 m/s).'); }
           if (U <= 3.0 && out) { out = false; src.enabled = true; ctx.message('Svíčka znovu zapálena.'); }
-          c.userData.wax.emissiveIntensity = out ? 0 : 4 * PRE.value; // prosvícený vosk u knotu (podpovrchový rozptyl, odhad ~12 cd/m²)
+          c.userData.wax.emissiveIntensity = out ? 0 : 14 * PRE.value; // prosvícený vosk u knotu (podpovrchový rozptyl; fotky: horní 2–3 cm svítí žlutě) ★2
           if (wisp > 0) { wisp -= dt; if (Math.random() < dt * 25) ctx.fx.bb.spawnSmoke({ x: at.x, y: at.y - 0.008, z: at.z, vy: 0.15, life: 3, s0: 0.004, s1: 0.06, tau: 0.6 * Math.max(wisp / 6, 0), albedo: [0.85, 0.85, 0.86], drag: 0.3 }); }
         },
         info: () => [...fireRows(src), ['Stav', out ? 'zhasnutá (vítr)' : 'hoří', 'práh ~3 m/s ★2']],
@@ -318,7 +319,7 @@ export const SCENARIOS = [
   {
     id: 'tnt', group: 'Exploze', name: 'Exploze 1 t TNT', ground: 'dryGrass', time: 'den', duration: 60, loop: true,
     desc: '1 000 kg TNT v sudu na zemi. Ohnivá koule ~25 m (0,5 s), rázová vlna (kondenzace a prach), stoupající černý mrak (TNT má nedostatek kyslíku → saze), kráter.',
-    cams: [{ name: '160 m', pos: [130, 8, 95], target: [0, 18, 0] }, { name: '400 m', pos: [330, 25, 230], target: [0, 40, 0] }, { name: 'blízko (60 m)', pos: [50, 4, 35], target: [0, 10, 0] }],
+    cams: [{ name: '160 m', pos: [130, 8, 95], target: [0, 30, 0] }, { name: '400 m', pos: [330, 25, 230], target: [0, 60, 0] }, { name: 'blízko (60 m)', pos: [50, 4, 35], target: [0, 12, 0] }],
     build(ctx) {
       const d = P.tntDrum({ lod: ctx.lod }); ctx.add(d);
       const W = 1000, fb = heFireball(W);
@@ -327,7 +328,7 @@ export const SCENARIOS = [
         update(dt, t) {
           if (!boom && t > 2) {
             boom = true; d.visible = false;
-            ctx.fx.addExplosion({ pos: V(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70 });
+            ctx.fx.addExplosion({ pos: V(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, wilson: 2.5 });
           }
         },
         info: () => [...blastRows(W), ['Ohnivá koule', fb.D.toFixed(0) + ' m / ' + fb.t.toFixed(2) + ' s', '★2'], ['Rychlost čela v 10 m', '≈ ' + (343 * Math.sqrt(1 + (6 * blastSummary(W, [10])[0].Ps) / (7 * 101325))).toFixed(0) + ' m/s', 'Rankine–Hugoniot ★5']],
@@ -407,10 +408,12 @@ function landscapeFire(ctx, o) {
   };
   recompute(0);
   const I0 = crownInitiation(4, 100);
-  const poolN = [40, 70, 110, 180][ctx.tier.id];
+  const poolN = [40, 70, 110, 180, 240, 300][ctx.tier.id] ?? 180; // T4/T5 dřív bez zdrojů (index mimo pole) – oprava iterace 4
   const pool = [];
-  for (let i = 0; i < poolN; i++) pool.push(ctx.fx.addSource({ pos: V(0, 0, 0), fuel: o.fuel, Q: 0, D: cell, footprint: { type: 'rect', w: cell, d: cell }, volume: i < 4, seed: 100 + i, mult: { smoke: 1, embers: 0.6, haze: 0.4, light: 1 } }));
+  for (let i = 0; i < poolN; i++) pool.push(ctx.fx.addSource({ pos: V(0, 0, 0), fuel: o.fuel, Q: 0, D: cell, footprint: { type: 'rect', w: cell, d: cell }, volume: i < 4, seed: 100 + i, mult: { smoke: 1, embers: 0.6, haze: 0.15, light: 1 } })); // haze: desítky zdrojů se sčítají → slabší
   pool.forEach((s) => (s.enabled = false));
+  const detail = o.kind === 'pine' ? forestDetail(ctx, { flora, arr: () => arr, fuel, seed: o.seed + 5 }) : null;
+  if (detail) ctx.addDisposable(detail);
   const scorch = ctx.fx.addScorch({ pos: V(0, 0, 0), radius: 0.1, seed: 9 }); scorch.mesh.visible = false;
   let stats = { burning: 0, burnt: 0, crown: 0 };
   const cellCenter = (k) => [((k % nx) + 0.5) * cell - size / 2, (((k / nx) | 0) + 0.5) * cell - size / 2];
@@ -473,6 +476,7 @@ function landscapeFire(ctx, o) {
         flora.setChar(i, Math.min(1, a * 1.5), a < 1.5 ? Math.min(1, a * 3) * (1 - a / 1.5) : 0);
       }
       flora.update(ctx.camera, t);
+      detail?.update(t, crownCell);
       // doutnání za čelem: světlý, líně stoupající kouř (vysoké albedo, malý vztlak), náhodné buňky do 3 tr po průchodu
       {
         const smN = Math.min(burnt, 400), rate = smN * 0.04 * (ctx.tier.smokeMul ?? 1) * ctx.fx.budgetScale.smoke;
@@ -572,6 +576,7 @@ function houseFire(ctx) {
             life: 6 + 6 * r(), s0: 1.2, s1: 4 + 3 * r(), tau: 1.2, albedo: [0.12, 0.11, 0.1], drag: 0.8, seed: r() });
         }
         ctx.fx.debris.burst(V(-1.6, Hw + 1.2, 0), { n: 50, speed: 5, size: 0.25, hot: 0.7, up: 0.2, T: 1050 }, r);
+        roof.brandBurst(45, 2.2, [P.x, Hw + 0.3, P.z]); // hořící kusy latí a izolace s plamínkem a kouřovou stopou
         ctx.fx.shake = Math.max(ctx.fx.shake, 0.15);
         ctx.message?.('Zřícení střechy nad obývákem: krov padá do žáru, výtrysk jisker.');
       }

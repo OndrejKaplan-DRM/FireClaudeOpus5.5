@@ -4,7 +4,18 @@ Připravila Kristína ve FireLab, 27. 11. 2026. **Ondřejova rozhodnutí z 27. 1
 souboru, FireLab se do xEngine připojí jako **git submodul**. Do xEngine jsem nic nezapisovala; vše níže je pro tebe.
 
 Pravda o FireLab je v repu `OndrejKaplan-DRM/FireClaudeOpus5.5`. Když se tenhle soubor a kód rozcházejí, platí kód
-(`integrations/xengine/fire-system.js`) a jeho testy.
+(`integrations/xengine/fire-system.js`) a jeho testy. Souvisí: [`MAPA.md`](MAPA.md) (kam sáhnout pro co),
+[`NAVRHY.md`](NAVRHY.md) (F-1 až F-8), [`SVODNA.md`](SVODNA.md), [`SESNA_B.md`](SESNA_B.md).
+
+**Novinky iterace 4 (27. 11. odpoledne), které se tě týkají:**
+- Hořící oharky, sazové výrony a vzplanutí běží v systému samy (žádné nové API). Na low je jich polovina (`emberMul` 0,5).
+- Předvolba `candle` je laminární (hladká kapka); `tnt` má houbový mrak a výraznější Wilsonův dóm (Ondřej: varianta b).
+- Houbový mrak přidává po dobu výbuchu pole proudění ke **všem** částicím FireLab (`air.extraUp`); u hry s více ohni
+  v okolí to je správně (nasávání k sloupci), jen to nepovažuj za chybu větru.
+- Stupeň 3 high = FireLab T2: ve FireLab má T2 nově časovou akumulaci objemů (TAA); v xEngine je vypnutá
+  (`hostTier` – hostitel kreslí přímo na plátno bez hloubky a historie). Objemy proto na high mírně zrní; když to bude
+  vadit, napiš – řešením je hloubková textura hostitele (návrh pro svodnou, zatím ne).
+- Pin submodulu: commit iterace 4 (hash poslední změny `integrations/xengine`, příkaz v 2.1).
 
 ---
 

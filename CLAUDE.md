@@ -62,6 +62,12 @@ Parametry URL: `?scn=<id>&tier=0..5&wind=0..3&o2=0..1&t=<s>&ui=0`.
 - Testy: `?noloop=1`, simulace přes `window.__fire.ff()`, snímek přes `__fire.shot()` (toDataURL ve stejné úloze).
 - Nebuildovat, když běží `npm run bake` nebo testy (stránka se načte s jiným kódem).
 - Swiftshader: T2/T3 načtení 20–30 s (bake atlasu + překlad shaderů); na GPU desítky ms.
+- Referenční fotky (Commons) se **necommitují** – jen `dataset/reference/manifest.json` (autor, licence, odkaz). D-028.
+- Metrika barvy z fotek („svítivé pixely“) platí jen pro noční snímky; ve dne měří oblohu.
+- `air.extraUp` je jedno pole pro všechny částice: skládá ho `FXWorld.update` z výbuchů s `mf` (houbový mrak). Kdo ho
+  nastaví jinde, přepíše hřib.
+- Scénáře s polem podle `tier.id` (`[..][ctx.tier.id]`) musí mít 6 hodnot (T0–T5) nebo `??` – jinak T4/T5 tiše nic (les, D-032).
+- Laminární plamen se zapíná malým `turbAmp` (< 0,05); modrá zóna pak jen v plášti (`gBlue`), jinak levandulový nádech.
 
 ## Co nedělat
 - Nepřidávat CDN závislosti (artefakt i `file://` musí běžet offline).

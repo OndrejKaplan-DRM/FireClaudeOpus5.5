@@ -6,7 +6,7 @@ import { bleveFireball, heFireball, gasTNT } from '../../src/physics/blast.js';
 
 /** Ohně: { fuel, Q [W] nebo Q(t), D [m], ... }. `L` je výška plamene, když ji nechceme z Heskestada. */
 export const FIRE_PRESETS = {
-  candle: { fuel: 'paraffin', Q: 80, D: 0.016, L: () => 0.045, T: 1450, blue: 1, taper: 1.25, baseWide: -0.1, neck: 0.55, puffAmp: 0.12, turbAmp: 0.12, tongues: 3, lightH: 0.4, mult: { smoke: 0.4, embers: 0, sparks: 0, haze: 0.5 } },
+  candle: { fuel: 'paraffin', Q: 80, D: 0.016, L: () => 0.045, T: 1450, blue: 1, taper: 0.9, baseWide: -0.1, neck: 0.55, puffAmp: 0.12, turbAmp: 0.03, wobble: 0.04, tongues: 3, lightH: 0.4, mult: { smoke: 0.4, embers: 0, sparks: 0, haze: 0.5 } },
   torch: { fuel: 'woodResin', Q: 4000, D: 0.065, mult: { embers: 0.12, sparks: 0.08 }, taper: 0.9 },
   smallFire: { fuel: 'woodDry', Q: 15000, D: 0.32 },
   campfire: { fuel: 'woodDry', Q: 2e5, D: 0.8 },
@@ -38,6 +38,6 @@ export const EXPLOSION_PRESETS = {
   },
   tnt: () => {
     const W = 1000, fb = heFireball(W);
-    return { ex: { W, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70 }, fires: [], dy: 0.6 };
+    return { ex: { W, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, wilson: 2.5 }, fires: [], dy: 0.6 };
   },
 };

@@ -107,6 +107,17 @@ vec3 bbColor(float T){
 }
 // Sazový plamen: spektrální emisivita sazí ε ∝ λ^−1,39 (Hottel–Broughton) posouvá barevnou teplotu o ~+28 %
 // (svíčka: T sazí ~1 450 K, naměřená CCT ~1 850 K). Jas podle skutečné T, barva podle posunuté. ★★★★
+// Plamen (objem, jazyky) používá menší kompresi jasu (γ 0,45): kontrast horkých a chladných míst jako na fotkách
+// (1 250 × 1 400 K: 2,6× místo 1,9×), iterace 4 podle měření 20 fotek (docs/REFERENCE.md). Výbuchy zůstávají na BB_GAMMA.
+// Barva navíc kalibrovaná na fotky: horká místa žlutší, chladná červenější, než dává samotný posun sazí
+// (fotky: odstín 12–20° v tmavších, 36–48° v nejjasnějších částech plamene; čistý Planck × 1,28 jen 18–30°) ★2 umělecké
+vec3 sootColorG(float T, float g){
+  float u0 = clamp((T - uBB.x) / (uBB.y - uBB.x), 0.0, 1.0);
+  float u1 = clamp((T * 1.28 + (T - 1250.0) * 1.6 - uBB.x) / (uBB.y - uBB.x), 0.0, 1.0);
+  vec4 a = texture(tBB, vec2(u1 * (255.0/256.0) + 0.5/256.0, 0.5));
+  vec4 b = texture(tBB, vec2(u0 * (255.0/256.0) + 0.5/256.0, 0.5));
+  return a.rgb * exp2(b.a * g) * uPreExp;
+}
 vec3 sootColor(float T){
   float u0 = clamp((T - uBB.x) / (uBB.y - uBB.x), 0.0, 1.0);
   float u1 = clamp((T * 1.28 - uBB.x) / (uBB.y - uBB.x), 0.0, 1.0);

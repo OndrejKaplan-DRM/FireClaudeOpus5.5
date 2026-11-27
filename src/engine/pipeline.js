@@ -60,7 +60,7 @@ void main(){
 const FINAL = /* glsl */`
 precision highp float; in vec2 vUv; out vec4 o;
 uniform sampler2D tMain, tBloom, tHaze;
-uniform float exposure, bloomStrength, useBloom, useHaze, grain, time, vignette;
+uniform float exposure, bloomStrength, useBloom, useHaze, grain, time, vignette, tone;
 uniform vec2 res;
 vec3 aces(vec3 x){ // Hill / Narkowicz – ACES fit
   const mat3 m1 = mat3(0.59719, 0.07600, 0.02840, 0.35458, 0.90834, 0.13383, 0.04823, 0.01566, 0.83777);
@@ -68,6 +68,10 @@ vec3 aces(vec3 x){ // Hill / Narkowicz – ACES fit
   vec3 v = m1 * x; vec3 a = v * (v + 0.0245786) - 0.000090537; vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
   return clamp(m2 * (a / b), 0.0, 1.0);
 }
+// Filmická křivka po kanálech (Hable): jasná oranžová přejde do sytě žluté (červený kanál se nasytí první) jako na fotkách
+// plamene; ACES fit místo toho rychle bělá. tone: 0 = ACES, 1 = Hable po kanálech, mezi = směs (iterace 4, REFERENCE.md)
+vec3 hable(vec3 x){ const float A = 0.15, B = 0.50, C = 0.10, D = 0.20, E = 0.02, F = 0.30; return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F; }
+vec3 filmic(vec3 x){ const float W = 11.2; return clamp(hable(x * 2.0) / hable(vec3(W)), 0.0, 1.0); }
 vec3 toSRGB(vec3 c){ return mix(c * 12.92, 1.055 * pow(c, vec3(1.0/2.4)) - 0.055, step(0.0031308, c)); }
 float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + time * 0.0) * 43758.5453); }
 void main(){
@@ -77,7 +81,7 @@ void main(){
   if (useBloom > 0.5) c += texture(tBloom, vUv).rgb * bloomStrength;
   c *= exposure;
   vec2 q = vUv - 0.5; c *= 1.0 - vignette * dot(q, q) * 1.6;
-  c = aces(c);
+  c = mix(aces(c), filmic(c), tone);
   c = toSRGB(c);
   if (grain > 0.0) c += (h(vUv * res + fract(time) * 91.0) - 0.5) * grain;
   o = vec4(c, 1.0);
@@ -124,7 +128,7 @@ export class Pipeline {
     this.final = fsPass(FINAL, {
       tMain: { value: null }, tBloom: { value: null }, tHaze: { value: null },
       exposure: { value: 1 }, bloomStrength: { value: 0.6 }, useBloom: { value: 0 }, useHaze: { value: 0 },
-      grain: { value: 0 }, time: { value: 0 }, vignette: { value: 0.35 }, res: { value: new THREE.Vector2() },
+      grain: { value: 0 }, time: { value: 0 }, vignette: { value: 0.35 }, tone: { value: 0 }, res: { value: new THREE.Vector2() },
     });
     this.taa = fsPass(TAA, { tCur: { value: null }, tDist: { value: null }, tHist: { value: null }, invVP: { value: new THREE.Matrix4() }, prevVP: { value: new THREE.Matrix4() }, camPos: { value: new THREE.Vector3() }, texel: { value: new THREE.Vector2() }, blend: { value: 0.12 } });
     this.comp = fsPass(COPY_PM, { tSrc: { value: null } });
@@ -256,7 +260,7 @@ export class Pipeline {
     f.useBloom.value = this.bloomRTs.length ? 1 : 0;
     f.tHaze.value = this.haze ? this.haze.texture : null; f.useHaze.value = this.haze ? 1 : 0;
     f.exposure.value = 1; // expozice je už v osvětlení a emisi (před-expozice, shared.PRE)
-    f.bloomStrength.value = this.bloomStrength;
+    f.bloomStrength.value = this.bloomStrength; f.tone.value = this.tone ?? 0;
     f.grain.value = t.grain ? 0.012 : 0; f.time.value = time;
     r.setRenderTarget(null); r.render(this.final.scene, camera); passes++;
     this.stats.passes = passes;

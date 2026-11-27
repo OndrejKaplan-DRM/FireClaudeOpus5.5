@@ -174,3 +174,50 @@ Formát: **D-xxx · datum · rozhodnutí** — proč, alternativy, důsledky, ji
 - `applyChar({hole})`: díra propálená nad obývákem (nad výškou stropu, ne okna), nepravidelný okraj ze šumu, žhnoucí lem.
   Roste od prohoření (~14 min) do 1,8 m, po 5 min (★2) zřícení: skok na 3,1 m, výtrysk ~500 uhlíků, kouř, trosky, otřes,
   vzplanutí střešního zdroje ×2,3 doznívající s τ = 45 s (čerstvý vzduch a nové palivo).
+
+### D-028 · 2026-11-27 · Kalibrace podle fotografií (iterace 4) – reference bez obrázků v repu
+- 39 fotografií z Wikimedia Commons (13 kategorií), srovnání obraz vedle obrazu + statistiky barvy nočních snímků
+  (`REFERENCE.md`). **Obrázky se necommitují** (CC BY-SA vyžaduje uvedení a stejnou licenci; dataset FireLab je vlastní práce),
+  v repu je jen seznam s autory a odkazy (`dataset/reference/manifest.json`) a naměřená čísla.
+- Plamen: jazyky (`tongues()`, 3–7 podle průměru), okraj v metrech (`flameEdgeM`), barva `sootColorG(T, 0,45)` s posunem
+  odstínu podle fotek, zisk opticky tenkých plamenů (1/τ)^0,5 do 2×, vzplanutí (Poisson podle paliva). Umělecké ★2–3.
+- Metrika „svítivých pixelů“ funguje jen v noci: ve dne do ní padá obloha a osvětlená zem (první pokus to ukázal).
+
+### D-029 · 2026-11-27 · Laminární svíčka
+- `uTurb.x` < 0,05 přepíná pole plamene do laminárního režimu: bez odtrhávání a skvrn, kužel tmavého jádra par nad knotem
+  (do ~40 % výšky), svítivá zóna až nad modrým kalichem, chladnutí špičky slabší. Modrá emise CH*/C2* jen v tenkém plášti
+  (`gBlue`) a slabší – jinak modrá zalitá přes celé tělo dává levandulový nádech (zjištěno na snímku). ★3 (Faraday, fotky).
+- Parafín nemá vzplanutí (klidný vzduch); `wobble` (vlnění osy) je nová volba zdroje.
+
+### D-030 · 2026-11-27 · Hořící oharky a sazové výrony
+- Typ částice 2 v `SparkSystem`: kus 6–35 mm (log-normálně, medián 12 mm ★3), pádová rychlost z ρ = 300 kg/m³, C_D ≈ 1;
+  první 25–65 % života vlastní plamínek (sprite `FLAME` ~2–4× průměr), pak jen doutná a kouří (stopa do `BillboardSystem`,
+  45/7 částic za s × √emberMul). Kreslí se aditivně jako jiskra, ale se skvrnitou maskou (žhnou praskliny, ne celý povrch).
+- Zdroje: dřevo (embers > 0,3) průběžně 0,45·embers·√(Q/100 kW) za s a dávka 1–5 při vzplanutí; `brandBurst(n)` pro scénáře
+  (zřícení střechy 45, dopad větve 6). Četnosti umělecké ★2.
+- Sazový výron: při vzplanutí sazového paliva (ys > 0,03) 4–8 hustých černých chuchvalců nad špičkou (τ 3–6). ★2.
+
+### D-031 · 2026-11-27 · Houbový mrak 1 t TNT a výraznější Wilsonův dóm (Ondřej: varianta b)
+- Explosion s `mushroom: true` počítá termiku: z ≈ 1,8·(B t²)^¼, B = g·0,35·E/(ρ c_p T) (Morton–Taylor–Turner, Scorer ★2),
+  prstenec a = 0,34 z, rychlost w = dz/dt. Pole proudění (`flow`) se přičítá ke všem částicím přes `air.extraUp`: rotace kolem
+  zploštělého jádra prstence, stoupání klobouku, osový sloupec a přítok u země. Prachový sloupec = částice zvířené u paty.
+  Pole doznívá s τ 50 s. Bez nového systému částic – stačí stávající kouř.
+- Wilsonův dóm: volba `wilson` (násobek; TNT 2,5): širší okno tlaku (80–18 kPa), delší zánik 0,55 s, tenký plášť s jasným
+  lemem a průsvitným středem, zadní strana slabší, bílý (albedo kondenzátu ~0,8). Umělecké ★1 – rozhodnutí Ondřeje.
+- Výbuchy na zemi zblízka: hroudy zeminy jako trosky (balistika, 50–290 ks podle náplně a stupně), výtrysky z menších
+  a hustších částic (dřív „vatové koule“).
+
+### D-032 · 2026-11-27 · Les zblízka: hořící kmeny a padající větve (`src/scenarios/forestDetail.js`)
+- K nejbližším hořícím stromům do 45 m se přidají zdroje na kmenech (smolné dřevo, 160 kW × velikost stromu, L 1,6–5,2 m ★3
+  podle Byrama) – počet podle stupně (2–10). Z korun (korunový režim) a ze suchých spodních větví (přízemní režim) padají
+  hořící větve: válec s ohořením + malý zdroj nesený s větví, po dopadu dávka oharků a doutnání 14–24 s. Četnosti ★1.
+- Kmeny borovic tenčí: poloměr u paty 1,6 % výšky (DBH ≈ 3 % výšky, dřív 5 %) ★3.
+- Oprava: `poolN` lesa/křoví indexoval pole jen do T3 → **na T4/T5 les vůbec nehořel**. Teď 240/300 zdrojů.
+- Opar od desítek buněk se sčítal do vlnění celého obrazu → `haze` buněk 0,15 (dřív 0,4).
+
+### D-033 · 2026-11-27 · xEngine: návrhy a návody pro všechny tři sešny v repu FireLab
+- Ondřej: návrhy patří do tohoto repa a mají pokrýt svodnou sešnu, sešnu A i sešnu B. `integrations/xengine/`:
+  `NAVRHY.md` (F-1 až F-8 + rozhodnutí + otevřené otázky), `MAPA.md` (kam sáhnout pro co), `SVODNA.md`, `SESNA_A.md`,
+  `SESNA_B.md` (prefaby, validátor, generátor, tabulka předvoleb s výškou plamene a vzdálenostmi sálání).
+- Do xEngine se nic nezapisuje (pravidlo rolí); texty jsou připravené k přenesení sešnami.
+- `hostTier` vypíná `volumeTAA` (hostitel kreslí bez hloubky a historie); předvolby `candle` a `tnt` srovnané se scénáři.

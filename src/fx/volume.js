@@ -30,6 +30,7 @@ uniform vec4 uFlame2;        // x: κ svítivých sazí při 1 500 K [1/m] (≈ 
 uniform float uFlowL;        // délka plamene [m] pro advekci s urychlením u ∝ √z
 uniform float uDetail;       // 0..2 počet jemných oktáv (stupně kvality)
 uniform float uShapeK;       // tvar obálky: 1 kužel, ~2 sloup velké louže
+uniform float uTongues;      // počet samostatných jazyků (0 = jen obálka – svíčka, louč)
 uniform float uPixAng;       // úhel jednoho pixelu [rad] (stopa vzorku = t·uPixAng)
 
 // Advekce s urychlením (McCaffrey: v souvislé zóně u ∝ √z): souřadnice šumu = čas letu od paty.
@@ -43,6 +44,7 @@ vec3 flowQ(vec3 w, float tt){
 // Antialiasovaný šum: oktáva menší než stopa vzorku (pixel ve vzdálenosti t, nebo krok paprsku) se plynule
 // nahradí střední hodnotou → žádná „srst“ z podvzorkovaných oktáv, a zároveň levněji (méně čtení textury).
 float gFpq = 0.0; // stopa vzorku v jednotkách q (nastavuje main před voláním pole)
+float gBlue = 1.0;   // maska modré zóny (laminární plamen: jen tenký plát na plášti)
 float octv(vec3 q, float amp, float cell){
   float wk = 1.0 - smoothstep(0.35, 1.0, gFpq * cell);
   return amp * (wk > 0.001 ? mix(0.5, n3(q), wk) : 0.5);
@@ -62,8 +64,9 @@ vec4 flameNoise(vec3 w, float tt){
   vec3 wq = q + wv * uFlame2.w * 1.6;
   float n1 = fbmD(wq, 1.0);
   float n2 = fbmD(wq * 1.7 + vec3(5.2, 1.3, 2.8), 1.7);
-  float n4 = n3(wq * 0.7 + vec3(9.1, 2.0, 4.4) - vec3(0.0, uTime * 0.2, 0.0)); // světelné skvrny pláště
-  return vec4(n1, n2, n4, wv.x);
+  // nízká frekvence: dělí plamen na 3–7 samostatných jazyků s mezerami (fotky: jazyky s ostrou hranou, ne „srst“)
+  float nL = 0.62 * n3(wq * 0.42 + vec3(9.1, 2.0, 4.4)) + 0.38 * n3(wq * 0.86 + vec3(3.3, 7.7, 1.9));
+  return vec4(n1, n2, nL, wv.x);
 }
 vec4 flameNoiseLoop(vec3 w){
   if (uLoopT <= 0.0) return flameNoise(w, uTime);
@@ -71,6 +74,27 @@ vec4 flameNoiseLoop(vec3 w){
   vec4 a = flameNoise(w, ph * uLoopT);
   vec4 b = flameNoise(w + vec3(0.37, 0.0, 0.11) * uTurb.y * 6.0, (ph - 1.0) * uLoopT);
   return mix(a, b, smoothstep(0.0, 1.0, ph));
+}
+
+// Samostatné jazyky (iterace 4 podle fotek): plamen táboráku není jedna obálka, ale 3–7 jazyků z mezer v palivu,
+// dole splývají, nahoře se rozcházejí a každý má vlastní výšku a mihotání. Pracuje v normované rovině (1 = poloměr).
+float tongues(vec2 q2, float y, float nL, float n2){
+  float best = -10.0;
+  for (int i = 0; i < 7; i++) {
+    if (float(i) >= uTongues) break;
+    float fi = float(i);
+    float h1 = fract(sin(fi * 12.9898 + uSeed * 78.233) * 43758.5453);
+    float h2 = fract(sin(fi * 39.3468 + uSeed * 11.135) * 24634.6345);
+    float h3 = fract(sin(fi * 73.156 + uSeed * 52.235) * 13758.937);
+    float ang = 6.2832 * (fi / uTongues + 0.25 * h1);
+    float H = (0.7 + 0.45 * h3) * (1.0 + 0.2 * sin(6.2832 * uPuff.x * (0.6 + 0.5 * h1) * uTime + fi * 2.1) + 0.25 * (nL - 0.5));
+    float yy = y / max(H, 0.05);
+    if (yy > 1.0) continue;
+    vec2 c = (0.25 + 0.4 * h2) * vec2(cos(ang), sin(ang)) * (1.0 - 0.7 * yy) + vec2(n2 - 0.5, nL - 0.5) * 0.5 * yy;
+    float ri = (0.26 + 0.16 * h2) * pow(1.0 - yy, 0.45) * (1.0 + 0.5 * exp(-yy * 6.0));
+    best = max(best, ri - length(q2 - c));
+  }
+  return best;
 }
 
 // vrací (svítivá hustota 0..1, teplota [K], saze bez emise 0..1)
@@ -87,7 +111,7 @@ vec3 fieldFlame(vec3 p){
   if (prof + amp - length(vec2(rx, rz)) < 0.0) return vec3(0.0, uTamb, 0.0);
   vec3 w = p * uScale;
   vec4 N = flameNoiseLoop(w);
-  float n1 = N.x, n2 = N.y, n4 = N.z;
+  float n1 = N.x, n2 = N.y, nL = N.z;
   // vlnění osy (jazyk) – velké měřítko z ohybového pole
   float wob = (n2 - 0.5) * uTurb.w * y + N.w * uTurb.w * y * 0.6;
   float ax = axBase + wob;
@@ -96,26 +120,42 @@ vec3 fieldFlame(vec3 p){
   float r = length(d2);
   // pulzace: toroidní víry stoupající rychlostí ~ U (Cetegen & Ahmed)
   float puff = sin(6.2832 * (uPuff.x * uTime - tof(w.y) / max(uFlowL, 0.01) * 0.8)) * uPuff.y;
-  float dd = prof * (1.0 + 0.25 * puff * y) - r + (n1 - 0.5) * uTurb.x * (0.35 + 1.4 * y) + (n2 - 0.5) * uTurb.x * 0.45;
-  // přerušovaná zóna (McCaffrey η 0,08–0,2): odtrhávání plaménků
-  dd -= smoothstep(0.38, 0.95, y) * smoothstep(0.46, 0.66, n2) * 0.34;
+  // jazyky: velké měřítko (nL) dělí obálku, jemné oktávy jen vlní okraj (iterace 4 podle fotek)
+  float dd = prof * (1.0 + 0.25 * puff * y) - r + (nL - 0.5) * uTurb.x * (0.5 + 2.0 * y) * 1.3;
+  if (uTongues > 0.5) {
+    // obálka drží jen spojenou patu, výš jsou samostatné jazyky
+    float tg = tongues(d2, y, nL, n2) + (nL - 0.5) * uTurb.x * (0.2 + 0.6 * y);
+    dd = max(dd - smoothstep(0.06, 0.32, y) * 0.8, tg);
+  }
+  dd += (n1 - 0.5) * uTurb.x * (0.12 + 0.3 * y) + (n2 - 0.5) * uTurb.x * 0.1;
+  // přerušovaná zóna (McCaffrey η 0,08–0,2): odtrhávání celých jazyků, ne vláken
+  // laminární plamen (svíčka, malý knot): hladká kapka bez odtrhávání (Re < ~2000)
+  float lam = 1.0 - smoothstep(0.03, 0.08, uTurb.x);
+  dd -= smoothstep(0.45, 0.98, y) * smoothstep(0.45, 0.6, nL + 0.3 * (n2 - 0.5)) * 0.3 * (1.0 - lam);
   // velké požáry: přerušovaná zóna začíná níž (η ≈ 0,4 L) a trhá sloup na samostatné jazyky s tmavými mezerami
-  dd -= (uShapeK - 1.0) * smoothstep(0.28, 0.85, y) * smoothstep(0.44, 0.6, n1 + 0.3 * (n2 - 0.5)) * 0.45;
+  dd -= (uShapeK - 1.0) * smoothstep(0.28, 0.85, y) * smoothstep(0.44, 0.6, nL + 0.3 * (n1 - 0.5)) * 0.45;
   // nedostatek kyslíku: odtržené líné jazyky
   dd -= uLift * smoothstep(0.55, 0.8, n2) * 0.4 * y;
   float edge = uFlame2.z;
-  float dens = smoothstep(0.0, edge, dd);
+  // plamenný plát: saze vznikají v tenké vrstvě u čela plamene → jasnější lem a ostrá hranice (limb brightening)
+  float dens = smoothstep(0.0, edge, dd) * (1.0 + 0.8 * exp(-max(dd, 0.0) / 0.1));
   float core = smoothstep(0.1, 0.5, dd);
   // zatížení sazemi kolísá (pruhy hustých a řídkých sazí) → průhledné mezery mezi jazyky
   float big = clamp(uShapeK - 1.0, 0.0, 1.0);
-  dens *= mix(0.35 + 0.9 * smoothstep(0.3, 0.7, n1 + 0.15 * (n2 - 0.5)), smoothstep(0.4, 0.62, n1 + 0.2 * (n2 - 0.5)), big * 0.7);
+  dens *= mix(mix(0.8 + 0.2 * smoothstep(0.3, 0.7, n1), 1.0, lam), smoothstep(0.4, 0.62, nL + 0.2 * (n2 - 0.5)), big * 0.7);
+  // svíčka: tmavé jádro par paliva nad knotem (kužel do ~30 % výšky) a svítivá zóna až nad modrým kalichem ★3 (Faraday; fotky)
+  gBlue = mix(1.0, step(0.0, dd) * exp(-max(dd, 0.0) / 0.07), lam);
+  float inner = prof * 0.7 * (1.0 - y / 0.4);
+  dens *= mix(1.0, (0.08 + 0.92 * smoothstep(inner - 0.04, inner + 0.15, r)) * (0.04 + 0.96 * smoothstep(0.06, 0.34, y)), lam);
   // teplota: reakční zóna na plášti; horké proužky; u paty velkých požárů chladné tmavé jádro par paliva
-  float zone = smoothstep(0.0, 0.16, dd) * (1.0 - 0.5 * core * exp(-y * 4.0) * (0.4 + uFlame2.y));
-  float hotStreak = smoothstep(0.38, 0.78, n2);
-  float T = uTamb + (uTpeak - uTamb) * pow(zone, 0.8) * mix(0.66 - 0.06 * big, 1.04, hotStreak) * (1.0 - 0.42 * pow(y, 1.5));
+  // okraje a tenké špičky chladnější (oranžové), tlusté části horké (žluté) – jako na fotkách
+  float zone = smoothstep(0.0, 0.22, dd) * (1.0 - 0.5 * core * exp(-y * 4.0) * (0.4 + uFlame2.y));
+  float hotStreak = mix(smoothstep(0.38, 0.78, 0.55 * nL + 0.45 * n2), 0.8, lam);
+  float T = uTamb + (uTpeak - uTamb) * pow(zone, 0.8) * mix(0.66 - 0.06 * big, 1.04, hotStreak) * (1.0 - mix(0.3, 0.12, lam) * pow(y, 1.5));
+  T *= mix(1.0, 0.8 + 0.2 * smoothstep(0.03, 0.28, y), lam);
   // velké sazové požáry (Steinhaus, Takahashi): vnější vrstva sazí, světlo prorážejí jen „luminous zones“
   float shell = uFlame2.y * (1.0 - core) * smoothstep(0.15, 0.55, y + 0.25 * n1);
-  float lumPatch = smoothstep(0.52, 0.64, n4);
+  float lumPatch = smoothstep(0.52, 0.64, 0.5 * n1 + 0.5 * nL + 0.03);
   dens *= mix(1.0, 0.15 + 0.85 * lumPatch, shell);
   // saze: nad špičkou dohasínající plamen a plášť
   float soot = uSoot * smoothstep(0.35, 0.95, y) * smoothstep(-0.12, 0.08, dd) * (1.0 - core * 0.5);
@@ -216,10 +256,11 @@ void main(){
       float ks = f.z * uSigmaSoot;
       float k = ke + ks + 1e-5;
       float a = exp(-k * dt);
-      col += trans * (1.0 - a) * (ke / k) * sootColor(f.y) * uIntensity;
+      col += trans * (1.0 - a) * (ke / k) * sootColorG(f.y, 0.45) * uIntensity;
       // modrá zóna (CH*, C2*): jen u paty a jen tam, kde nesvítí saze (jinak modrá + oranžová = růžová)
       float edgeB = smoothstep(0.0, 0.25, f.x) * (1.0 - smoothstep(0.3, 0.9, f.x)) * (1.0 - smoothstep(0.08, 0.3, ke * dt));
-      col += trans * vec3(0.04, 0.12, 1.0) * uBlue * exp(-p.y * 30.0) * edgeB * uIntensity * uPreExp * 0.22 * (dt / max(uFlowL * 0.25, 1e-3));
+      float lamB = 1.0 - smoothstep(0.03, 0.08, uTurb.x);
+      col += trans * vec3(0.04, 0.12, 1.0) * uBlue * exp(-p.y * mix(30.0, 20.0, lamB)) * mix(1.0, 0.3, lamB) * gBlue * edgeB * uIntensity * uPreExp * 0.22 * (dt / max(uFlowL * 0.25, 1e-3));
       dW += trans * (1.0 - a) * t;
       trans *= a;
     }
@@ -246,7 +287,7 @@ export function createVolumeMaterial({ ball = false, depth = null, steps = 48, m
     uShape: { value: new THREE.Vector4(0.45, 0.8, 0.3, 0.2) }, uAxis0: { value: 0 }, uShear: { value: 0 }, uRz: { value: 0.45 },
     uTurb: { value: new THREE.Vector4(0.45, 0.4, 2.0, 0.15) }, uPuff: { value: new THREE.Vector2(1.5, 0.5) },
     uSoot: { value: 0 }, uBlue: { value: 0 }, uSigma: { value: 0.3 }, uLift: { value: 0 }, uAge: { value: 0 }, uLoopT: { value: 0 },
-    uRes: { value: new THREE.Vector2(1, 1) }, uCamPos: { value: new THREE.Vector3() }, uPixAng: { value: 0.0015 }, uShapeK: { value: 1 },
+    uRes: { value: new THREE.Vector2(1, 1) }, uCamPos: { value: new THREE.Vector3() }, uPixAng: { value: 0.0015 }, uShapeK: { value: 1 }, uTongues: { value: 0 },
     tDepth: { value: depth }, uDepthRes: { value: new THREE.Vector2(1, 1) },
     uFlame2: { value: new THREE.Vector4(1.35, 0, 0.12, 0.6) }, uFlowL: { value: 1 }, uDetail: { value: 1 },
     uStepLen: { value: 0.05 }, uFrame: { value: 0 }, uSigmaSoot: { value: 2.5 },
