@@ -11,6 +11,12 @@
 - xEngine (jen ke čtení, kvůli testu integrace): `OndrejKaplan-DRM/xEngine`, klon do `/home/claude/ondrejkaplan-drm/xengine`,
   `XENGINE=<cesta> npm run test:xengine`. **Do xEngine se nezapisuje.**
 
+## Stav po iteraci 6 (2026-11-27 večer)
+- `main`: 23bac35 (iterace 6: kód a dokumenty), 27d1ac9 (dataset). Artefakt FireLab verze `1795804912-6128`.
+- Testy na tomto stavu: fyzika, T0 a T3 (24 scénářů), UI, zvuk, integrace s xEngine `main` 1f2e623 – vše bez chyb.
+- Otevřené otázky pro Ondřeje jsou na konci zprávy z iterace 6 (hořlavé předměty do xEngine, přepis starých scénářů,
+  filmová nebo fyzikální láhev, denní jas, co dál).
+
 ## Co číst jako první (v tomto pořadí)
 1. `CLAUDE.md` – pravidla, příkazy, pasti.
 2. `STRATEGIE.md` – postup a zásady.
