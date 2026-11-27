@@ -1,0 +1,260 @@
+{
+ "format": "firelab-preset/1",
+ "id": "leak",
+ "name": "Prostřelený sud: hořící pramínek",
+ "group": "Kapaliny",
+ "desc": "Otvor 9 mm půl metru pod hladinou: vytéká 0,12 l/s (Torricelli). Vše, co vyteče, shoří → ~4,6 MW na pruhu ~8 × 0,6 m, plameny ~2,4 m, černý kouř. Benzín vzplane po celé délce za pár sekund, nafta se rozhořívá pomalu od zdroje zapálení.",
+ "time": "den",
+ "timeScale": 4,
+ "duration": 420,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    4.5,
+    3.2,
+    11
+   ],
+   "target": [
+    4.2,
+    1.6,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    -2.2,
+    1.7,
+    4.5
+   ],
+   "target": [
+    3,
+    1.2,
+    0
+   ]
+  },
+  {
+   "name": "od sudu",
+   "pos": [
+    -1.6,
+    1.3,
+    1.2
+   ],
+   "target": [
+    4,
+    0.9,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Druh ohně",
+   "v": "vytékající kapalina",
+   "src": "fireSpec"
+  },
+  {
+   "k": "Hmotnost paliva",
+   "v": "108.4 kg",
+   "src": ""
+  },
+  {
+   "k": "Doba hoření",
+   "v": "35 min",
+   "src": "m·ΔHc / Q"
+  },
+  {
+   "k": "Výtok",
+   "v": "0.12 l/s",
+   "src": "Torricelli, otvor 9 mm ★5"
+  },
+  {
+   "k": "Hořící plocha (rovnováha)",
+   "v": "4.6 m²",
+   "src": "ṁ = m″·A ★3"
+  },
+  {
+   "k": "Vyteče za",
+   "v": "35 min",
+   "src": "★4"
+  },
+  {
+   "k": "Palivo",
+   "v": "Nafta",
+   "src": "bod vzplanutí 55 °C"
+  },
+  {
+   "k": "Celkový výkon",
+   "v": "4.55 MW",
+   "src": "součet úseků"
+  },
+  {
+   "k": "Šíření plamene po pruhu",
+   "v": "13 cm/s → k sudu za 66 s",
+   "src": "★2–3"
+  },
+  {
+   "k": "Výška plamenů pruhu",
+   "v": "2.4 m",
+   "src": "Yuan & Cox ★4"
+  },
+  {
+   "k": "úsek u sudu: Teplota svítivé zóny",
+   "v": "1150 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "úsek u sudu: Pulzace plamene",
+   "v": "1.2 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "úsek u sudu: Optická tl. kouře τ",
+   "v": "1.32",
+   "src": "Mulholland σs ★3"
+  },
+  {
+   "k": "úsek u sudu: Ekvivalenční poměr Φ",
+   "v": "0.50  saze ×1.00",
+   "src": "Tewarson ★2"
+  },
+  {
+   "k": "Plášť sudu",
+   "v": "658 °C (max 658 °C) – žhne",
+   "src": "tenký plech ★4"
+  },
+  {
+   "k": "Tok na plášť",
+   "v": "109 kW/m²",
+   "src": "★3"
+  },
+  {
+   "k": "Co hrozí",
+   "v": "zavřený sud v plameni: roztržení a ohnivá koule (viz Výbuch sudu)",
+   "src": "D-008"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "diesel",
+   "pos": [
+    8.262,
+    0.01,
+    -0.06
+   ],
+   "D": 1.52,
+   "Q_W": 651405,
+   "L_m": 1.587,
+   "T_K": 1150,
+   "puff_Hz": 1.22,
+   "smoke_tau": 1.181,
+   "smoke_rgb": [
+    0.067,
+    0.064,
+    0.062
+   ],
+   "light_cd": 5079
+  },
+  {
+   "fuel": "diesel",
+   "pos": [
+    6.623,
+    0.01,
+    0.06
+   ],
+   "D": 1.52,
+   "Q_W": 919783,
+   "L_m": 2.052,
+   "T_K": 1150,
+   "puff_Hz": 1.22,
+   "smoke_tau": 1.353,
+   "smoke_rgb": [
+    0.067,
+    0.064,
+    0.062
+   ],
+   "light_cd": 7171.6
+  },
+  {
+   "fuel": "diesel",
+   "pos": [
+    4.985,
+    0.01,
+    -0.06
+   ],
+   "D": 1.52,
+   "Q_W": 753892,
+   "L_m": 1.776,
+   "T_K": 1150,
+   "puff_Hz": 1.22,
+   "smoke_tau": 1.251,
+   "smoke_rgb": [
+    0.067,
+    0.064,
+    0.062
+   ],
+   "light_cd": 5878.1
+  },
+  {
+   "fuel": "diesel",
+   "pos": [
+    3.346,
+    0.01,
+    0.06
+   ],
+   "D": 1.52,
+   "Q_W": 1022271,
+   "L_m": 2.207,
+   "T_K": 1150,
+   "puff_Hz": 1.22,
+   "smoke_tau": 1.411,
+   "smoke_rgb": [
+    0.067,
+    0.064,
+    0.062
+   ],
+   "light_cd": 7970.7
+  },
+  {
+   "fuel": "diesel",
+   "pos": [
+    1.707,
+    0.01,
+    -0.06
+   ],
+   "D": 1.52,
+   "Q_W": 856380,
+   "L_m": 1.95,
+   "T_K": 1150,
+   "puff_Hz": 1.22,
+   "smoke_tau": 1.315,
+   "smoke_rgb": [
+    0.067,
+    0.064,
+    0.062
+   ],
+   "light_cd": 6677.2
+  },
+  {
+   "fuel": "diesel",
+   "pos": [
+    0.636,
+    0.01,
+    0
+   ],
+   "D": 0.7,
+   "Q_W": 350000,
+   "L_m": 1.733,
+   "T_K": 1150,
+   "puff_Hz": 1.79,
+   "smoke_tau": 0.915,
+   "smoke_rgb": [
+    0.067,
+    0.064,
+    0.062
+   ],
+   "light_cd": 2729
+  }
+ ]
+}

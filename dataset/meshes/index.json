@@ -44,13 +44,13 @@
     "lod": 1,
     "tris": 436,
     "file": "torch_L1.glb",
-    "kB": 179
+    "kB": 180
    },
    {
     "lod": 2,
     "tris": 2552,
     "file": "torch_L2.glb",
-    "kB": 227
+    "kB": 228
    },
    {
     "lod": 3,
@@ -71,19 +71,19 @@
     "lod": 0,
     "tris": 228,
     "file": "campfireS_L0.glb",
-    "kB": 365
+    "kB": 366
    },
    {
     "lod": 1,
     "tris": 1024,
     "file": "campfireS_L1.glb",
-    "kB": 436
+    "kB": 437
    },
    {
     "lod": 2,
     "tris": 5840,
     "file": "campfireS_L2.glb",
-    "kB": 778
+    "kB": 779
    },
    {
     "lod": 3,
@@ -109,13 +109,13 @@
     "lod": 1,
     "tris": 1904,
     "file": "campfire_L1.glb",
-    "kB": 512
+    "kB": 514
    },
    {
     "lod": 2,
     "tris": 10656,
     "file": "campfire_L2.glb",
-    "kB": 1150
+    "kB": 1152
    },
    {
     "lod": 3,
@@ -135,19 +135,19 @@
     "lod": 0,
     "tris": 568,
     "file": "bonfire_L0.glb",
-    "kB": 397
+    "kB": 398
    },
    {
     "lod": 1,
     "tris": 2584,
     "file": "bonfire_L1.glb",
-    "kB": 566
+    "kB": 568
    },
    {
     "lod": 2,
     "tris": 14928,
     "file": "bonfire_L2.glb",
-    "kB": 1428
+    "kB": 1430
    },
    {
     "lod": 3,
@@ -167,13 +167,13 @@
     "lod": 0,
     "tris": 184,
     "file": "tire_L0.glb",
-    "kB": 149
+    "kB": 150
    },
    {
     "lod": 1,
     "tris": 1368,
     "file": "tire_L1.glb",
-    "kB": 176
+    "kB": 177
    },
    {
     "lod": 2,
@@ -185,7 +185,7 @@
     "lod": 3,
     "tris": 129120,
     "file": "tire_L3.glb",
-    "kB": 2946
+    "kB": 2947
    },
    {
     "lod": 4,
@@ -212,7 +212,7 @@
     "lod": 2,
     "tris": 46800,
     "file": "tirePile_L2.glb",
-    "kB": 307
+    "kB": 308
    },
    {
     "lod": 3,
@@ -238,7 +238,7 @@
     "lod": 1,
     "tris": 1368,
     "file": "barrel_L1.glb",
-    "kB": 72
+    "kB": 73
    },
    {
     "lod": 2,
@@ -434,13 +434,13 @@
     "lod": 1,
     "tris": 340,
     "file": "strawStack_L1.glb",
-    "kB": 289
+    "kB": 290
    },
    {
     "lod": 2,
     "tris": 5440,
     "file": "strawStack_L2.glb",
-    "kB": 767
+    "kB": 768
    },
    {
     "lod": 3,
@@ -460,19 +460,19 @@
     "lod": 0,
     "tris": 824,
     "file": "car_L0.glb",
-    "kB": 294
+    "kB": 295
    },
    {
     "lod": 1,
     "tris": 2304,
     "file": "car_L1.glb",
-    "kB": 335
+    "kB": 336
    },
    {
     "lod": 2,
     "tris": 18704,
     "file": "car_L2.glb",
-    "kB": 713
+    "kB": 714
    },
    {
     "lod": 3,
@@ -492,19 +492,19 @@
     "lod": 0,
     "tris": 964,
     "file": "house_L0.glb",
-    "kB": 414
+    "kB": 416
    },
    {
     "lod": 1,
     "tris": 1288,
     "file": "house_L1.glb",
-    "kB": 445
+    "kB": 446
    },
    {
     "lod": 2,
     "tris": 8176,
     "file": "house_L2.glb",
-    "kB": 1091
+    "kB": 1092
    },
    {
     "lod": 3,
@@ -518,19 +518,183 @@
    }
   ]
  },
+ "lighter": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 120,
+    "file": "lighter_L0.glb",
+    "kB": 125
+   },
+   {
+    "lod": 1,
+    "tris": 188,
+    "file": "lighter_L1.glb",
+    "kB": 130
+   },
+   {
+    "lod": 2,
+    "tris": 664,
+    "file": "lighter_L2.glb",
+    "kB": 154
+   },
+   {
+    "lod": 3,
+    "tris": 4000,
+    "file": "lighter_L3.glb",
+    "kB": 265
+   },
+   {
+    "lod": 4,
+    "tris": 33104,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "barrelOpen": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 190,
+    "file": "barrelOpen_L0.glb",
+    "kB": 53
+   },
+   {
+    "lod": 1,
+    "tris": 1536,
+    "file": "barrelOpen_L1.glb",
+    "kB": 85
+   },
+   {
+    "lod": 2,
+    "tris": 17152,
+    "file": "barrelOpen_L2.glb",
+    "kB": 430
+   },
+   {
+    "lod": 3,
+    "tris": 175400,
+    "note": "generuje se za běhu (D-007)"
+   },
+   {
+    "lod": 4,
+    "tris": 1038000,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "gasCylinder": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 172,
+    "file": "gasCylinder_L0.glb",
+    "kB": 43
+   },
+   {
+    "lod": 1,
+    "tris": 776,
+    "file": "gasCylinder_L1.glb",
+    "kB": 58
+   },
+   {
+    "lod": 2,
+    "tris": 6192,
+    "file": "gasCylinder_L2.glb",
+    "kB": 179
+   },
+   {
+    "lod": 3,
+    "tris": 61560,
+    "file": "gasCylinder_L3.glb",
+    "kB": 1384
+   },
+   {
+    "lod": 4,
+    "tris": 409312,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "pallet": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 400,
+    "file": "pallet_L0.glb",
+    "kB": 99
+   },
+   {
+    "lod": 1,
+    "tris": 400,
+    "file": "pallet_L1.glb",
+    "kB": 99
+   },
+   {
+    "lod": 2,
+    "tris": 1120,
+    "file": "pallet_L2.glb",
+    "kB": 167
+   },
+   {
+    "lod": 3,
+    "tris": 7200,
+    "file": "pallet_L3.glb",
+    "kB": 737
+   },
+   {
+    "lod": 4,
+    "tris": 44800,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
+ "crate": {
+  "lods": [
+   {
+    "lod": 0,
+    "tris": 264,
+    "file": "crate_L0.glb",
+    "kB": 87
+   },
+   {
+    "lod": 1,
+    "tris": 264,
+    "file": "crate_L1.glb",
+    "kB": 87
+   },
+   {
+    "lod": 2,
+    "tris": 1056,
+    "file": "crate_L2.glb",
+    "kB": 161
+   },
+   {
+    "lod": 3,
+    "tris": 9504,
+    "file": "crate_L3.glb",
+    "kB": 953
+   },
+   {
+    "lod": 4,
+    "tris": 67584,
+    "note": "generuje se za běhu (D-007)"
+   }
+  ]
+ },
  "pine": {
   "lods": [
    {
     "lod": 0,
     "tris": 24,
     "file": "pine_L0.glb",
-    "kB": 217
+    "kB": 218
    },
    {
     "lod": 1,
     "tris": 60,
     "file": "pine_L1.glb",
-    "kB": 221
+    "kB": 222
    },
    {
     "lod": 2,
@@ -557,25 +721,25 @@
     "lod": 0,
     "tris": 112,
     "file": "bush_L0.glb",
-    "kB": 242
+    "kB": 243
    },
    {
     "lod": 1,
     "tris": 352,
     "file": "bush_L1.glb",
-    "kB": 265
+    "kB": 266
    },
    {
     "lod": 2,
     "tris": 1392,
     "file": "bush_L2.glb",
-    "kB": 362
+    "kB": 363
    },
    {
     "lod": 3,
     "tris": 2992,
     "file": "bush_L3.glb",
-    "kB": 512
+    "kB": 513
    },
    {
     "lod": 4,

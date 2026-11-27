@@ -1,0 +1,494 @@
+{
+ "tnt_0.05kg": {
+  "W": 0.05,
+  "flash": 685050,
+  "scorch": 0.8087,
+  "dust": true,
+  "dustAlbedo": [
+   0.32,
+   0.27,
+   0.2
+  ],
+  "crater": 0,
+  "fireball": {
+   "D": 0.92101,
+   "t": 0.03842,
+   "T": 2600,
+   "soot": 1
+  },
+  "smoke": {
+   "n": 91,
+   "life": 4.8384,
+   "albedo": [
+    0.11,
+    0.1,
+    0.095
+   ],
+   "tau": 1.4218,
+   "buoy": 0.39876,
+   "buoyAcc": 0.14241
+  },
+  "debris": {
+   "n": 61,
+   "speed": 26.976,
+   "size": 0.011682,
+   "hot": 0.25,
+   "up": 0.55,
+   "T": 1300
+  },
+  "sparks": {
+   "n": 169,
+   "speed": 63.26
+  }
+ },
+ "tnt_0.24kg": {
+  "W": 0.24,
+  "flash": 2003400,
+  "scorch": 1.4012,
+  "dust": true,
+  "dustAlbedo": [
+   0.32001,
+   0.27001,
+   0.20001
+  ],
+  "crater": 0,
+  "fireball": {
+   "D": 1.5536,
+   "t": 0.051072,
+   "T": 2599.9,
+   "soot": 1
+  },
+  "smoke": {
+   "n": 140,
+   "life": 7.0041,
+   "albedo": [
+    0.10999,
+    0.099995,
+    0.094995
+   ],
+   "tau": 1.6003,
+   "buoy": 0.70063,
+   "buoyAcc": 0.25022
+  },
+  "debris": {
+   "n": 90,
+   "speed": 35.015,
+   "size": 0.020017,
+   "hot": 0.25,
+   "up": 0.55,
+   "T": 1300
+  },
+  "sparks": {
+   "n": 220,
+   "speed": 70.011
+  }
+ },
+ "tnt_1kg": {
+  "W": 1,
+  "flash": 5318400,
+  "scorch": 2.3105,
+  "dust": true,
+  "dustAlbedo": [
+   0.32686,
+   0.27514,
+   0.20343
+  ],
+  "crater": 0,
+  "fireball": {
+   "D": 2.5,
+   "t": 0.07,
+   "T": 2565.7,
+   "soot": 1
+  },
+  "smoke": {
+   "n": 208,
+   "life": 9.8065,
+   "albedo": [
+    0.10657,
+    0.097428,
+    0.092428
+   ],
+   "tau": 1.7821,
+   "buoy": 1.17,
+   "buoyAcc": 0.41786
+  },
+  "debris": {
+   "n": 128,
+   "speed": 44.392,
+   "size": 0.032672,
+   "hot": 0.25,
+   "up": 0.55,
+   "T": 1300
+  },
+  "sparks": {
+   "n": 280,
+   "speed": 76.778
+  }
+ },
+ "tnt_10kg": {
+  "W": 10,
+  "flash": 25698000,
+  "scorch": 5.1775,
+  "dust": true,
+  "dustAlbedo": [
+   0.33791,
+   0.28343,
+   0.20895
+  ],
+  "crater": 1,
+  "fireball": {
+   "D": 5.3861,
+   "t": 0.12772,
+   "T": 2510.5,
+   "soot": 1
+  },
+  "smoke": {
+   "n": 392,
+   "life": 16.878,
+   "albedo": [
+    0.10105,
+    0.093285,
+    0.088285
+   ],
+   "tau": 2.12,
+   "buoy": 2.6761,
+   "buoyAcc": 0.95575
+  },
+  "debris": {
+   "n": 225,
+   "speed": 65.1,
+   "size": 0.072023,
+   "hot": 0.25,
+   "up": 0.55,
+   "T": 1300
+  },
+  "sparks": {
+   "n": 413,
+   "speed": 89.101
+  }
+ },
+ "tnt_100kg": {
+  "W": 100,
+  "flash": 124170000,
+  "scorch": 11.602,
+  "dust": true,
+  "dustAlbedo": [
+   0.34895,
+   0.29171,
+   0.21448
+  ],
+  "crater": 1,
+  "fireball": {
+   "D": 11.604,
+   "t": 0.25208,
+   "T": 2455.2,
+   "soot": 1,
+   "rise": 13.925
+  },
+  "smoke": {
+   "n": 741,
+   "life": 29.05,
+   "albedo": [
+    0.095524,
+    0.089143,
+    0.084143
+   ],
+   "tau": 2.5219,
+   "buoy": 6.1209,
+   "buoyAcc": 2.186,
+   "dur": 1.8566
+  },
+  "debris": {
+   "n": 397,
+   "speed": 95.467,
+   "size": 0.15877,
+   "hot": 0.25,
+   "up": 0.55,
+   "T": 1300
+  },
+  "sparks": {
+   "n": 610,
+   "speed": 103.4
+  },
+  "life": 43.01,
+  "mushroom": true
+ },
+ "tnt_1000kg": {
+  "W": 1000,
+  "flash": 600000000,
+  "scorch": 26,
+  "dust": true,
+  "dustAlbedo": [
+   0.36,
+   0.3,
+   0.22
+  ],
+  "crater": 1,
+  "fireball": {
+   "D": 25,
+   "t": 0.52,
+   "T": 2400,
+   "soot": 1,
+   "rise": 30
+  },
+  "smoke": {
+   "n": 1400,
+   "life": 50,
+   "albedo": [
+    0.09,
+    0.085,
+    0.08
+   ],
+   "tau": 3,
+   "buoy": 14,
+   "buoyAcc": 5,
+   "dur": 4
+  },
+  "debris": {
+   "n": 700,
+   "speed": 140,
+   "size": 0.35,
+   "hot": 0.25,
+   "up": 0.55,
+   "T": 1300
+  },
+  "sparks": {
+   "n": 900,
+   "speed": 120
+  },
+  "life": 70,
+  "mushroom": true,
+  "ring": true,
+  "wilson": 2.5
+ },
+ "tnt_5000kg": {
+  "W": 5000,
+  "flash": 1804400000,
+  "scorch": 45.699,
+  "dust": true,
+  "dustAlbedo": [
+   0.36,
+   0.3,
+   0.22
+  ],
+  "crater": 1,
+  "fireball": {
+   "D": 42.749,
+   "t": 0.87499,
+   "T": 2400,
+   "soot": 1,
+   "rise": 51.299
+  },
+  "smoke": {
+   "n": 2184,
+   "life": 73.08,
+   "albedo": [
+    0.09,
+    0.085,
+    0.08
+   ],
+   "tau": 3.387,
+   "buoy": 24.962,
+   "buoyAcc": 8.915,
+   "dur": 6.8399
+  },
+  "debris": {
+   "n": 1040,
+   "speed": 182.96,
+   "size": 0.60817,
+   "hot": 0.25,
+   "up": 0.55,
+   "T": 1300
+  },
+  "sparks": {
+   "n": 1181,
+   "speed": 133.16
+  },
+  "life": 98.39,
+  "mushroom": true,
+  "ring": true,
+  "wilson": 2.5
+ },
+ "fireball_5kg": {
+  "W": 0.01,
+  "flash": 683990,
+  "scorch": 3.5088,
+  "dust": false,
+  "fireball": {
+   "D": 9.9179,
+   "t": 0.76949,
+   "T": 1650,
+   "rise": 7.4384,
+   "soot": 0.6
+  },
+  "smoke": {
+   "n": 319,
+   "life": 11.596,
+   "albedo": [
+    0.07,
+    0.065,
+    0.06
+   ],
+   "tau": 2.5,
+   "buoy": 4.5883,
+   "buoyAcc": 1.5294
+  },
+  "debris": {
+   "n": 14,
+   "speed": 18,
+   "size": 0.12,
+   "hot": 0.5,
+   "up": 0.6,
+   "T": 1200
+  },
+  "sparks": {
+   "n": 175,
+   "speed": 12
+  }
+ },
+ "fireball_25kg": {
+  "W": 0.05,
+  "flash": 2000000,
+  "scorch": 6,
+  "dust": false,
+  "fireball": {
+   "D": 16.959,
+   "t": 1.3158,
+   "T": 1650,
+   "rise": 12.719,
+   "soot": 0.6
+  },
+  "smoke": {
+   "n": 500,
+   "life": 16,
+   "albedo": [
+    0.07,
+    0.065,
+    0.06
+   ],
+   "tau": 2.5,
+   "buoy": 6,
+   "buoyAcc": 2
+  },
+  "debris": {
+   "n": 14,
+   "speed": 18,
+   "size": 0.12,
+   "hot": 0.5,
+   "up": 0.6,
+   "T": 1200
+  },
+  "sparks": {
+   "n": 300,
+   "speed": 12
+  }
+ },
+ "fireball_100kg": {
+  "W": 0.2,
+  "flash": 5039700,
+  "scorch": 9.5244,
+  "dust": false,
+  "fireball": {
+   "D": 26.921,
+   "t": 2.0887,
+   "T": 1650,
+   "rise": 20.191,
+   "soot": 0.6
+  },
+  "smoke": {
+   "n": 737,
+   "life": 21.112,
+   "albedo": [
+    0.07,
+    0.065,
+    0.06
+   ],
+   "tau": 2.5,
+   "buoy": 7.5595,
+   "buoyAcc": 2.5198
+  },
+  "debris": {
+   "n": 14,
+   "speed": 18,
+   "size": 0.12,
+   "hot": 0.5,
+   "up": 0.6,
+   "T": 1200
+  },
+  "sparks": {
+   "n": 476,
+   "speed": 12
+  }
+ },
+ "acetyleneCylinder50l": {
+  "W": 1.7791,
+  "vFrag": 80.134,
+  "Eburst_J": 695650,
+  "flash": 5000000,
+  "scorch": 5,
+  "dust": true,
+  "dustAlbedo": [
+   0.3,
+   0.27,
+   0.22
+  ],
+  "fireball": {
+   "D": 12.977,
+   "t": 1.0068,
+   "T": 1800,
+   "rise": 7.7861,
+   "soot": 0.9
+  },
+  "smoke": {
+   "n": 420,
+   "life": 15,
+   "albedo": [
+    0.045,
+    0.042,
+    0.04
+   ],
+   "tau": 3.4,
+   "buoy": 5,
+   "buoyAcc": 1.8
+  },
+  "debris": {
+   "n": 46,
+   "speed": 48.08,
+   "size": 0.09,
+   "hot": 0.6,
+   "up": 0.5,
+   "T": 1200
+  },
+  "sparks": {
+   "n": 420,
+   "speed": 28
+  },
+  "rows": [
+   [
+    "Náplň",
+    "7 kg C₂H₂ v 14 kg acetonu",
+    "láhev 50 l ★4"
+   ],
+   [
+    "Energie roztržení",
+    "0.70 MJ",
+    "Brode ★2"
+   ],
+   [
+    "TNT ekvivalent",
+    "1.8 kg (rozsah 0,2–4)",
+    "roztržení + deflagrace ★2"
+   ],
+   [
+    "Ohnivá koule",
+    "13.0 m / 1.01 s",
+    "CCPS ★4; pokusy ~10 m"
+   ],
+   [
+    "Úlomky pláště",
+    "80 m/s, dolet stovky m",
+    "zóna 200 m (HSE) ★4"
+   ]
+  ]
+ }
+}

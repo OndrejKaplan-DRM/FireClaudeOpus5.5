@@ -1,0 +1,122 @@
+{
+ "format": "firelab-preset/1",
+ "id": "lighter",
+ "name": "Zapalovač: jiskra → plamen",
+ "group": "Zážeh",
+ "desc": "Křesací kolečko strhne z „kamínku“ (ferrocer) třísky, které na vzduchu samy vzplanou (~3 000 °C). První škrtnutí nechytne, druhé zapálí butan: laminární plamínek 25 mm, ~57 W, modrá pata a žlutá špička.",
+ "time": "noc",
+ "timeScale": 1,
+ "duration": 9,
+ "cams": [
+  {
+   "name": "detail",
+   "pos": [
+    0.075,
+    0.105,
+    0.13
+   ],
+   "target": [
+    0,
+    0.075,
+    0
+   ]
+  },
+  {
+   "name": "stůl",
+   "pos": [
+    0.35,
+    0.28,
+    0.5
+   ],
+   "target": [
+    0,
+    0.05,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Druh ohně",
+   "v": "plamen z trysky",
+   "src": "fireSpec"
+  },
+  {
+   "k": "Hmotnost paliva",
+   "v": "4.5 g",
+   "src": ""
+  },
+  {
+   "k": "Doba hoření",
+   "v": "60 min",
+   "src": "m·ΔHc / Q"
+  },
+  {
+   "k": "Spotřeba",
+   "v": "1.25 mg/s",
+   "src": "Q/ΔHc ★4"
+  },
+  {
+   "k": "Tepelný výkon Q",
+   "v": "57 W",
+   "src": "model scénáře"
+  },
+  {
+   "k": "Výška plamene L",
+   "v": "0.025 m",
+   "src": "měřená hodnota"
+  },
+  {
+   "k": "Náklon plamene",
+   "v": "0°  (u* = 0.00)",
+   "src": "AGA ★4"
+  },
+  {
+   "k": "Teplota svítivé zóny",
+   "v": "1500 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "Pulzace plamene",
+   "v": "19.4 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "Jiskra",
+   "v": "ferrocer (Ce + Fe), vznítí se při 150–180 °C, hoří ~3 000 °C",
+   "src": "★4"
+  },
+  {
+   "k": "Proč první škrtnutí nechytne",
+   "v": "plyn ještě nedosáhl dolní meze výbušnosti 1,8 % u jisker",
+   "src": "★3"
+  },
+  {
+   "k": "Sálání ve 3 cm od plamene",
+   "v": "1.5 kW/m²",
+   "src": "bodový zdroj ★3"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "butane",
+   "pos": [
+    -0.005,
+    0.073,
+    0
+   ],
+   "D": 0.006,
+   "Q_W": 57,
+   "L_m": 0.025,
+   "T_K": 1500,
+   "puff_Hz": 19.36,
+   "smoke_tau": 0.004,
+   "smoke_rgb": [
+    0.383,
+    0.382,
+    0.381
+   ],
+   "light_cd": 1.3
+  }
+ ]
+}

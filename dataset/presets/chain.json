@@ -1,0 +1,160 @@
+{
+ "format": "firelab-preset/1",
+ "id": "chain",
+ "name": "Přestup tepla: řetěz vznícení",
+ "group": "Šíření",
+ "desc": "Hoří dvě palety (~0,9 MW). Okolní věci dostávají tepelný tok podle vzdálenosti a každá sčítá svou dávku do vznícení podle materiálu: sláma chytne od ~8 kW/m² za sekundy, dřevo až nad 12 kW/m² za minuty, pneumatika až nad 17 kW/m². Co chytne, přidá vlastní teplo a zapálí další. Paleta ve 4,5 m zůstane pod prahem; plech sudu nehoří, ale ztratí lak a zčerná.",
+ "time": "den",
+ "timeScale": 10,
+ "duration": 1500,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    5.5,
+    3.6,
+    6.5
+   ],
+   "target": [
+    0,
+    0.9,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    3.6,
+    1.7,
+    5.2
+   ],
+   "target": [
+    0,
+    0.8,
+    0
+   ]
+  },
+  {
+   "name": "shora",
+   "pos": [
+    0.5,
+    9,
+    2.5
+   ],
+   "target": [
+    0,
+    0.3,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Celkový výkon",
+   "v": "3.00 MW",
+   "src": "součet zdrojů"
+  },
+  {
+   "k": "2 palety (ohnisko)",
+   "v": "12 kW/m² · HOŘÍ od 0.0 min, 910.0 kW",
+   "src": ""
+  },
+  {
+   "k": "balík slámy (1,7 m)",
+   "v": "11 kW/m² · HOŘÍ od 2.9 min, 1.80 MW",
+   "src": ""
+  },
+  {
+   "k": "bedna (1,2 m)",
+   "v": "27 kW/m² · HOŘÍ od 4.3 min, 286.0 kW",
+   "src": ""
+  },
+  {
+   "k": "pneumatika (1,1 m)",
+   "v": "33 kW/m² · dávka 76 %",
+   "src": "při tomto toku za 4.7 min"
+  },
+  {
+   "k": "paleta daleko (4,5 m)",
+   "v": "3.0 kW/m² · dávka 0 %",
+   "src": "pod prahem 12 kW/m²"
+  },
+  {
+   "k": "sud – plech (0,9 m)",
+   "v": "51 kW/m² · 478 °C (max 478 °C) – lak shořel",
+   "src": ""
+  },
+  {
+   "k": "Sálání ve 3 m (hráč)",
+   "v": "9.9 kW/m² – vzplane sláma a suchá tráva",
+   "src": "Modak ★4"
+  },
+  {
+   "k": "Model",
+   "v": "dávka = ∫(q″ − q″crit)ⁿ dt, n = 2 tlusté, 1 tenké",
+   "src": "Quintiere; Shields ★3–4"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "woodDry",
+   "pos": [
+    0,
+    0.02,
+    0
+   ],
+   "D": 1.106,
+   "Q_W": 910000,
+   "L_m": 2.459,
+   "T_K": 1250,
+   "puff_Hz": 1.43,
+   "smoke_tau": 0.961,
+   "smoke_rgb": [
+    0.471,
+    0.468,
+    0.466
+   ],
+   "light_cd": 9904.2
+  },
+  {
+   "fuel": "straw",
+   "pos": [
+    2.7,
+    0.55,
+    0.2
+   ],
+   "D": 1.915,
+   "Q_W": 1800000,
+   "L_m": 2.758,
+   "T_K": 1200,
+   "puff_Hz": 1.08,
+   "smoke_tau": 0.906,
+   "smoke_rgb": [
+    0.567,
+    0.565,
+    0.565
+   ],
+   "light_cd": 16639.3
+  },
+  {
+   "fuel": "woodDry",
+   "pos": [
+    -0.25,
+    0.25,
+    -1.5
+   ],
+   "D": 0.966,
+   "Q_W": 286000,
+   "L_m": 1.272,
+   "T_K": 1250,
+   "puff_Hz": 1.53,
+   "smoke_tau": 0.608,
+   "smoke_rgb": [
+    0.471,
+    0.468,
+    0.466
+   ],
+   "light_cd": 3112.7
+  }
+ ]
+}

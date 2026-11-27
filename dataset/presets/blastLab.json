@@ -1,0 +1,109 @@
+{
+ "format": "firelab-preset/1",
+ "id": "blastLab",
+ "name": "Obecný výbuch (nálož → vše)",
+ "group": "Laboratoř",
+ "desc": "Jeden popis výbuchu: druh a hmotnost → přetlak, ohnivá koule, kouř, trosky, kráter, od 50 g po 5 t. Mocninné zákony procházejí ručně vyladěnými body (granát 0,24 kg, 1 t TNT), mezi nimi drží fyzikální exponenty (délky ∝ W^⅓, plochy ∝ W^⅔).",
+ "time": "den",
+ "timeScale": 1,
+ "duration": 26,
+ "cams": [
+  {
+   "name": "25 m",
+   "pos": [
+    18,
+    3,
+    17
+   ],
+   "target": [
+    0,
+    3,
+    0
+   ]
+  },
+  {
+   "name": "80 m",
+   "pos": [
+    62,
+    6,
+    50
+   ],
+   "target": [
+    0,
+    14,
+    0
+   ]
+  },
+  {
+   "name": "300 m",
+   "pos": [
+    240,
+    20,
+    180
+   ],
+   "target": [
+    0,
+    50,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Nálož",
+   "v": "10 kg TNT",
+   "src": ""
+  },
+  {
+   "k": "TNT ekvivalent",
+   "v": "10.00 kg",
+   "src": "★4"
+  },
+  {
+   "k": "Ohnivá koule",
+   "v": "5.4 m / 128 ms",
+   "src": "objem zplodin ★2"
+  },
+  {
+   "k": "Kráter",
+   "v": "0.86 m",
+   "src": "TM 5-855 ★3"
+  },
+  {
+   "k": "  přetlak v 3 m",
+   "v": "749.9 kPa",
+   "src": "letální práh plic ~1 %"
+  },
+  {
+   "k": "  přetlak v 10 m",
+   "v": "49.3 kPa",
+   "src": "zničení dřevostaveb, ušní bubínky ~50 %"
+  },
+  {
+   "k": "  přetlak v 30 m",
+   "v": "8.4 kPa",
+   "src": "okna rozbitá, lehké poškození střech"
+  },
+  {
+   "k": "  přetlak v 100 m",
+   "v": "2.2 kPa",
+   "src": "rozbitá okna (část)"
+  },
+  {
+   "k": "Kouř (částic / život)",
+   "v": "392 / 17 s",
+   "src": "mocninný zákon"
+  },
+  {
+   "k": "Trosky (počet / rychlost)",
+   "v": "225 / 65 m/s",
+   "src": ""
+  },
+  {
+   "k": "Hřib / kondenzační dóm",
+   "v": "ne / ne",
+   "src": "od 100 / 300 kg"
+  }
+ ],
+ "sources": []
+}

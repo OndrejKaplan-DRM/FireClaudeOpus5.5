@@ -1,0 +1,295 @@
+{
+ "format": "firelab-preset/1",
+ "id": "acetyleneCyl",
+ "name": "Výbuch acetylenové lahve (v požáru)",
+ "group": "Exploze",
+ "desc": "Tlaková láhev 50 l (7 kg C₂H₂ v acetonu) v hořící hranici palet. Ocel při ~550 °C ztrácí polovinu pevnosti, acetylen se uvnitř rozkládá → plášť se roztrhne na kusy, plyn vzplane v ohnivou kouli ~13 m (1 s), oslnivě žlutou a plnou sazí. Tlaková vlna ≈ 1–2 kg TNT, úlomky letí ~80 m/s na stovky metrů (zóna hasičů 200 m).",
+ "time": "soumrak",
+ "timeScale": 20,
+ "duration": 560,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    15,
+    4,
+    19
+   ],
+   "target": [
+    0,
+    4.5,
+    0
+   ]
+  },
+  {
+   "name": "hráč (12 m)",
+   "pos": [
+    9,
+    1.7,
+    8
+   ],
+   "target": [
+    0,
+    2.5,
+    0
+   ]
+  },
+  {
+   "name": "z dálky (70 m)",
+   "pos": [
+    55,
+    6,
+    45
+   ],
+   "target": [
+    0,
+    7,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Stav",
+   "v": "roztržena v čase 7.1 min",
+   "src": ""
+  },
+  {
+   "k": "Plášť lahve",
+   "v": "552 °C (max 552 °C) – žhne",
+   "src": "mez 550 °C ★4"
+  },
+  {
+   "k": "Tok na plášť",
+   "v": "198 kW/m²",
+   "src": "kontakt ★3"
+  },
+  {
+   "k": "Náplň",
+   "v": "7 kg C₂H₂ v 14 kg acetonu",
+   "src": "láhev 50 l ★4"
+  },
+  {
+   "k": "Energie roztržení",
+   "v": "0.70 MJ",
+   "src": "Brode ★2"
+  },
+  {
+   "k": "TNT ekvivalent",
+   "v": "1.8 kg (rozsah 0,2–4)",
+   "src": "roztržení + deflagrace ★2"
+  },
+  {
+   "k": "Ohnivá koule",
+   "v": "13.0 m / 1.01 s",
+   "src": "CCPS ★4; pokusy ~10 m"
+  },
+  {
+   "k": "Úlomky pláště",
+   "v": "80 m/s, dolet stovky m",
+   "src": "zóna 200 m (HSE) ★4"
+  },
+  {
+   "k": "  přetlak v 3 m",
+   "v": "199.6 kPa",
+   "src": "poškození plic, převrácení aut"
+  },
+  {
+   "k": "  přetlak v 10 m",
+   "v": "17.4 kPa",
+   "src": "poškození lehkých konstrukcí, prasklé ušní bubínky ~1 %"
+  },
+  {
+   "k": "  přetlak v 30 m",
+   "v": "4.3 kPa",
+   "src": "rozbitá okna (část)"
+  },
+  {
+   "k": "  přetlak v 100 m",
+   "v": "1.2 kPa",
+   "src": "rozbitá okna (část)"
+  },
+  {
+   "k": "hranice: Tepelný výkon Q",
+   "v": "800.8 kW",
+   "src": "model scénáře"
+  },
+  {
+   "k": "hranice: Výška plamene L",
+   "v": "1.88 m",
+   "src": "Heskestad ★5"
+  },
+  {
+   "k": "Dolet úlomku bez odporu",
+   "v": "368 m",
+   "src": "v²/g ★3"
+  },
+  {
+   "k": "Proč ne „detonace“",
+   "v": "rozklad C₂H₂ v porézní hmotě je pomalý; ničí roztržení a oheň, ne brizance",
+   "src": "Jankůj & Mynarz 2022 ★4"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "woodDry",
+   "pos": [
+    0,
+    0.1,
+    0
+   ],
+   "D": 1.5,
+   "Q_W": 800800,
+   "L_m": 1.878,
+   "T_K": 1250,
+   "puff_Hz": 1.22,
+   "smoke_tau": 0.918,
+   "smoke_rgb": [
+    0.471,
+    0.468,
+    0.466
+   ],
+   "light_cd": 8715.7
+  },
+  {
+   "fuel": "acetone",
+   "pos": [
+    0.4,
+    0.01,
+    0.3
+   ],
+   "D": 2.2,
+   "Q_W": 1581167,
+   "L_m": 2.23,
+   "T_K": 1250,
+   "puff_Hz": 1.01,
+   "smoke_tau": 0.637,
+   "smoke_rgb": [
+    0.443,
+    0.443,
+    0.443
+   ],
+   "light_cd": 17209
+  },
+  {
+   "fuel": "woodDry",
+   "pos": [
+    3.777,
+    0.02,
+    1.168
+   ],
+   "D": 0.5,
+   "Q_W": 61106,
+   "L_m": 0.708,
+   "T_K": 1250,
+   "puff_Hz": 2.12,
+   "smoke_tau": 0.328,
+   "smoke_rgb": [
+    0.471,
+    0.468,
+    0.466
+   ],
+   "light_cd": 665.1
+  },
+  {
+   "fuel": "woodDry",
+   "pos": [
+    0.692,
+    0.02,
+    3.084
+   ],
+   "D": 0.5,
+   "Q_W": 131724,
+   "L_m": 1.146,
+   "T_K": 1250,
+   "puff_Hz": 2.12,
+   "smoke_tau": 0.444,
+   "smoke_rgb": [
+    0.471,
+    0.468,
+    0.466
+   ],
+   "light_cd": 1433.6
+  },
+  {
+   "fuel": "woodDry",
+   "pos": [
+    -3.069,
+    0.02,
+    2.811
+   ],
+   "D": 0.5,
+   "Q_W": 117879,
+   "L_m": 1.074,
+   "T_K": 1250,
+   "puff_Hz": 2.12,
+   "smoke_tau": 0.425,
+   "smoke_rgb": [
+    0.471,
+    0.468,
+    0.466
+   ],
+   "light_cd": 1283
+  },
+  {
+   "fuel": "woodDry",
+   "pos": [
+    -2.422,
+    0.02,
+    -0.772
+   ],
+   "D": 0.5,
+   "Q_W": 123481,
+   "L_m": 1.103,
+   "T_K": 1250,
+   "puff_Hz": 2.12,
+   "smoke_tau": 0.432,
+   "smoke_rgb": [
+    0.471,
+    0.468,
+    0.466
+   ],
+   "light_cd": 1343.9
+  },
+  {
+   "fuel": "woodDry",
+   "pos": [
+    -0.653,
+    0.02,
+    -3.03
+   ],
+   "D": 0.5,
+   "Q_W": 69861,
+   "L_m": 0.775,
+   "T_K": 1250,
+   "puff_Hz": 2.12,
+   "smoke_tau": 0.345,
+   "smoke_rgb": [
+    0.471,
+    0.468,
+    0.466
+   ],
+   "light_cd": 760.3
+  },
+  {
+   "fuel": "woodDry",
+   "pos": [
+    3.479,
+    0.02,
+    -3.133
+   ],
+   "D": 0.5,
+   "Q_W": 79638,
+   "L_m": 0.844,
+   "T_K": 1250,
+   "puff_Hz": 2.12,
+   "smoke_tau": 0.364,
+   "smoke_rgb": [
+    0.471,
+    0.468,
+    0.466
+   ],
+   "light_cd": 866.8
+  }
+ ]
+}

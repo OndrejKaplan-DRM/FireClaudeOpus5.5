@@ -1,0 +1,165 @@
+{
+ "format": "firelab-preset/1",
+ "id": "dieselBarrel",
+ "name": "Hořící sud s naftou",
+ "group": "Kapaliny",
+ "desc": "Sud 200 l bez víka, ~170 l nafty. Louže o průměru 0,56 m: ~350 kW, plamen ~1,9 m, pulzace 2 Hz, hustý černý kouř. Hoří skoro 6 hodin (hladina klesá 2,2 mm/min). Lak nad hladinou shoří, pod hladinou ho kapalina chladí.",
+ "time": "den",
+ "timeScale": 6,
+ "duration": 900,
+ "cams": [
+  {
+   "name": "celek",
+   "pos": [
+    3.6,
+    1.9,
+    4.4
+   ],
+   "target": [
+    0,
+    1.5,
+    0
+   ]
+  },
+  {
+   "name": "hráč",
+   "pos": [
+    2.4,
+    1.7,
+    2.2
+   ],
+   "target": [
+    0,
+    1.1,
+    0
+   ]
+  },
+  {
+   "name": "sloup kouře",
+   "pos": [
+    10,
+    2.5,
+    13
+   ],
+   "target": [
+    0,
+    5,
+    0
+   ]
+  }
+ ],
+ "physics": [
+  {
+   "k": "Druh ohně",
+   "v": "louže v nádobě",
+   "src": "fireSpec"
+  },
+  {
+   "k": "Hmotnost paliva",
+   "v": "142.8 kg",
+   "src": ""
+  },
+  {
+   "k": "Doba hoření",
+   "v": "309 min",
+   "src": "m·ΔHc / Q"
+  },
+  {
+   "k": "Odhořívání",
+   "v": "31.1 g/m²s",
+   "src": "Babrauskas ★4"
+  },
+  {
+   "k": "Pokles hladiny",
+   "v": "2.2 mm/min",
+   "src": "m″/ρ ★4"
+  },
+  {
+   "k": "Tepelný výkon Q",
+   "v": "327.3 kW",
+   "src": "model scénáře"
+  },
+  {
+   "k": "Výška plamene L",
+   "v": "1.81 m",
+   "src": "Heskestad ★5"
+  },
+  {
+   "k": "Náklon plamene",
+   "v": "0°  (u* = 0.00)",
+   "src": "AGA ★4"
+  },
+  {
+   "k": "Teplota svítivé zóny",
+   "v": "1150 K",
+   "src": "pyrometrie sazí ★3"
+  },
+  {
+   "k": "Pulzace plamene",
+   "v": "2.0 Hz",
+   "src": "Cetegen & Ahmed ★4"
+  },
+  {
+   "k": "Optická tl. kouře τ",
+   "v": "0.89",
+   "src": "Mulholland σs ★3"
+  },
+  {
+   "k": "Ekvivalenční poměr Φ",
+   "v": "0.50  saze ×1.00",
+   "src": "Tewarson ★2"
+  },
+  {
+   "k": "Výtěžek sazí / CO",
+   "v": "0.059 / 0.012 kg/kg",
+   "src": "SFPE ★3"
+  },
+  {
+   "k": "Svítivost",
+   "v": "2551.7 cd",
+   "src": "odhad ★2"
+  },
+  {
+   "k": "Shořelo",
+   "v": "0.69 kg",
+   "src": "ṁ = Q/ΔHc"
+  },
+  {
+   "k": "Plášť u okraje",
+   "v": "563 °C (max 563 °C) – žhne",
+   "src": "tenký plech ★4"
+  },
+  {
+   "k": "Tok na plášť",
+   "v": "74 kW/m²",
+   "src": "kontakt s plamenem ★3"
+  },
+  {
+   "k": "Sálání ve 2 m (výška pasu)",
+   "v": "2.4 kW/m² – letní slunce",
+   "src": "Modak ★4"
+  }
+ ],
+ "sources": [
+  {
+   "fuel": "diesel",
+   "pos": [
+    0,
+    0.714,
+    0
+   ],
+   "D": 0.561,
+   "Q_W": 327262,
+   "L_m": 1.81,
+   "T_K": 1150,
+   "puff_Hz": 2,
+   "smoke_tau": 0.889,
+   "smoke_rgb": [
+    0.067,
+    0.064,
+    0.062
+   ],
+   "light_cd": 2551.7
+  }
+ ]
+}

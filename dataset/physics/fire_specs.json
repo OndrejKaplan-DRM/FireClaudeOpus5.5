@@ -1,0 +1,638 @@
+{
+ "lighter": {
+  "spec": {
+   "kind": "jet",
+   "fuel": "butane",
+   "mdot": 0.00000125
+  },
+  "result": {
+   "kind": "jet",
+   "fuel": "butane",
+   "Q": 57.125,
+   "Qpeak": 57.125,
+   "D": 0.006,
+   "L": 0.025055,
+   "mdot": 0.00000125,
+   "mass": 0.0045,
+   "duration": 3600,
+   "chiR": 0.28
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "plamen z trysky",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "4.5 g",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "60 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Spotřeba",
+    "1.25 mg/s",
+    "Q/ΔHc ★4"
+   ]
+  ]
+ },
+ "candle": {
+  "spec": {
+   "kind": "wick",
+   "fuel": "paraffin",
+   "Q": 80
+  },
+  "result": {
+   "kind": "wick",
+   "fuel": "paraffin",
+   "Q": 80,
+   "Qpeak": 80,
+   "D": 0.016,
+   "L": 0.045,
+   "mdot": 0.0000019048,
+   "mass": 0.05,
+   "duration": 26250,
+   "chiR": 0.25
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "plamen knotu",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "50.0 g",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "438 min",
+    "m·ΔHc / Q"
+   ]
+  ]
+ },
+ "dieselBarrel": {
+  "spec": {
+   "kind": "pool",
+   "fuel": "diesel",
+   "D": 0.56,
+   "volumeL": 170
+  },
+  "result": {
+   "kind": "pool",
+   "fuel": "diesel",
+   "Q": 340290,
+   "Qpeak": 340290,
+   "D": 0.56,
+   "L": 1.8488,
+   "mass": 142.8,
+   "mdot": 0.0076642,
+   "duration": 18632,
+   "chiR": 0.35
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "louže v nádobě",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "142.8 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "311 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Odhořívání",
+    "31.1 g/m²s",
+    "Babrauskas ★4"
+   ],
+   [
+    "Pokles hladiny",
+    "2.2 mm/min",
+    "m″/ρ ★4"
+   ]
+  ]
+ },
+ "gasolineBarrel": {
+  "spec": {
+   "kind": "pool",
+   "fuel": "gasoline",
+   "D": 0.56,
+   "volumeL": 170
+  },
+  "result": {
+   "kind": "pool",
+   "fuel": "gasoline",
+   "Q": 409350,
+   "Qpeak": 409350,
+   "D": 0.56,
+   "L": 2.0344,
+   "mass": 125.8,
+   "mdot": 0.0093673,
+   "duration": 13430,
+   "chiR": 0.35
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "louže v nádobě",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "125.8 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "224 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Odhořívání",
+    "38.0 g/m²s",
+    "Babrauskas ★4"
+   ],
+   [
+    "Pokles hladiny",
+    "3.1 mm/min",
+    "m″/ρ ★4"
+   ]
+  ]
+ },
+ "dieselSpill20l": {
+  "spec": {
+   "kind": "spill",
+   "fuel": "diesel",
+   "volumeL": 20
+  },
+  "result": {
+   "kind": "spill",
+   "fuel": "diesel",
+   "Q": 13318000,
+   "Qpeak": 13318000,
+   "D": 4.1203,
+   "L": 6.2889,
+   "mass": 16.8,
+   "mdot": 0.29995,
+   "duration": 56.01,
+   "chiR": 0.35
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "rozlitá kapalina",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "16.8 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "56 s",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Plocha",
+    "13.3 m²",
+    "vrstva 1.5 mm ★3"
+   ]
+  ]
+ },
+ "leakDiesel9mm": {
+  "spec": {
+   "kind": "leak",
+   "fuel": "diesel",
+   "holeMM": 9,
+   "head": 0.5
+  },
+  "result": {
+   "kind": "leak",
+   "fuel": "diesel",
+   "Qpeak": 4607500,
+   "D": 2.4307,
+   "L": 4.3828,
+   "mdot": 0.10377,
+   "mass": 108.36,
+   "duration": 2088.4,
+   "A": 4.6403,
+   "chiR": 0.35
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "vytékající kapalina",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "108.4 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "35 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Výtok",
+    "0.12 l/s",
+    "Torricelli, otvor 9 mm ★5"
+   ],
+   [
+    "Hořící plocha (rovnováha)",
+    "4.6 m²",
+    "ṁ = m″·A ★3"
+   ],
+   [
+    "Vyteče za",
+    "35 min",
+    "★4"
+   ]
+  ]
+ },
+ "leakGasoline9mm": {
+  "spec": {
+   "kind": "leak",
+   "fuel": "gasoline",
+   "holeMM": 9,
+   "head": 0.5
+  },
+  "result": {
+   "kind": "leak",
+   "fuel": "gasoline",
+   "Qpeak": 3995000,
+   "D": 2.0708,
+   "L": 4.3693,
+   "mdot": 0.091418,
+   "mass": 95.46,
+   "duration": 2088.4,
+   "A": 3.3678,
+   "chiR": 0.35
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "vytékající kapalina",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "95.5 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "35 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Výtok",
+    "0.12 l/s",
+    "Torricelli, otvor 9 mm ★5"
+   ],
+   [
+    "Hořící plocha (rovnováha)",
+    "3.4 m²",
+    "ṁ = m″·A ★3"
+   ],
+   [
+    "Vyteče za",
+    "35 min",
+    "★4"
+   ]
+  ]
+ },
+ "smallFire1kg": {
+  "spec": {
+   "kind": "pile",
+   "material": "softwood",
+   "mass": 1,
+   "stick": 0.03
+  },
+  "result": {
+   "kind": "pile",
+   "fuel": "woodDry",
+   "Qpeak": 17333,
+   "D": 0.34998,
+   "L": 0.37858,
+   "mass": 1,
+   "duration": 1137.4,
+   "chiR": 0.3
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "hromada dřeva",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "1.0 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "19 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Hořící povrch polen",
+    "0.3 m² × 0.5",
+    "A = 4m/ρb ★3"
+   ],
+   [
+    "Prohoření polena",
+    "23 min",
+    "EN 1995-1-2 ★5"
+   ]
+  ]
+ },
+ "campfire20kg": {
+  "spec": {
+   "kind": "pile",
+   "material": "softwood",
+   "mass": 20,
+   "stick": 0.08
+  },
+  "result": {
+   "kind": "pile",
+   "fuel": "woodDry",
+   "Qpeak": 130000,
+   "D": 0.95,
+   "L": 0.67782,
+   "mass": 20,
+   "duration": 2969.2,
+   "chiR": 0.3
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "hromada dřeva",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "20.0 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "49 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Hořící povrch polen",
+    "2.0 m² × 0.5",
+    "A = 4m/ρb ★3"
+   ],
+   [
+    "Prohoření polena",
+    "62 min",
+    "EN 1995-1-2 ★5"
+   ]
+  ]
+ },
+ "bonfire600kg": {
+  "spec": {
+   "kind": "pile",
+   "material": "softwood",
+   "mass": 600,
+   "stick": 0.1
+  },
+  "result": {
+   "kind": "pile",
+   "fuel": "woodDry",
+   "Qpeak": 3120000,
+   "D": 2.9519,
+   "L": 2.8603,
+   "mass": 600,
+   "duration": 3998.7,
+   "chiR": 0.3
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "hromada dřeva",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "600.0 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "67 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Hořící povrch polen",
+    "48.0 m² × 0.5",
+    "A = 4m/ρb ★3"
+   ],
+   [
+    "Prohoření polena",
+    "77 min",
+    "EN 1995-1-2 ★5"
+   ]
+  ]
+ },
+ "pallets2": {
+  "spec": {
+   "kind": "solid",
+   "material": "softwood",
+   "mass": 44,
+   "area": 7,
+   "size": 1.2
+  },
+  "result": {
+   "kind": "solid",
+   "fuel": "woodDry",
+   "Qpeak": 910000,
+   "D": 1.7236,
+   "L": 1.8285,
+   "mass": 44,
+   "duration": 970.33,
+   "chiR": 0.3
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "hořící předmět",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "44.0 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "16 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Výkon z povrchu",
+    "130 kW/m²",
+    "SFPE ★3"
+   ],
+   [
+    "Rozhoření",
+    "150 s",
+    "rozměr / rychlost šíření ★2"
+   ]
+  ]
+ },
+ "strawBale": {
+  "spec": {
+   "kind": "solid",
+   "material": "straw",
+   "mass": 250,
+   "area": 9,
+   "size": 1.6
+  },
+  "result": {
+   "kind": "solid",
+   "fuel": "straw",
+   "Qpeak": 1800000,
+   "D": 1.9544,
+   "L": 2.7182,
+   "mass": 250,
+   "duration": 2630.3,
+   "chiR": 0.3
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "hořící předmět",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "250.0 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "44 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Výkon z povrchu",
+    "200 kW/m²",
+    "SFPE ★3"
+   ],
+   [
+    "Rozhoření",
+    "8 s",
+    "rozměr / rychlost šíření ★2"
+   ]
+  ]
+ },
+ "tire": {
+  "spec": {
+   "kind": "solid",
+   "material": "rubber",
+   "mass": 9,
+   "area": 1.2,
+   "size": 0.65,
+   "D": 0.65
+  },
+  "result": {
+   "kind": "solid",
+   "fuel": "rubber",
+   "Qpeak": 300000,
+   "D": 0.65,
+   "L": 1.638,
+   "mass": 9,
+   "duration": 985.92,
+   "chiR": 0.4
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "hořící předmět",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "9.0 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "16 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Výkon z povrchu",
+    "250 kW/m²",
+    "SFPE ★3"
+   ],
+   [
+    "Rozhoření",
+    "203 s",
+    "rozměr / rychlost šíření ★2"
+   ]
+  ]
+ },
+ "crate": {
+  "spec": {
+   "kind": "solid",
+   "material": "softwood",
+   "mass": 9,
+   "area": 2.2,
+   "size": 0.6
+  },
+  "result": {
+   "kind": "solid",
+   "fuel": "woodDry",
+   "Qpeak": 286000,
+   "D": 0.96629,
+   "L": 1.2718,
+   "mass": 9,
+   "duration": 616.43,
+   "chiR": 0.3
+  },
+  "rows": [
+   [
+    "Druh ohně",
+    "hořící předmět",
+    "fireSpec"
+   ],
+   [
+    "Hmotnost paliva",
+    "9.0 kg",
+    ""
+   ],
+   [
+    "Doba hoření",
+    "10 min",
+    "m·ΔHc / Q"
+   ],
+   [
+    "Výkon z povrchu",
+    "130 kW/m²",
+    "SFPE ★3"
+   ],
+   [
+    "Rozhoření",
+    "75 s",
+    "rozměr / rychlost šíření ★2"
+   ]
+  ]
+ }
+}

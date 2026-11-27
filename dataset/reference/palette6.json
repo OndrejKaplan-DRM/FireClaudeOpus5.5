@@ -1,0 +1,848 @@
+[
+ {
+  "file": "p01_lighterSpark_0.jpg",
+  "category": "zážeh",
+  "note": "jiskry zapalovače",
+  "title": "File:Zippo Detail.jpg",
+  "artist": "Ricardo Liberato",
+  "license": "CC BY-SA 2.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Zippo_Detail.jpg",
+  "stats": {
+   "scene_median": 0.07,
+   "night": false,
+   "dark_frac": 0.246,
+   "flame_frac": 0.029,
+   "flame_hue": 24.2,
+   "flame_sat": 0.73,
+   "flame_Y_med": 0.52,
+   "flame_Y_p90": 0.69,
+   "flame_over_scene": 7.6,
+   "clipped": 0.31
+  }
+ },
+ {
+  "file": "p02_dLighter_2.jpg",
+  "category": "zážeh",
+  "note": "plamen zapalovače",
+  "title": "File:Silva Helios rope burner lighter.jpg",
+  "artist": "The original uploader was Kallemax at English Wikipedia.",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Silva_Helios_rope_burner_lighter.jpg",
+  "stats": {
+   "scene_median": 0.219,
+   "night": false,
+   "dark_frac": 0.143,
+   "flame_frac": 0.0
+  }
+ },
+ {
+  "file": "p03_candle_0.jpg",
+  "category": "zážeh",
+  "note": "svíčka",
+  "title": "File:DFC 6183 A single tealight glows warmly inside a glass holder surrounded by scattered pink and purple bougainvillea petals.jpg",
+  "artist": "PattayaPatrol",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:DFC_6183_A_single_tealight_glows_warmly_inside_a_glass_holder_surrounded_by_scattered_pink_and_purple_bougainvillea_petals.jpg",
+  "stats": {
+   "scene_median": 0.009,
+   "night": true,
+   "dark_frac": 0.647,
+   "flame_frac": 0.037,
+   "flame_hue": 19.6,
+   "flame_sat": 0.62,
+   "flame_Y_med": 0.53,
+   "flame_Y_p90": 0.58,
+   "flame_over_scene": 62.5,
+   "clipped": 0.15
+  }
+ },
+ {
+  "file": "p04_campfire_0.jpg",
+  "category": "oheň",
+  "note": "plameny v noci",
+  "title": "File:Campfire flames at night.jpg",
+  "artist": "Marc-Lautenbacher",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Campfire_flames_at_night.jpg",
+  "stats": {
+   "scene_median": 0.003,
+   "night": true,
+   "dark_frac": 0.677,
+   "flame_frac": 0.138,
+   "flame_hue": 18.7,
+   "flame_sat": 0.98,
+   "flame_Y_med": 0.43,
+   "flame_Y_p90": 0.77,
+   "flame_over_scene": 214.4,
+   "clipped": 0.05
+  }
+ },
+ {
+  "file": "p05_campfire_1.jpg",
+  "category": "oheň",
+  "note": "odtržený jazyk",
+  "title": "File:Midnight Campfire at the Beach 2026.jpg",
+  "artist": "SutKartonu",
+  "license": "CC0",
+  "url": "https://commons.wikimedia.org/wiki/File:Midnight_Campfire_at_the_Beach_2026.jpg",
+  "stats": {
+   "scene_median": 0.0,
+   "night": true,
+   "dark_frac": 0.906,
+   "flame_frac": 0.008,
+   "flame_hue": 5.4,
+   "flame_sat": 1.0,
+   "flame_Y_med": 0.19,
+   "flame_Y_p90": 0.28,
+   "flame_over_scene": 191.6,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p06_campfire_2.jpg",
+  "category": "oheň",
+  "note": "jiskry nad ohništěm",
+  "title": "File:Campfire (79586115).jpeg",
+  "artist": "Thibaud Furst",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Campfire_(79586115).jpeg",
+  "stats": {
+   "scene_median": 0.004,
+   "night": true,
+   "dark_frac": 0.799,
+   "flame_frac": 0.044,
+   "flame_hue": 12.1,
+   "flame_sat": 0.81,
+   "flame_Y_med": 0.38,
+   "flame_Y_p90": 0.71,
+   "flame_over_scene": 93.6,
+   "clipped": 0.03
+  }
+ },
+ {
+  "file": "p07_campfire_3.jpg",
+  "category": "oheň",
+  "note": "polena a žhavé uhlí",
+  "title": "File:Campfire (15621989189).jpg",
+  "artist": "Tony Webster from Portland, Oregon, United States",
+  "license": "CC BY 2.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Campfire_(15621989189).jpg",
+  "stats": {
+   "scene_median": 0.004,
+   "night": true,
+   "dark_frac": 0.712,
+   "flame_frac": 0.075,
+   "flame_hue": 10.5,
+   "flame_sat": 0.96,
+   "flame_Y_med": 0.33,
+   "flame_Y_p90": 0.65,
+   "flame_over_scene": 107.5,
+   "clipped": 0.04
+  }
+ },
+ {
+  "file": "p08_campfire_4.jpg",
+  "category": "oheň",
+  "note": "malý oheň z dálky",
+  "title": "File:Wood campfire.JPG",
+  "artist": "MartinSpamer",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Wood_campfire.JPG",
+  "stats": {
+   "scene_median": 0.001,
+   "night": true,
+   "dark_frac": 0.964,
+   "flame_frac": 0.022,
+   "flame_hue": 16.0,
+   "flame_sat": 0.98,
+   "flame_Y_med": 0.4,
+   "flame_Y_p90": 0.66,
+   "flame_over_scene": 397.7,
+   "clipped": 0.02
+  }
+ },
+ {
+  "file": "p09_cEmbers_0.jpg",
+  "category": "uhlíky",
+  "note": "žhavé lože",
+  "title": "File:0507 HRO Strandparty PICT5896.jpg",
+  "artist": "JanReschuh",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:0507_HRO_Strandparty_PICT5896.jpg",
+  "stats": {
+   "scene_median": 0.001,
+   "night": true,
+   "dark_frac": 0.757,
+   "flame_frac": 0.05,
+   "flame_hue": 4.5,
+   "flame_sat": 0.96,
+   "flame_Y_med": 0.22,
+   "flame_Y_p90": 0.38,
+   "flame_over_scene": 217.0,
+   "clipped": 0.01
+  }
+ },
+ {
+  "file": "p10_cEmbers_4.jpg",
+  "category": "uhlíky",
+  "note": "roj jisker",
+  "title": "File:2013-06-12 23-01-22-braises.jpg",
+  "artist": "Thomas Bresson",
+  "license": "CC BY 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:2013-06-12_23-01-22-braises.jpg",
+  "stats": {
+   "scene_median": 0.154,
+   "night": false,
+   "dark_frac": 0.193,
+   "flame_frac": 0.458,
+   "flame_hue": 8.7,
+   "flame_sat": 0.93,
+   "flame_Y_med": 0.31,
+   "flame_Y_p90": 0.62,
+   "flame_over_scene": 7.3,
+   "clipped": 0.04
+  }
+ },
+ {
+  "file": "p11_cEmbers_5.jpg",
+  "category": "uhlíky",
+  "note": "uhlí s plamínkem",
+  "title": "File:2013-365-28 Complexity Never Seen (8425465941).jpg",
+  "artist": "cogdogblog",
+  "license": "CC BY 2.0",
+  "url": "https://commons.wikimedia.org/wiki/File:2013-365-28_Complexity_Never_Seen_(8425465941).jpg",
+  "stats": {
+   "scene_median": 0.024,
+   "night": false,
+   "dark_frac": 0.461,
+   "flame_frac": 0.049,
+   "flame_hue": 13.3,
+   "flame_sat": 0.94,
+   "flame_Y_med": 0.33,
+   "flame_Y_p90": 0.53,
+   "flame_over_scene": 15.4,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p12_grinder_1.jpg",
+  "category": "jiskry",
+  "note": "bruska – vějíř",
+  "title": "File:US Navy 100715-N-0569K-026 Aviation Structural Mechanic 2nd Class Timothy J. Workman grinds steel used for aircraft support equipment repairs in the jet shop aboard the aircraft carrier USS Enterprise (CVN 65).jpg",
+  "artist": "U.S. Navy photo by Mass Communication Specialist Seaman Apprentice Jared M. King",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:US_Navy_100715-N-0569K-026_Aviation_Structural_Mechanic_2nd_Class_Timothy_J._Workman_grinds_steel_used_for_aircraft_support_equipment_repairs_in_the_jet_shop_aboard_the_aircraft_carrier_USS_Enterprise_(CVN_65).jpg",
+  "stats": {
+   "scene_median": 0.009,
+   "night": true,
+   "dark_frac": 0.657,
+   "flame_frac": 0.055,
+   "flame_hue": 27.9,
+   "flame_sat": 0.92,
+   "flame_Y_med": 0.44,
+   "flame_Y_p90": 0.74,
+   "flame_over_scene": 59.8,
+   "clipped": 0.05
+  }
+ },
+ {
+  "file": "p13_grinder_4.jpg",
+  "category": "jiskry",
+  "note": "bruska – proud",
+  "title": "File:Shower of Sparks.jpg",
+  "artist": "Colowokanga",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Shower_of_Sparks.jpg",
+  "stats": {
+   "scene_median": 0.023,
+   "night": false,
+   "dark_frac": 0.465,
+   "flame_frac": 0.019,
+   "flame_hue": 52.3,
+   "flame_sat": 0.95,
+   "flame_Y_med": 0.54,
+   "flame_Y_p90": 0.82,
+   "flame_over_scene": 24.4,
+   "clipped": 0.37
+  }
+ },
+ {
+  "file": "p14_tire_3.jpg",
+  "category": "pneumatiky",
+  "note": "den, černý kouř",
+  "title": "File:Tires on fire used as a barricade line. Clashes in Kyiv, Ukraine. Events of February 18, 2014.jpg",
+  "artist": "Mstyslav Chernov/Unframe/http://www.unframe.com/",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Tires_on_fire_used_as_a_barricade_line._Clashes_in_Kyiv,_Ukraine._Events_of_February_18,_2014.jpg",
+  "stats": {
+   "scene_median": 0.022,
+   "night": false,
+   "dark_frac": 0.481,
+   "flame_frac": 0.054,
+   "flame_hue": 9.9,
+   "flame_sat": 0.88,
+   "flame_Y_med": 0.38,
+   "flame_Y_p90": 0.61,
+   "flame_over_scene": 19.7,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p15_tire_4.jpg",
+  "category": "pneumatiky",
+  "note": "hromada, kouř",
+  "title": "File:Protesters throwing tires to the fire set by the protesters to prevent internal forces from crossing the barricade line. Kyiv, Ukraine. Jan 22, 2014.jpg",
+  "artist": "Mstyslav Chernov/Unframe/http://www.unframe.com/photographers/102-mstyslav-chern",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Protesters_throwing_tires_to_the_fire_set_by_the_protesters_to_prevent_internal_forces_from_crossing_the_barricade_line._Kyiv,_Ukraine._Jan_22,_2014.jpg",
+  "stats": {
+   "scene_median": 0.03,
+   "night": false,
+   "dark_frac": 0.369,
+   "flame_frac": 0.012,
+   "flame_hue": 16.8,
+   "flame_sat": 0.93,
+   "flame_Y_med": 0.37,
+   "flame_Y_p90": 0.9,
+   "flame_over_scene": 12.6,
+   "clipped": 0.17
+  }
+ },
+ {
+  "file": "p16_cStraw_0.jpg",
+  "category": "sláma",
+  "note": "hořící sláma",
+  "title": "File:Burning the Straw (Chondipur) in 2025.01.jpg",
+  "artist": "CAPTAIN RAJU",
+  "license": "CC0",
+  "url": "https://commons.wikimedia.org/wiki/File:Burning_the_Straw_(Chondipur)_in_2025.01.jpg",
+  "stats": {
+   "scene_median": 0.157,
+   "night": false,
+   "dark_frac": 0.053,
+   "flame_frac": 0.125,
+   "flame_hue": 12.9,
+   "flame_sat": 0.82,
+   "flame_Y_med": 0.38,
+   "flame_Y_p90": 0.6,
+   "flame_over_scene": 2.8,
+   "clipped": 0.02
+  }
+ },
+ {
+  "file": "p17_cStraw_4.jpg",
+  "category": "sláma",
+  "note": "bílý dým",
+  "title": "File:Burning the Straw (Chondipur) in 2025.05.jpg",
+  "artist": "CAPTAIN RAJU",
+  "license": "CC0",
+  "url": "https://commons.wikimedia.org/wiki/File:Burning_the_Straw_(Chondipur)_in_2025.05.jpg",
+  "stats": {
+   "scene_median": 0.228,
+   "night": false,
+   "dark_frac": 0.034,
+   "flame_frac": 0.015,
+   "flame_hue": 23.3,
+   "flame_sat": 0.67,
+   "flame_Y_med": 0.39,
+   "flame_Y_p90": 0.49,
+   "flame_over_scene": 1.7,
+   "clipped": 1.53
+  }
+ },
+ {
+  "file": "p18_cStraw_5.jpg",
+  "category": "sláma",
+  "note": "pás plamenů ve dne",
+  "title": "File:Gelsenkirchen Horst - Schloss - Gaudium - Löwenritter 32 ies.jpg",
+  "artist": "Frank Vincentz",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Gelsenkirchen_Horst_-_Schloss_-_Gaudium_-_L%C3%B6wenritter_32_ies.jpg",
+  "stats": {
+   "scene_median": 0.067,
+   "night": false,
+   "dark_frac": 0.26,
+   "flame_frac": 0.127,
+   "flame_hue": 36.6,
+   "flame_sat": 0.98,
+   "flame_Y_med": 0.59,
+   "flame_Y_p90": 0.9,
+   "flame_over_scene": 11.3,
+   "clipped": 0.1
+  }
+ },
+ {
+  "file": "p19_carFire_3.jpg",
+  "category": "auto",
+  "note": "výcvikový požár",
+  "title": "File:U.S. Air Force Senior Airman Christopher Crusius, a firefighter assigned to the 612th Air Base Squadron, is engulfed in flames as he opens the hood during a simulated car fire as part of Central America Sharing 130827-F-NG649-002.jpg",
+  "artist": "SSG Jarrod Chavana",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:U.S._Air_Force_Senior_Airman_Christopher_Crusius,_a_firefighter_assigned_to_the_612th_Air_Base_Squadron,_is_engulfed_in_flames_as_he_opens_the_hood_during_a_simulated_car_fire_as_part_of_Central_America_Sharing_130827-F-NG649-002.jpg",
+  "stats": {
+   "scene_median": 0.616,
+   "night": false,
+   "dark_frac": 0.132,
+   "flame_frac": 0.083,
+   "flame_hue": 20.5,
+   "flame_sat": 0.68,
+   "flame_Y_med": 0.61,
+   "flame_Y_p90": 0.76,
+   "flame_over_scene": 1.0,
+   "clipped": 0.01
+  }
+ },
+ {
+  "file": "p20_carFire_4.jpg",
+  "category": "auto",
+  "note": "požár auta ve dne",
+  "title": "File:SV-RTL Firefighting (16685391802).jpg",
+  "artist": "Kecko",
+  "license": "CC BY 2.0",
+  "url": "https://commons.wikimedia.org/wiki/File:SV-RTL_Firefighting_(16685391802).jpg",
+  "stats": {
+   "scene_median": 0.1,
+   "night": false,
+   "dark_frac": 0.146,
+   "flame_frac": 0.013,
+   "flame_hue": 6.9,
+   "flame_sat": 0.96,
+   "flame_Y_med": 0.24,
+   "flame_Y_p90": 0.43,
+   "flame_over_scene": 2.5,
+   "clipped": 0.01
+  }
+ },
+ {
+  "file": "p21_carWreck_0.jpg",
+  "category": "vyhořelé auto",
+  "note": "rez, saze, bílý popílek",
+  "title": "File:Burnt out car wreck - geograph.org.uk - 6813228.jpg",
+  "artist": "Neil Theasby",
+  "license": "CC BY-SA 2.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Burnt_out_car_wreck_-_geograph.org.uk_-_6813228.jpg",
+  "stats": {
+   "scene_median": 0.191,
+   "night": false,
+   "dark_frac": 0.059,
+   "flame_frac": 0.0
+  }
+ },
+ {
+  "file": "p22_carWreck_2.jpg",
+  "category": "vyhořelé auto",
+  "note": "hranice shořelého laku",
+  "title": "File:Burnt out car wreck near Bolton Ings - geograph.org.uk - 5035204.jpg",
+  "artist": "Neil Theasby",
+  "license": "CC BY-SA 2.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Burnt_out_car_wreck_near_Bolton_Ings_-_geograph.org.uk_-_5035204.jpg",
+  "stats": {
+   "scene_median": 0.193,
+   "night": false,
+   "dark_frac": 0.081,
+   "flame_frac": 0.003,
+   "flame_hue": 33.7,
+   "flame_sat": 0.66,
+   "flame_Y_med": 0.42,
+   "flame_Y_p90": 0.51,
+   "flame_over_scene": 2.2,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p23_carWreck_4.jpg",
+  "category": "vyhořelé auto",
+  "note": "starý vrak",
+  "title": "File:Burnt out Car Wreck on M76 (37730039262).jpg",
+  "artist": "Sonse",
+  "license": "CC BY 2.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Burnt_out_Car_Wreck_on_M76_(37730039262).jpg",
+  "stats": {
+   "scene_median": 0.391,
+   "night": false,
+   "dark_frac": 0.042,
+   "flame_frac": 0.177,
+   "flame_hue": 28.8,
+   "flame_sat": 0.65,
+   "flame_Y_med": 0.39,
+   "flame_Y_p90": 0.44,
+   "flame_over_scene": 1.0,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p24_cHouse_0.jpg",
+  "category": "dům",
+  "note": "noční požár",
+  "title": "File:2025 Southern California fires and the United States Forest Service (USFS) - Eaton Fire Initial Attack (54263442283).jpg",
+  "artist": "Pacific Southwest Forest Service, USDA from USA",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:2025_Southern_California_fires_and_the_United_States_Forest_Service_(USFS)_-_Eaton_Fire_Initial_Attack_(54263442283).jpg",
+  "stats": {
+   "scene_median": 0.024,
+   "night": false,
+   "dark_frac": 0.456,
+   "flame_frac": 0.083,
+   "flame_hue": 17.6,
+   "flame_sat": 0.79,
+   "flame_Y_med": 0.36,
+   "flame_Y_p90": 0.58,
+   "flame_over_scene": 18.0,
+   "clipped": 0.01
+  }
+ },
+ {
+  "file": "p25_cHouse_3.jpg",
+  "category": "dům",
+  "note": "střecha, černý kouř",
+  "title": "File:House fire in Waikanae, 16 May 2026, P 03.jpg",
+  "artist": "Panamitsu",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:House_fire_in_Waikanae,_16_May_2026,_P_03.jpg",
+  "stats": {
+   "scene_median": 0.129,
+   "night": false,
+   "dark_frac": 0.011,
+   "flame_frac": 0.003,
+   "flame_hue": 27.3,
+   "flame_sat": 0.64,
+   "flame_Y_med": 0.43,
+   "flame_Y_p90": 0.55,
+   "flame_over_scene": 3.3,
+   "clipped": 4.08
+  }
+ },
+ {
+  "file": "p26_cFlash_1.jpg",
+  "category": "dům",
+  "note": "plameny pod stropem",
+  "title": "File:Flashover001.jpg",
+  "artist": "Pabloboj",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Flashover001.jpg",
+  "stats": {
+   "scene_median": 0.237,
+   "night": false,
+   "dark_frac": 0.005,
+   "flame_frac": 0.246,
+   "flame_hue": 15.8,
+   "flame_sat": 0.81,
+   "flame_Y_med": 0.44,
+   "flame_Y_p90": 0.72,
+   "flame_over_scene": 2.7,
+   "clipped": 0.14
+  }
+ },
+ {
+  "file": "p27_cSoot_2.jpg",
+  "category": "škody",
+  "note": "saze nad okny",
+  "title": "File:Burnt out Ballys 6Av 20 jeh.JPG",
+  "artist": "Jim.henderson",
+  "license": "CC0",
+  "url": "https://commons.wikimedia.org/wiki/File:Burnt_out_Ballys_6Av_20_jeh.JPG",
+  "stats": {
+   "scene_median": 0.224,
+   "night": false,
+   "dark_frac": 0.045,
+   "flame_frac": 0.008,
+   "flame_hue": 56.7,
+   "flame_sat": 0.74,
+   "flame_Y_med": 0.75,
+   "flame_Y_p90": 0.94,
+   "flame_over_scene": 3.4,
+   "clipped": 2.16
+  }
+ },
+ {
+  "file": "p28_cChar_0.jpg",
+  "category": "škody",
+  "note": "zuhelnatělý pařez",
+  "title": "File:Kultplatz Danielsberg, Mölltal, Kärnten.jpg",
+  "artist": "Naturpuur",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Kultplatz_Danielsberg,_M%C3%B6lltal,_K%C3%A4rnten.jpg",
+  "stats": {
+   "scene_median": 0.079,
+   "night": false,
+   "dark_frac": 0.143,
+   "flame_frac": 0.001,
+   "flame_hue": 23.9,
+   "flame_sat": 0.68,
+   "flame_Y_med": 0.4,
+   "flame_Y_p90": 0.53,
+   "flame_over_scene": 5.0,
+   "clipped": 32.29
+  }
+ },
+ {
+  "file": "p29_cChar_1.jpg",
+  "category": "škody",
+  "note": "aligátoří trám",
+  "title": "File:Mostschenke Oberlaa 02.jpg",
+  "artist": "Herzi Pinki",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Mostschenke_Oberlaa_02.jpg",
+  "stats": {
+   "scene_median": 0.034,
+   "night": false,
+   "dark_frac": 0.394,
+   "flame_frac": 0.0
+  }
+ },
+ {
+  "file": "p30_dKuwait_1.jpg",
+  "category": "kapaliny",
+  "note": "hořící ropná jezera",
+  "title": "File:F-14A VF-114 over burning Kuwaiti oil well 1991.JPEG",
+  "artist": "Lt. Steve Gozzo, U.S. Navy",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:F-14A_VF-114_over_burning_Kuwaiti_oil_well_1991.JPEG",
+  "stats": {
+   "scene_median": 0.018,
+   "night": true,
+   "dark_frac": 0.539,
+   "flame_frac": 0.002,
+   "flame_hue": 8.8,
+   "flame_sat": 0.9,
+   "flame_Y_med": 0.3,
+   "flame_Y_p90": 0.56,
+   "flame_over_scene": 16.8,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p31_dKuwait_2.jpg",
+  "category": "kapaliny",
+  "note": "hořící vrt",
+  "title": "File:Kuwaiti Oil Well Fire.jpg",
+  "artist": "EdJF",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Kuwaiti_Oil_Well_Fire.jpg",
+  "stats": {
+   "scene_median": 0.241,
+   "night": false,
+   "dark_frac": 0.007,
+   "flame_frac": 0.044,
+   "flame_hue": 34.2,
+   "flame_sat": 0.83,
+   "flame_Y_med": 0.63,
+   "flame_Y_p90": 0.84,
+   "flame_over_scene": 2.8,
+   "clipped": 0.1
+  }
+ },
+ {
+  "file": "p32_dWall_1.jpg",
+  "category": "ohnivá koule",
+  "note": "benzínová stěna ohně",
+  "title": "File:US Air Force F-16 Viper at the Fort Worth Airshow, 2017.jpg",
+  "artist": "Air Force Viper Demo Team (United States Air Force)",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:US_Air_Force_F-16_Viper_at_the_Fort_Worth_Airshow,_2017.jpg",
+  "stats": {
+   "scene_median": 0.271,
+   "night": false,
+   "dark_frac": 0.071,
+   "flame_frac": 0.214,
+   "flame_hue": 14.2,
+   "flame_sat": 1.0,
+   "flame_Y_med": 0.37,
+   "flame_Y_p90": 0.59,
+   "flame_over_scene": 2.5,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p33_dWall_2.jpg",
+  "category": "ohnivá koule",
+  "note": "benzínová stěna ohně",
+  "title": "File:120928-M-MM918-002 (8046941568).jpg",
+  "artist": "U.S. Department of Defense Current Photos",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:120928-M-MM918-002_(8046941568).jpg",
+  "stats": {
+   "scene_median": 0.183,
+   "night": false,
+   "dark_frac": 0.087,
+   "flame_frac": 0.346,
+   "flame_hue": 17.4,
+   "flame_sat": 0.98,
+   "flame_Y_med": 0.41,
+   "flame_Y_p90": 0.76,
+   "flame_over_scene": 5.1,
+   "clipped": 0.04
+  }
+ },
+ {
+  "file": "p34_cFireball_0.jpg",
+  "category": "ohnivá koule",
+  "note": "stoupající hřiby",
+  "title": "File:Fire explosions.jpg",
+  "artist": "Jon Sullivan",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Fire_explosions.jpg",
+  "stats": {
+   "scene_median": 0.167,
+   "night": false,
+   "dark_frac": 0.201,
+   "flame_frac": 0.088,
+   "flame_hue": 16.4,
+   "flame_sat": 0.96,
+   "flame_Y_med": 0.36,
+   "flame_Y_p90": 0.71,
+   "flame_over_scene": 3.8,
+   "clipped": 0.02
+  }
+ },
+ {
+  "file": "p35_detonation_0.jpg",
+  "category": "výbuch",
+  "note": "ohnivá koule a prach",
+  "title": "File:379 ECES EOD team practices controlled detonation procedure for base defense (9467998).jpg",
+  "artist": "U.S. Air Force photo by Tech. Sgt. Justin Norton",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:379_ECES_EOD_team_practices_controlled_detonation_procedure_for_base_defense_(9467998).jpg",
+  "stats": {
+   "scene_median": 0.107,
+   "night": false,
+   "dark_frac": 0.029,
+   "flame_frac": 0.425,
+   "flame_hue": 24.2,
+   "flame_sat": 0.99,
+   "flame_Y_med": 0.49,
+   "flame_Y_p90": 0.78,
+   "flame_over_scene": 12.4,
+   "clipped": 0.02
+  }
+ },
+ {
+  "file": "p36_detonation_2.jpg",
+  "category": "výbuch",
+  "note": "koule se střepinami",
+  "title": "File:Flickr - The U.S. Army - Controlled detonation (1).jpg",
+  "artist": "The U.S. Army\n\nPFC Gary Silverman/Photographer/U.S. Army",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Flickr_-_The_U.S._Army_-_Controlled_detonation_(1).jpg",
+  "stats": {
+   "scene_median": 0.484,
+   "night": false,
+   "dark_frac": 0.005,
+   "flame_frac": 0.233,
+   "flame_hue": 21.5,
+   "flame_sat": 0.93,
+   "flame_Y_med": 0.46,
+   "flame_Y_p90": 0.84,
+   "flame_over_scene": 0.9,
+   "clipped": 0.07
+  }
+ },
+ {
+  "file": "p37_detonation_3.jpg",
+  "category": "výbuch",
+  "note": "sloup prachu a hřib",
+  "title": "File:US Navy 050210-N-6932B-257 Chief Operations Specialist Slade Scott and Gunner's Mate 2nd Class Clifford Sabo conduct a controlled detonation of unexploded ordnance.jpg",
+  "artist": "U.S. Navy photo by Photographer's Mate 1st Class Richard J. Brunson",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:US_Navy_050210-N-6932B-257_Chief_Operations_Specialist_Slade_Scott_and_Gunner%27s_Mate_2nd_Class_Clifford_Sabo_conduct_a_controlled_detonation_of_unexploded_ordnance.jpg",
+  "stats": {
+   "scene_median": 0.25,
+   "night": false,
+   "dark_frac": 0.128,
+   "flame_frac": 0.004,
+   "flame_hue": 30.0,
+   "flame_sat": 0.69,
+   "flame_Y_med": 0.39,
+   "flame_Y_p90": 0.43,
+   "flame_over_scene": 1.6,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p38_detonation_4.jpg",
+  "category": "výbuch",
+  "note": "černý mrak s ohněm",
+  "title": "File:US Navy 050210-N-6932B-214 Chief Operations Specialist Slade Scott and Gunner's Mate 2nd Class Clifford Sabo conduct a controlled detonation of unexploded ordnance.jpg",
+  "artist": "U.S. Navy photo by Photographer's Mate 1st Class Richard J. Brunson",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:US_Navy_050210-N-6932B-214_Chief_Operations_Specialist_Slade_Scott_and_Gunner%27s_Mate_2nd_Class_Clifford_Sabo_conduct_a_controlled_detonation_of_unexploded_ordnance.jpg",
+  "stats": {
+   "scene_median": 0.528,
+   "night": false,
+   "dark_frac": 0.094,
+   "flame_frac": 0.022,
+   "flame_hue": 13.0,
+   "flame_sat": 0.93,
+   "flame_Y_med": 0.32,
+   "flame_Y_p90": 0.42,
+   "flame_over_scene": 0.6,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p39_cExpl_1.jpg",
+  "category": "výbuch",
+  "note": "výtrysky zeminy",
+  "title": "File:'Breacher you have control!' 130110-M-WC184-006.jpg",
+  "artist": "Lance Cpl. Austin Long",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:%27Breacher_you_have_control!%27_130110-M-WC184-006.jpg",
+  "stats": {
+   "scene_median": 0.11,
+   "night": false,
+   "dark_frac": 0.074,
+   "flame_frac": 0.0
+  }
+ },
+ {
+  "file": "p40_cExpl_4.jpg",
+  "category": "výbuch",
+  "note": "velká koule u vozidel",
+  "title": "File:1 CEB Clears Rout 611 During Operation Outlaw Wrath.jpg",
+  "artist": "Cpl. John McCall",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:1_CEB_Clears_Rout_611_During_Operation_Outlaw_Wrath.jpg",
+  "stats": {
+   "scene_median": 0.243,
+   "night": false,
+   "dark_frac": 0.004,
+   "flame_frac": 0.167,
+   "flame_hue": 8.8,
+   "flame_sat": 0.86,
+   "flame_Y_med": 0.43,
+   "flame_Y_p90": 0.58,
+   "flame_over_scene": 1.9,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "p41_dWeld_0.jpg",
+  "category": "plyn",
+  "note": "hořák – předmíšený plamen",
+  "title": "File:Oxy-fuel welding - flame1.jpg",
+  "artist": "Sheila",
+  "license": "CC BY 2.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Oxy-fuel_welding_-_flame1.jpg",
+  "stats": {
+   "scene_median": 0.157,
+   "night": false,
+   "dark_frac": 0.084,
+   "flame_frac": 0.0
+  }
+ },
+ {
+  "file": "p42_cHaze_4.jpg",
+  "category": "tetelení",
+  "note": "tetelení vzduchu",
+  "title": "File:2019-03-31 - DB0IL-DM0SL - Line of Sight.jpg",
+  "artist": "Fabian Horst",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:2019-03-31_-_DB0IL-DM0SL_-_Line_of_Sight.jpg",
+  "stats": {
+   "scene_median": 0.354,
+   "night": false,
+   "dark_frac": 0.0,
+   "flame_frac": 0.0
+  }
+ }
+]

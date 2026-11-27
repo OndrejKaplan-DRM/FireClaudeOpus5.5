@@ -1,0 +1,187 @@
+{
+ "flux_W_m2": [
+  8000,
+  10000,
+  12500,
+  15000,
+  20000,
+  25000,
+  35000,
+  50000,
+  80000,
+  150000
+ ],
+ "note": "doba do vznícení [s], null = pod kritickým tokem",
+ "materials": {
+  "softwood": [
+   null,
+   null,
+   90792.03,
+   2522,
+   354.66,
+   134.31,
+   42.91,
+   15.72,
+   4.91,
+   1.19
+  ],
+  "hardwood": [
+   null,
+   null,
+   16796.37,
+   2361.99,
+   466.57,
+   192.82,
+   65.61,
+   24.85,
+   7.94,
+   1.96
+  ],
+  "woodWet": [
+   null,
+   null,
+   null,
+   null,
+   2442.9,
+   610.73,
+   152.68,
+   49.86,
+   14.46,
+   3.35
+  ],
+  "paper": [
+   null,
+   null,
+   45.02,
+   22.51,
+   11.26,
+   7.5,
+   4.5,
+   2.81,
+   1.61,
+   0.8
+  ],
+  "straw": [
+   null,
+   25.2,
+   11.2,
+   7.2,
+   4.2,
+   2.96,
+   1.87,
+   1.2,
+   0.7,
+   0.35
+  ],
+  "textile": [
+   null,
+   null,
+   26.21,
+   13.1,
+   6.55,
+   4.37,
+   2.62,
+   1.64,
+   0.94,
+   0.47
+  ],
+  "puFoam": [
+   2155.13,
+   239.46,
+   71.24,
+   33.67,
+   12.75,
+   6.65,
+   2.75,
+   1.17,
+   0.4,
+   0.11
+  ],
+  "plastic": [
+   null,
+   null,
+   null,
+   null,
+   3175.52,
+   793.88,
+   198.47,
+   64.81,
+   18.79,
+   4.36
+  ],
+  "rubber": [
+   null,
+   null,
+   null,
+   null,
+   7963.94,
+   1119.93,
+   221.22,
+   65.82,
+   18.06,
+   4.05
+  ],
+  "gasoline": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "diesel": [
+   22.34,
+   15.96,
+   11.76,
+   9.31,
+   6.57,
+   5.08,
+   3.49,
+   2.38,
+   1.45,
+   0.76
+  ]
+ },
+ "effects": [
+  [
+   1000,
+   "letní slunce"
+  ],
+  [
+   2500,
+   "bolest kůže do ~30 s; mez pro hasiče bez ochrany"
+  ],
+  [
+   5000,
+   "bolest do 10 s, puchýře do 30 s; sklo praská"
+  ],
+  [
+   8000,
+   "vzplane sláma a suchá tráva"
+  ],
+  [
+   12500,
+   "vzplane dřevo s pilotním plamenem; taví se plasty"
+  ],
+  [
+   20000,
+   "podlaha při flashoveru; vypadává sklo"
+  ],
+  [
+   35000,
+   "dřevo vzplane samo bez plamínku za desítky sekund"
+  ],
+  [
+   80000,
+   "kontakt s plamenem"
+  ],
+  [
+   150000,
+   "pohlcení velkým požárem kapalin"
+  ]
+ ]
+}

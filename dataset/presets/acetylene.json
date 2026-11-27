@@ -1,7 +1,7 @@
 {
  "format": "firelab-preset/1",
  "id": "acetylene",
- "name": "Výbuch acetylenové bomby",
+ "name": "Výbuch směsi acetylen + kyslík (sáček)",
  "group": "Exploze",
  "desc": "50 l PE sáček se stechiometrickou směsí C₂H₂ + O₂ (≈ 15 g C₂H₂). Detonace → modrobílý záblesk ~3 000 K, téměř bez sazí, ostrá tlaková vlna.",
  "time": "soumrak",

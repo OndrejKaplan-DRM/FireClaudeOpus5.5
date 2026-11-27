@@ -63,6 +63,7 @@
    "conf": 3
   },
   "diesel": {
+   "sootBlack": 0.96,
    "fv": 2,
    "Tlum": 1380,
    "name": "Nafta",
@@ -81,6 +82,7 @@
    "conf": 4
   },
   "gasoline": {
+   "sootBlack": 0.92,
    "fv": 1.5,
    "Tlum": 1400,
    "name": "Benzín",
@@ -115,6 +117,7 @@
    "conf": 3
   },
   "vehicle": {
+   "sootBlack": 0.92,
    "fv": 1.8,
    "Tlum": 1360,
    "name": "Osobní auto (plasty, pryž, palivo)",
@@ -205,6 +208,73 @@
    "wa": 1.3,
    "wb": 1.4,
    "tr": 40
+  },
+  "butane": {
+   "fv": 3,
+   "name": "Butan (zapalovač)",
+   "dHc": 45700000,
+   "rho": 580,
+   "ys": 0.029,
+   "yCO": 0.007,
+   "chiR": 0.28,
+   "Tflame": 1400,
+   "water": 0,
+   "tar": 0,
+   "embers": 0,
+   "sparks": 0,
+   "conf": 4
+  },
+  "acetylene": {
+   "sootBlack": 1,
+   "fv": 6,
+   "Tlum": 1500,
+   "name": "Acetylen (na vzduchu)",
+   "dHc": 48200000,
+   "rho": 1.1,
+   "ys": 0.096,
+   "yCO": 0.04,
+   "chiR": 0.4,
+   "Tflame": 1350,
+   "water": 0,
+   "tar": 0.1,
+   "embers": 0,
+   "sparks": 0,
+   "conf": 4
+  },
+  "acetone": {
+   "fv": 0.8,
+   "Tlum": 1350,
+   "name": "Aceton",
+   "dHc": 25800000,
+   "mInf": 0.041,
+   "kBeta": 1.9,
+   "rho": 790,
+   "ys": 0.014,
+   "yCO": 0.003,
+   "chiR": 0.27,
+   "Tflame": 1250,
+   "water": 0,
+   "tar": 0,
+   "embers": 0,
+   "sparks": 0,
+   "conf": 4
+  },
+  "ethanol": {
+   "fv": 0.15,
+   "name": "Líh (etanol)",
+   "dHc": 26800000,
+   "mInf": 0.015,
+   "kBeta": 100,
+   "rho": 790,
+   "ys": 0.008,
+   "yCO": 0.001,
+   "chiR": 0.2,
+   "Tflame": 1500,
+   "water": 0,
+   "tar": 0,
+   "embers": 0,
+   "sparks": 0,
+   "conf": 4
   },
   "steelSpark": {
    "fv": 0,
