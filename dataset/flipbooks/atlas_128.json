@@ -2,7 +2,7 @@
  "res": 128,
  "frames": 64,
  "layout": "16x8: 0-7 flame, 8-15 smoke",
- "bakeMs": 26,
+ "bakeMs": 32.60000000009313,
  "grid": [
   16,
   8

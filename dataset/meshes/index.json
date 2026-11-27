@@ -534,19 +534,19 @@
    },
    {
     "lod": 2,
-    "tris": 1132,
+    "tris": 1318,
     "file": "pine_L2.glb",
-    "kB": 321
+    "kB": 371
    },
    {
     "lod": 3,
-    "tris": 12936,
+    "tris": 2682,
     "file": "pine_L3.glb",
-    "kB": 1428
+    "kB": 499
    },
    {
     "lod": 4,
-    "tris": 160536,
+    "tris": 6038,
     "note": "generuje se za běhu (D-007)"
    }
   ]
