@@ -23,7 +23,7 @@
   "homepage": "https://github.com/OndrejKaplan-DRM/fireclaudeopus5.5#readme",
   "dependencies": {
     "esbuild": "^0.24.0",
-    "three": "^0.170.0"
+    "three": "^0.187.0"
   },
   "type": "module"
 }

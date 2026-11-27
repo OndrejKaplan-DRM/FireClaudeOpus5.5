@@ -88,6 +88,7 @@ export function bakeAtlas(renderer, { res = 128, seed = 3, steps = 48 } = {}) {
     uTurb: { value: new THREE.Vector4(0.75, 0.4, 1.6, 2.0) }, uPuff: { value: new THREE.Vector2(1.0 / 2.0, 0.35) },
     uSoot: { value: 0.35 }, uBlue: { value: 0 }, uSigma: { value: 0.2 }, uLift: { value: 0 }, uAge: { value: 0 }, uLoopT: { value: 2.0 },
     uRes: { value: new THREE.Vector2(W, H) },
+    uFlame2: { value: new THREE.Vector4(1.5, 0, 0.12, 0.75) }, uFlowL: { value: 1.3 }, uDetail: { value: 2 }, uShapeK: { value: 1 }, uPixAng: { value: 0.0005 },
   };
   const m = new THREE.ShaderMaterial({ vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }', fragmentShader: src, uniforms: u, glslVersion: THREE.GLSL3, depthTest: false, depthWrite: false });
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));

@@ -31,7 +31,7 @@ window.__fire = {
   app, ui, SCENARIOS, ASSETS,
   ff(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) app.step(dt); },
   renderOnce() { app.updateExposure(); app.renderFrame(1 / 30); },
-  settle(n = 30) { for (let i = 0; i < n; i++) { app.updateExposure(); app.pipeline.exposure = app.pipeline.targetExposure; } app.updateExposure(); },
+  settle(n = 30) { for (let i = 0; i < n; i++) { app.updateExposure(); app.pipeline.exposure = app.pipeline.targetExposure; } app.updateExposure(); app.step(1 / 240); },
   shot() { app.updateExposure(); app.renderFrame(1 / 30); return app.renderer.domElement.toDataURL('image/png'); },
   /** GLB modelu jako base64 (pro bake datasetu) */
   glb(id, lod) {

@@ -14,7 +14,7 @@ import { mulberry32, fbm1 } from '../engine/rng.js';
 import { bbRGB } from './lights.js';
 import { FLAMEK, PRE } from './shared.js';
 
-export const FLAME_LUM = 12000; // jas plamene [cd/m²] při 1500 K a ε = 1 (po vizuální kompresi teploty) – viz DECISIONS D-010
+export const FLAME_LUM = 20000; // jas plamene [cd/m²] při 1500 K a ε = 1 (po vizuální kompresi teploty) – viz DECISIONS D-010
 
 export class FXWorld {
   constructor(renderer, scene, tier, pipeline) {
@@ -22,7 +22,7 @@ export class FXWorld {
     this.air = new AirField();
     this.time = 0; this.scnTime = 0; this.sources = []; this.explosions = []; this.decals = [];
     this.gustNoise = fbm1(77); this.o2 = 1; this.vent = C.ventilation(1);
-    this.shake = 0; this.flameLum = FLAME_LUM;
+    this.shake = 0; this.flameLum = FLAME_LUM; this.lumRef = 12000; // lumRef: původní klíč 16/expozice (výbuchy, jiskry, žhnutí) – vzhled sudu beze změny
     this.layers = { flame: true, smoke: true, sparks: true, haze: true, light: true, volume: true };
     this.setTier(tier);
   }
@@ -102,7 +102,7 @@ export class FXWorld {
     this.bb.pre = PRE.value;
     if (this.env) { const T = this.env.T, k = 1 / Math.PI; this.bb.mat.uniforms.uAmb.value.setRGB(0.75, 0.8, 0.95).multiplyScalar(T.hemi * k * 0.9); this.bb.mat.uniforms.uSunCol.value.setRGB(1, 0.95, 0.88).multiplyScalar((T.sun + T.moon) * k * 0.6); }
     this.bb.update(dt, a, camera, lights);
-    this.bb.mat.uniforms.uFlameLum.value = this.flameLum; FLAMEK.value = this.flameLum; this.sp.mat.uniforms.uLum.value = this.flameLum;
+    this.bb.mat.uniforms.uFlameLum.value = this.lumRef; FLAMEK.value = this.lumRef; this.sp.mat.uniforms.uLum.value = this.lumRef;
     this.sp.viewportH = this.pipeline.size?.H || 720;
     this.sp.update(dt, a, camera); this.sp.mesh.visible = this.layers.sparks;
     if (this.hz) { this.hz.update(dt, a, this.time); this.hz.mesh.visible = this.layers.haze; }
@@ -188,6 +188,13 @@ export class FireSource {
     const cw = Math.cos(w.air.dir), sw = Math.sin(w.air.dir);
     const lean = Math.tan(Math.min(ph.tilt.theta, 1.3));
     const flick = 0.8 + 0.2 * this.fl(gt * ph.fp * 0.6) + 0.12 * this.fl(gt * 0.4 + 9);
+    const kE = 2.7 * (f.fv ?? 0.6) * (0.7 + 0.6 * Math.min(1, ph.vent.sootMul - 0.5));
+    // opticky tlustý plamen (τ_D = κ·D/2 ≫ 1) má jas černého tělesa po celé ploše; oko se na takový zdroj adaptuje
+    // víc než na tenký jazyk svíčky → zisk (1 + 0,6(τ−1))^−0,6 (umělecké ★2, D-020); platí pro objem i sprity
+    const tauD = kE * D * 0.5;
+    this.gainVol = Math.pow(1 + 0.6 * Math.max(0, tauD - 1), -0.6);
+    const Tvis = (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop - 60; // barva spritů podle svítivých zón
+    const kSpr = this.gainVol * w.flameLum / Math.max(w.lumRef, 1e-6); // sprity sdílejí uniformu lumRef s výbuchy
     // --- objem
     const useVol = this.vol && w.layers.volume;
     if (useVol) {
@@ -195,16 +202,32 @@ export class FireSource {
       const Rz = this.o.footprint.type === 'rect' ? Math.max(this.o.footprint.d * this.fpScale, 0.1) / 2 : null;
       const Rx = this.o.footprint.type === 'rect' ? Math.max(this.o.footprint.w * this.fpScale, 0.1) / 2 : D / 2;
       v.place(this.pos, ph.L * (0.95 + 0.1 * flick), Math.max(Rx, 0.004), ph.tilt.theta, w.air.dir, ph.tilt.drag, Rz);
-      const u = v.u;
-      u.uTpeak.value = ph.T + 80; u.uTamb.value = 700;
-      u.uIntensity.value = w.flameLum * (1.3 / Math.max(D * 0.7 + ph.L * 0.15, 0.01)) * flick;
+      const u = v.u, tier = w.tier;
+      u.uTpeak.value = (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop; u.uTamb.value = 700;
+      // zdrojová funkce = Planck × jas po adaptaci; svítivost řídí κ ze sazí (emise–absorpce), ne ruční normalizace
+      u.uIntensity.value = w.flameLum * flick * this.gainVol;
+      u.uFlame2.value.set(kE,
+        Math.min(1, Math.max(0, (D - 1.5) / 4)) * Math.min(1, f.ys * ph.vent.sootMul * 20), tier.flameEdge ?? 0.14, 0.65 + 0.2 * w.air.turb);
+      this._volR = Math.max(Rx, 0.004);
       u.uSigma.value = 0.6 / Math.max(D, 0.02);
+      u.uSigmaSoot.value = 3.0 / Math.max(Math.sqrt(D), 0.1);
       u.uSeed.value = (this.o.seed ?? 1) * 0.37;
-      const sc = Math.max(D, ph.L * 0.35);
-      u.uTurb.value.set(this.o.turbAmp ?? 0.5 + 0.25 * ph.vent.lift, sc * 0.55, Math.max(ph.L * ph.fp * 0.9, 0.05), 0.25 + 0.1 * w.air.turb + 0.25 * ph.vent.lift);
+      const eddy = Math.max(D, ph.L * 0.3) * 0.42;
+      const U = 1.75 * Math.pow(ph.Q / 1000, 0.2); // rychlost v přerušované zóně (McCaffrey 1,93 Q^⅕) ★4
+      const bigK = Math.min(1, Math.max(0, (3 - ph.L / Math.max(D, 0.01)) * 0.5));
+      u.uTurb.value.set(this.o.turbAmp ?? 0.55 + 0.25 * ph.vent.lift + 0.3 * bigK, eddy, Math.max(U, 0.05), 0.25 + 0.1 * w.air.turb + 0.25 * ph.vent.lift);
+      u.uFlowL.value = Math.max(ph.L, 0.01);
+      u.uShapeK.value = this.o.shapeK ?? Math.min(2.2, Math.max(1, 1 + (3 - ph.L / Math.max(D, 0.01)) * 0.5));
+      u.uDetail.value = tier.volumeDetail ?? 1;
+      const sc = v.mesh.scale, boxMax = Math.max(sc.x, sc.y, sc.z);
+      // krok: zlomek víru, ale opticky ne tlustší než ~0,6 (jinak třpytivý povrch z rozptylu prvního zásahu)
+      u.uStepLen.value = Math.max(Math.min(eddy * 0.1, 0.6 / Math.max(kE, 0.1)), boxMax / tier.volumeSteps * 0.85);
+      // okraj nesmí být ostřejší než krok paprsku (jinak „zrnité“ okraje bez TAA)
+      u.uFlame2.value.z = Math.max(tier.flameEdge ?? 0.14, (1.3 * u.uStepLen.value) / this._volR * 0.5);
+      u.uFrame.value = (u.uFrame.value + 1) % 1024;
       u.uPuff.value.set(ph.fp, this.o.puffAmp ?? 0.5);
       u.uShape.value.y = this.o.taper ?? 0.85; u.uShape.value.z = this.o.baseWide ?? 0.25; u.uShape.value.w = this.o.neck ?? 0.2;
-      u.uSoot.value = Math.min(1.5, f.ys * ph.vent.sootMul * 18);
+      u.uSoot.value = Math.min(1.0, f.ys * ph.vent.sootMul * 18);
       u.uBlue.value = this.o.blue; u.uLift.value = ph.vent.lift;
     }
     // --- jazyky plamene (sprity)
@@ -213,8 +236,8 @@ export class FireSource {
     const uf = 1.5 * Math.pow(ph.Q / 1000, 0.2);
     const life = Math.min(2.5, Math.max(0.22, L / uf));
     const s0 = 1.45 * Math.max(Math.min(0.9 * L, Math.max(0.5 * L, 0.65 * D)), 0.004); // jazyk v atlasu zabírá ~60 % buňky
-    let nF = Math.min(160, 5 + 4 * (D / s0) ** 2 * (L / s0)) * m.flame * (useVol ? 0.3 : 1);
-    if (this.o.tongues) nF = this.o.tongues * (useVol ? 0.3 : 1);
+    let nF = Math.min(160, 5 + 4 * (D / s0) ** 2 * (L / s0)) * m.flame * (useVol ? 0.5 : 1);
+    if (this.o.tongues) nF = this.o.tongues * (useVol ? 0.5 : 1);
     this.demand.flame = nF;
     if (w.layers.flame && !(useVol && this.o.volumeOnly)) {
       this.acc.flame += (nF * w.budgetScale.flame * dt) / life;
@@ -222,15 +245,26 @@ export class FireSource {
         this.acc.flame -= 1;
         const [x, y, z] = this.footprintPoint();
         const up = (L / life) * 0.75;
+        if (useVol) {
+          // s objemem jen odtržené plaménky nad hrotem (přerušovaná zóna): malé, krátce žijící, bez „květákových“ puffů
+          const h = L * (0.55 + 0.45 * r()), sz = s0 * (0.18 + 0.14 * r());
+          w.bb.spawnFlame({
+            x: x * 0.6 + this.pos.x * 0.4 + lean * h * cw, y: y + h, z: z * 0.6 + this.pos.z * 0.4 + lean * h * sw,
+            vx: up * lean * cw + push[0], vy: up * 1.2 + push[1], vz: up * lean * sw + push[2],
+            life: life * (0.25 + 0.2 * r()), s0: sz, s1: sz * 0.3, T: Tvis + (r() - 0.5) * 80, lum: flick * 0.6 * kSpr, tint: [1, 1, 1],
+            ox: this.pos.x, oz: this.pos.z, pq: 0, pz0: 0, drag: life * 4, stretch: 0.8, R0: D / 2, seed: r(),
+          });
+          continue;
+        }
         if (D > 1.2 && r() < 0.35) {
           const h = L * (0.25 + 0.5 * r());
-          w.bb.spawnFirePuff({ x: x + lean * h * cw, y: y + h, z: z + lean * h * sw, vx: up * lean * cw + push[0], vy: up * 0.8 + push[1], vz: up * lean * sw + push[2], life: life * (0.8 + 0.6 * r()), s0: s0 * 0.7, s1: s0 * 1.1, T: ph.T * (0.95 + 0.1 * r()), lum: flick * 0.8, soot: Math.min(1, f.ys * ph.vent.sootMul * 10), drag: life * 3, seed: r() });
+          w.bb.spawnFirePuff({ x: x + lean * h * cw, y: y + h, z: z + lean * h * sw, vx: up * lean * cw + push[0], vy: up * 0.8 + push[1], vz: up * lean * sw + push[2], life: life * (0.8 + 0.6 * r()), s0: s0 * 0.7, s1: s0 * 1.1, T: Tvis * (0.95 + 0.1 * r()), lum: flick * 0.8 * kSpr, soot: Math.min(1, f.ys * ph.vent.sootMul * 10), drag: life * 3, seed: r() });
           continue;
         }
         w.bb.spawnFlame({
           x, y: y + L * 0.08 * r(), z, vx: up * lean * cw + push[0], vy: up + push[1], vz: up * lean * sw + push[2],
-          life: life * (0.75 + 0.5 * r()), s0: s0 * (0.8 + 0.4 * r()), s1: s0 * 0.55, T: ph.T + (r() - 0.5) * 100,
-          lum: flick * 0.75, tint: [1, 1, 1],
+          life: life * (0.75 + 0.5 * r()), s0: s0 * (0.8 + 0.4 * r()), s1: s0 * 0.55, T: Tvis + (r() - 0.5) * 100,
+          lum: flick * 0.75 * kSpr, tint: [1, 1, 1],
           ox: this.pos.x, oz: this.pos.z, pq: 0, pz0: 0, drag: life * 4, stretch: 0.6 + ph.tilt.us * 0.1, R0: D / 2,
           seed: r(),
         });
@@ -238,7 +272,8 @@ export class FireSource {
     }
     // --- kouř
     const smokeLife = (this.o.smokeLife ?? 1) * Math.min(28, Math.max(2.5, 4 + Math.sqrt(ph.Q / 1e5) * 3));
-    const nS = Math.min(700, 8 + 22 * Math.sqrt(ph.Q / 1e5)) * m.smoke;
+    const sMul = w.tier.smokeMul ?? 1;
+    const nS = Math.min(700 * sMul, (8 + 22 * Math.sqrt(ph.Q / 1e5)) * sMul) * m.smoke;
     this.demand.smoke = ph.tau > 0.003 ? nS : 0;
     if (w.layers.smoke && ph.tau > 0.003) {
       this.acc.smoke += (nS * w.budgetScale.smoke * dt) / smokeLife;
@@ -248,9 +283,10 @@ export class FireSource {
         this.acc.smoke -= 1;
         const [x, , z] = this.footprintPoint();
         const k = 0.45 + 0.4 * r();
-        const s0s = b * (1.2 + 0.6 * r());
+        const s0s = b * (1.2 + 0.6 * r()) / Math.pow(sMul, 0.25);
         // viditelná optická tloušťka sloupce → τ jedné částice (překryv ~3)
-        const tau0 = Math.min(8, ph.tau * 0.5 * (1 / Math.max(this.w.budgetScale.smoke, 0.25)) ** 0.5);
+        // víc částic → menší τ každé (překryv roste ∝ hustota emise); celková τ sloupce zůstává podle fyziky
+        const tau0 = Math.min(8, ph.tau * 0.5 * (1 / Math.max(this.w.budgetScale.smoke * sMul, 0.25)) ** 0.7);
         w.bb.spawnSmoke({
           x: x + lean * L * cw * k + push[0] * 0.3, y: zs, z: z + lean * L * sw * k + push[2] * 0.3, vx: push[0] * 0.5, vy: Math.max(1, L * ph.fp * 0.5), vz: push[2] * 0.5,
           life: smokeLife * (0.7 + 0.6 * r()), s0: s0s, s1: s0s * (4 + 4 * r()) + smokeLife * 0.15, tau: tau0,
@@ -296,7 +332,7 @@ export class FireSource {
     }
     // --- světlo
     const lh = this.o.lightH ?? 0.65;
-    w.lights.add(this.pos.x + lean * L * lh * cw, this.pos.y + L * lh, this.pos.z + lean * L * lh * sw, ph.I * flick, ph.T - 80, Math.max(D * 0.6, L * 0.5));
+    w.lights.add(this.pos.x + lean * L * lh * cw, this.pos.y + L * lh, this.pos.z + lean * L * lh * sw, ph.I * flick, (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop - 40, Math.max(D * 0.6, L * 0.5), ph.tau / Math.max(2 * ph.b, 0.05));
   }
 }
 
@@ -348,7 +384,7 @@ export class Explosion {
         ball.mesh.position.set(this.pos.x, yc - S / 2, this.pos.z); ball.mesh.rotation.set(0, 0, 0); ball.mesh.scale.set(S, S, S);
         const u = ball.u; u.uScale.value.set(S, S, S);
         u.uAge.value = age; u.uTpeak.value = fb.T; u.uTamb.value = 700;
-        u.uIntensity.value = w.flameLum * 1.8 / Math.max(R, 0.05) * (1 - age * 0.6);
+        u.uIntensity.value = w.lumRef * 1.8 / Math.max(R, 0.05) * (1 - age * 0.6);
         u.uSigma.value = 0.8 / Math.max(R, 0.05);
         u.uSoot.value = (fb.soot ?? 0.5) * 2.0 / Math.max(R, 0.1) * 0.5;
         u.uTurb.value.set(0.5, Math.max(R * 0.6, 0.05), Math.max(R / tf * 0.4, 0.2), 0);

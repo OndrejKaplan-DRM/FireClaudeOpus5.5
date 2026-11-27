@@ -180,7 +180,7 @@ void main(){
     // kouř: R = hustota, G = propustnost ke světlu shora, B = okraj
     float tau = vC.a;
     float al = (1.0 - exp(-a.r * tau * 2.2)) * a.a;
-    al *= smoothstep(0.0, 0.08, age) * (1.0 - smoothstep(0.8, 1.0, age)) * soft;
+    al *= (1.0 - smoothstep(0.8, 1.0, age)) * soft;
     vec3 alb = vC.rgb;
     vec3 lit = (uAmb * (0.55 + 0.45 * a.g) + uSunCol * a.g * (0.6 + 0.4 * a.b)) * uPreExp;
     // podsvícení ohněm zespodu (spočítáno na CPU, rozptyl ∝ albedo)
@@ -291,14 +291,19 @@ export class BillboardSystem extends BaseSystem {
       } else {
         // zřeďování: v oblaku c ∝ 1/b², tloušťka ∝ b → τ ∝ s0/s
         const s0 = Math.max(d[o + F.s0], 1e-3);
-        const tau = (d[o + F.tau0] * s0) / s;
+        // náběh krytí za ~0,3 s (ne podílem života: dlouhý život 28 s = mezera mezi plamenem a kouřem)
+        const tau = ((d[o + F.tau0] * s0) / s) * (1 - Math.exp(-age / 0.3));
         C[j * 4] = d[o + F.cr]; C[j * 4 + 1] = d[o + F.cg]; C[j * 4 + 2] = d[o + F.cb]; C[j * 4 + 3] = tau;
         // podsvícení od světel ohně
         let gr = 0, gg = 0, gb = 0;
         for (const L of lights) {
           if (!L.on) continue;
           const dx = d[o] - L.x, dy = d[o + 1] - L.y, dz = d[o + 2] - L.z;
-          const e = L.I / (dx * dx + dy * dy + dz * dz + L.r * L.r) * 0.015; // izotropní rozptyl E/4π × zastínění uvnitř kouře (×uPreExp v shaderu)
+          const d2 = dx * dx + dy * dy + dz * dz;
+          // izotropní rozptyl E/4π × zastínění uvnitř kouře (×uPreExp v shaderu); světlo k částici prochází
+          // vlastním sloupcem kouře: τ ≈ k·(d − r/2)·0,6 → nasvícená jen spodní část sloupce (fotky nočních požárů)
+          const sh = L.k > 0 ? Math.exp(-L.k * Math.max(0, Math.sqrt(d2) - L.r * 0.5) * 0.6) : 1;
+          const e = L.I / (d2 + 0.25 * L.r * L.r) * 0.05 * sh;
           gr += e * L.c[0]; gg += e * L.c[1]; gb += e * L.c[2];
         }
         G[j * 4] = gr; G[j * 4 + 1] = gg; G[j * 4 + 2] = gb; G[j * 4 + 3] = 0;

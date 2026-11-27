@@ -30,7 +30,8 @@ export class FireLights {
   }
   begin() { this.req.length = 0; }
   /** I [cd], T [K], r = poloměr zdroje (proti singularitě), pos */
-  add(x, y, z, I, T, r = 0.3) { if (I > 0) this.req.push({ x, y, z, I, T, r }); }
+  /** k [1/m] = extinkce kouře vlastního sloupce (stínění podsvícení kouře výš ve sloupci) */
+  add(x, y, z, I, T, r = 0.3, k = 0) { if (I > 0) this.req.push({ x, y, z, I, T, r, k }); }
   end(camera) {
     const reqs = this.req, n = this.pool.length;
     const cp = camera.position;
@@ -44,7 +45,7 @@ export class FireLights {
       const k = keep[best]; if (!k) continue;
       const s = k.I + q.I;
       k.x = (k.x * k.I + q.x * q.I) / s; k.y = (k.y * k.I + q.y * q.I) / s; k.z = (k.z * k.I + q.z * q.I) / s;
-      k.T = (k.T * k.I + q.T * q.I) / s; k.r = Math.max(k.r, Math.sqrt(bd) * 0.5); k.I = s;
+      k.T = (k.T * k.I + q.T * q.I) / s; k.r = Math.max(k.r, Math.sqrt(bd) * 0.5); k.I = s; k.k = Math.max(k.k || 0, q.k || 0);
     }
     this.active = [];
     for (let i = 0; i < n; i++) {
@@ -52,7 +53,7 @@ export class FireLights {
       if (!q) { L.intensity = 0; L.userData.I = 0; continue; }
       L.position.set(q.x, q.y, q.z); L.userData.I = q.I; L.intensity = q.I * PRE.value;
       const c = bbRGB(q.T * 1.28); L.color.setRGB(c[0], c[1], c[2]); // barevná teplota sazového plamene (viz sootColor)
-      this.active.push({ on: true, x: q.x, y: q.y, z: q.z, I: q.I, r: q.r, c });
+      this.active.push({ on: true, x: q.x, y: q.y, z: q.z, I: q.I, r: q.r, c, k: q.k || 0 });
     }
     return this.active;
   }

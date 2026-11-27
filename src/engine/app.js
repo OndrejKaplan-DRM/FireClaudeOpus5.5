@@ -17,13 +17,13 @@ export class App {
     this.canvas = canvas;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: !!q.preserve });
     this.renderer.info.autoReset = false;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     const g = guessTier(this.renderer);
     this.gpu = g.gpu; this.autoTier = g.tier;
     this.tierId = q.tier != null ? +q.tier : g.tier;
     this.tier = TIERS[this.tierId];
     this.renderer.shadowMap.enabled = this.tier.shadows;
-    setTextureSize(this.tier.id >= 2 ? 512 : 256);
+    setTextureSize(this.tier.id >= 4 ? 1024 : this.tier.id >= 2 ? 512 : 256);
     noiseTexture();
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(55, 16 / 9, 0.01, 4000);
@@ -36,12 +36,12 @@ export class App {
     this.fx.env = this.env;
     this.objects = []; this.disposables = []; this.flora = [];
     this.timeScale = 1; this.paused = false; this.t = 0; this.wind = 0; this.windDir = 0; this.o2 = 1;
-    this.flameKey = 16; this.lodOverride = null; this.wire = false;
+    this.flameKey = 100; this.lodOverride = null; this.wire = false;
     this.controlsVals = {};
     this.mode = 'scenario';
     this.frameMs = 16; this.cpuMs = 0; this._fpsAcc = []; this.shakeN = fbm1(3);
     this.onMessage = () => {}; this.onScenario = () => {};
-    this.clock = new THREE.Clock();
+    this.clock = { last: performance.now(), getDelta() { const n = performance.now(), d = (n - this.last) / 1000; this.last = n; return d; } };
     this.resize();
     addEventListener('resize', () => this.resize());
   }
@@ -58,7 +58,7 @@ export class App {
   setTier(id) {
     this.tierId = id; this.tier = TIERS[id];
     this.renderer.shadowMap.enabled = this.tier.shadows;
-    setTextureSize(this.tier.id >= 2 ? 512 : 256);
+    setTextureSize(this.tier.id >= 4 ? 1024 : this.tier.id >= 2 ? 512 : 256);
     this.pipeline.setTier(this.tier);
     this.resize();
     this.fx.pipeline = this.pipeline;
@@ -166,7 +166,11 @@ export class App {
     const Ls = (0.25 / Math.PI) * E;
     const Lavg = Math.exp(0.75 * Math.log(Math.max(Ls, 1e-5)) + 0.25 * Math.log(Math.max(this.env.skyL, 1e-5)));
     this.pipeline.targetExposure = Math.min(50, Math.max(2e-6, (0.25 / Lavg) * (this.expBias || 1)));
-    this.fx.flameLum = Math.min(FLAME_LUM, this.flameKey / Math.max(this.pipeline.exposure, 1e-9));
+    // lokální adaptace na plamen jen částečná (β = 0,4): velký požár v záběru stáhne i adaptaci oka (Hood & Finkelstein,
+    // částečná adaptace ~ L^0,4 v mezopickém rozsahu ★3) → velké plameny oranžově žluté, ne bílé; svíčka beze změny
+    const ex = Math.max(this.pipeline.exposure, 1e-9);
+    this.fx.flameLum = Math.min(FLAME_LUM, (this.flameKey / ex) * Math.min(1.3, Math.max(0.1, Math.pow(ex / 0.25, 0.4))));
+    this.fx.lumRef = Math.min(12000, 16 / ex);
     PRE.value = this.pipeline.exposure;
   }
 

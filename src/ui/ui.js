@@ -98,7 +98,7 @@ export class UI {
     else if (e.key === 'r' || e.key === 'R') this.restart();
     else if (e.key >= '1' && e.key <= '4') a.setWind(+e.key - 1);
     else if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('noui');
-    else if (e.key === 't' || e.key === 'T') a.setTier((a.tierId + 1) % 4);
+    else if (e.key === 't' || e.key === 'T') a.setTier((a.tierId + 1) % TIERS.length);
     else if (e.key === 'c' || e.key === 'C') { a.setCam(((a.camIndex || 0) + 1) % (a.scn?.cams?.length || 1)); }
     this.refresh();
   }

@@ -679,7 +679,7 @@ void main(){
     // kou\u0159: R = hustota, G = propustnost ke sv\u011Btlu shora, B = okraj
     float tau = vC.a;
     float al = (1.0 - exp(-a.r * tau * 2.2)) * a.a;
-    al *= smoothstep(0.0, 0.08, age) * (1.0 - smoothstep(0.8, 1.0, age)) * soft;
+    al *= (1.0 - smoothstep(0.8, 1.0, age)) * soft;
     vec3 alb = vC.rgb;
     vec3 lit = (uAmb * (0.55 + 0.45 * a.g) + uSunCol * a.g * (0.6 + 0.4 * a.b)) * uPreExp;
     // podsv\xEDcen\xED ohn\u011Bm zespodu (spo\u010D\xEDt\xE1no na CPU, rozptyl \u221D albedo)
@@ -900,7 +900,7 @@ var BillboardSystem = class extends BaseSystem {
         G[j * 4 + 3] = d[o + F.T0] * (1 - 0.3 * a01);
       } else {
         const s0 = Math.max(d[o + F.s0], 1e-3);
-        const tau = d[o + F.tau0] * s0 / s;
+        const tau = d[o + F.tau0] * s0 / s * (1 - Math.exp(-age / 0.3));
         C[j * 4] = d[o + F.cr];
         C[j * 4 + 1] = d[o + F.cg];
         C[j * 4 + 2] = d[o + F.cb];
@@ -909,7 +909,9 @@ var BillboardSystem = class extends BaseSystem {
         for (const L of lights) {
           if (!L.on) continue;
           const dx = d[o] - L.x, dy = d[o + 1] - L.y, dz = d[o + 2] - L.z;
-          const e = L.I / (dx * dx + dy * dy + dz * dz + L.r * L.r) * 0.015;
+          const d2 = dx * dx + dy * dy + dz * dz;
+          const sh = L.k > 0 ? Math.exp(-L.k * Math.max(0, Math.sqrt(d2) - L.r * 0.5) * 0.6) : 1;
+          const e = L.I / (d2 + 0.25 * L.r * L.r) * 0.05 * sh;
           gr += e * L.c[0];
           gg += e * L.c[1];
           gb += e * L.c[2];
@@ -1183,47 +1185,101 @@ uniform float uSoot, uBlue, uSigma, uLift;
 uniform float uAge;          // ohniv\xE1 koule: 0..1 pr\u016Fb\u011Bh
 uniform float uLoopT;        // >0: periodick\xE1 smy\u010Dka (bake)
 uniform vec2 uRes;
+uniform vec4 uFlame2;        // x: \u03BA sv\xEDtiv\xFDch saz\xED p\u0159i 1 500 K [1/m] (\u2248 2,7\xB7fv[ppm]), y: pl\xE1\u0161\u0165 kou\u0159e velk\xFDch po\u017E\xE1r\u016F 0..1, z: ostrost okraje, w: ohyb pole
+uniform float uFlowL;        // d\xE9lka plamene [m] pro advekci s urychlen\xEDm u \u221D \u221Az
+uniform float uDetail;       // 0..2 po\u010Det jemn\xFDch okt\xE1v (stupn\u011B kvality)
+uniform float uShapeK;       // tvar ob\xE1lky: 1 ku\u017Eel, ~2 sloup velk\xE9 lou\u017Ee
+uniform float uPixAng;       // \xFAhel jednoho pixelu [rad] (stopa vzorku = t\xB7uPixAng)
 
-float noiseLoop(vec3 q, float speed){
-  // periodick\xE1 smy\u010Dka: dv\u011B f\xE1ze \u0161umu prolnut\xE9 \u2013 pro bake beze\u0161v\xE9, jinak jen posun
-  if (uLoopT <= 0.0) return fbm4(q - vec3(0.0, uTime * speed, 0.0));
+// Advekce s urychlen\xEDm (McCaffrey: v souvisl\xE9 z\xF3n\u011B u \u221D \u221Az): sou\u0159adnice \u0161umu = \u010Das letu od paty.
+// \xDAtvar ve v\xFD\u0161ce z se pohybuje rychlost\xED U\xB7\u221A(z/L) a natahuje se svisle \u2013 jazyky \u201Evyst\u0159eluj\xED\u201C vzh\u016Fru.
+// z0 = 0,15 L: virtu\xE1ln\xED po\u010D\xE1tek \u2013 bez n\u011Bj se u paty \u0161um nekone\u010Dn\u011B stla\u010D\xED do vodorovn\xFDch \u201Epl\xE1st\u016F\u201C (\xFAl).
+float tof(float zm){ float L = max(uFlowL, 0.01), z0 = 0.15 * L; return 2.0 * (sqrt((max(zm, 0.0) + z0) * L) - sqrt(z0 * L)); }
+vec3 flowQ(vec3 w, float tt){
+  float s = uTurb.y;
+  return vec3(w.x / s, (uTurb.z * tt - tof(w.y)) / s, w.z / s) * 0.17 + vec3(uSeed * 3.1, 0.0, uSeed * 1.7);
+}
+// Antialiasovan\xFD \u0161um: okt\xE1va men\u0161\xED ne\u017E stopa vzorku (pixel ve vzd\xE1lenosti t, nebo krok paprsku) se plynule
+// nahrad\xED st\u0159edn\xED hodnotou \u2192 \u017E\xE1dn\xE1 \u201Esrst\u201C z podvzorkovan\xFDch okt\xE1v, a z\xE1rove\u0148 levn\u011Bji (m\xE9n\u011B \u010Dten\xED textury).
+float gFpq = 0.0; // stopa vzorku v jednotk\xE1ch q (nastavuje main p\u0159ed vol\xE1n\xEDm pole)
+float octv(vec3 q, float amp, float cell){
+  float wk = 1.0 - smoothstep(0.35, 1.0, gFpq * cell);
+  return amp * (wk > 0.001 ? mix(0.5, n3(q), wk) : 0.5);
+}
+float fbmD(vec3 q, float s){ // fbm s po\u010Dtem okt\xE1v podle stupn\u011B; s = m\u011B\u0159\xEDtko frekvence v\u016F\u010Di z\xE1kladu
+  float c = 16.0 * s;
+  float v = octv(q, 0.5, c) + octv(q * 2.03 + 0.17, 0.25, c * 2.03) + octv(q * 4.07 + 0.41, 0.125, c * 4.07), w = 0.875;
+  if (uDetail > 0.5) { v += octv(q * 8.13 + 0.73, 0.0625, c * 8.13); w += 0.0625; }
+  if (uDetail > 1.5) { v += octv(q * 16.3 + 0.29, 0.03125, c * 16.3); w += 0.03125; }
+  return v / w;
+}
+// ohnut\xE9 pole (domain warp) \u2013 skl\xE1d\xE1 plamen do tenk\xFDch zvln\u011Bn\xFDch pl\xE1t\u016F
+vec4 flameNoise(vec3 w, float tt){
+  vec3 q = flowQ(w, tt);
+  vec3 wv = vec3(n3(q * 0.5 + 0.11), n3(q * 0.5 + 0.43), n3(q * 0.5 + 0.77)) - 0.5;
+  vec3 wq = q + wv * uFlame2.w * 1.6;
+  float n1 = fbmD(wq, 1.0);
+  float n2 = fbmD(wq * 2.2 + vec3(5.2, 1.3, 2.8), 2.2);
+  float n4 = n3(wq * 0.7 + vec3(9.1, 2.0, 4.4) - vec3(0.0, uTime * 0.2, 0.0)); // sv\u011Bteln\xE9 skvrny pl\xE1\u0161t\u011B
+  return vec4(n1, n2, n4, wv.x);
+}
+vec4 flameNoiseLoop(vec3 w){
+  if (uLoopT <= 0.0) return flameNoise(w, uTime);
   float ph = mod(uTime, uLoopT) / uLoopT;
-  float a = fbm4(q - vec3(0.0, ph * uLoopT * speed, 0.0));
-  float b = fbm4(q - vec3(0.0, (ph - 1.0) * uLoopT * speed, 0.0) + vec3(0.37, 0.0, 0.11));
+  vec4 a = flameNoise(w, ph * uLoopT);
+  vec4 b = flameNoise(w + vec3(0.37, 0.0, 0.11) * uTurb.y * 6.0, (ph - 1.0) * uLoopT);
   return mix(a, b, smoothstep(0.0, 1.0, ph));
 }
 
-// vrac\xED (hustota plamene, teplota, saze)
+// vrac\xED (sv\xEDtiv\xE1 hustota 0..1, teplota [K], saze bez emise 0..1)
 vec3 fieldFlame(vec3 p){
   float y = p.y;
-  vec3 w = p * uScale;                                // metry
-  float s = uTurb.y;
-  vec3 q = (w + vec3(uSeed * 3.1, 0.0, uSeed * 1.7)) / s * 0.17;
-  float n1 = noiseLoop(q, uTurb.z / s * 0.17);
-  float n2 = noiseLoop(q * 2.3 + vec3(5.2, 1.3, 2.8), uTurb.z / s * 0.39);
-  // vln\u011Bn\xED osy (v\xEDr) \u2013 flame lick
-  float wob = (n2 - 0.5) * uTurb.w * y;
-  float ax = uAxis0 + uShear * y + wob;
+  // ob\xE1lka bez \u0161umu \u2192 p\u0159esko\u010Den\xED pr\xE1zdna (levn\xE9, v\u011Bt\u0161ina vzork\u016F mimo plamen)
+  // velk\xE9 lou\u017Ee (L/D < 3): sloup \u0161irok\xFD skoro do p\u016Fli v\xFD\u0161ky, pak se rozpad\xE1; \u0161t\xEDhl\xE9 plameny: ku\u017Eel (uShapeK = 1)
+  float prof = pow(clamp(1.0 - pow(max(y, 0.0), uShapeK), 0.0, 1.0), uShape.y) * (1.0 + uShape.z * exp(-y * 9.0));
+  prof *= mix(1.0, clamp(sqrt(y * 6.0 + 0.15), 0.0, 1.0), uShape.w);
+  float axBase = uAxis0 + uShear * y;
+  float wobMax = uTurb.w * y * 0.6 + 0.02;
+  float rx = max(abs(p.x - axBase) - wobMax, 0.0) / uShape.x, rz = max(abs(p.z) - wobMax, 0.0) / uRz;
+  float amp = uTurb.x * (0.35 + 1.4 * y) * 0.6 + 0.12 + uFlame2.y * 0.3;
+  if (prof + amp - length(vec2(rx, rz)) < 0.0) return vec3(0.0, uTamb, 0.0);
+  vec3 w = p * uScale;
+  vec4 N = flameNoiseLoop(w);
+  float n1 = N.x, n2 = N.y, n4 = N.z;
+  // vln\u011Bn\xED osy (jazyk) \u2013 velk\xE9 m\u011B\u0159\xEDtko z ohybov\xE9ho pole
+  float wob = (n2 - 0.5) * uTurb.w * y + N.w * uTurb.w * y * 0.6;
+  float ax = axBase + wob;
   float az = (n1 - 0.5) * uTurb.w * y * 0.6;
   vec2 d2 = vec2((p.x - ax) / uShape.x, (p.z - az) / uRz);
   float r = length(d2);
-  // profil: pata (roz\u0161\xED\u0159en\xED), t\u011Blo zu\u017Euj\xEDc\xED se ke \u0161pi\u010Dce, hrdlo
-  float prof = pow(clamp(1.0 - y, 0.0, 1.0), uShape.y) * (1.0 + uShape.z * exp(-y * 9.0));
-  prof *= mix(1.0, clamp(sqrt(y * 6.0 + 0.15), 0.0, 1.0), uShape.w);
-  // pulzace: prstence stoupaj\xEDc\xED rychlost\xED ~ rise
-  float puff = sin(6.2832 * (uPuff.x * uTime - y * 1.6)) * uPuff.y;
+  // pulzace: toroidn\xED v\xEDry stoupaj\xEDc\xED rychlost\xED ~ U (Cetegen & Ahmed)
+  float puff = sin(6.2832 * (uPuff.x * uTime - tof(w.y) / max(uFlowL, 0.01) * 0.8)) * uPuff.y;
   float dd = prof * (1.0 + 0.25 * puff * y) - r + (n1 - 0.5) * uTurb.x * (0.35 + 1.4 * y) + (n2 - 0.5) * uTurb.x * 0.45;
-  // odtrh\xE1v\xE1n\xED plam\xE9nk\u016F u \u0161pi\u010Dky (p\u0159eru\u0161ovan\xE1 z\xF3na McCaffrey)
-  dd -= smoothstep(0.4, 0.95, y) * smoothstep(0.48, 0.68, n2) * 0.32;
-  // nedostatek kysl\xEDku: odtr\u017Een\xE9 jazyky (lift)
+  // p\u0159eru\u0161ovan\xE1 z\xF3na (McCaffrey \u03B7 0,08\u20130,2): odtrh\xE1v\xE1n\xED plam\xE9nk\u016F
+  dd -= smoothstep(0.38, 0.95, y) * smoothstep(0.46, 0.66, n2) * 0.34;
+  // velk\xE9 po\u017E\xE1ry: p\u0159eru\u0161ovan\xE1 z\xF3na za\u010D\xEDn\xE1 n\xED\u017E (\u03B7 \u2248 0,4 L) a trh\xE1 sloup na samostatn\xE9 jazyky s tmav\xFDmi mezerami
+  dd -= (uShapeK - 1.0) * smoothstep(0.28, 0.85, y) * smoothstep(0.44, 0.6, n1 + 0.3 * (n2 - 0.5)) * 0.45;
+  // nedostatek kysl\xEDku: odtr\u017Een\xE9 l\xEDn\xE9 jazyky
   dd -= uLift * smoothstep(0.55, 0.8, n2) * 0.4 * y;
-  float dens = smoothstep(0.0, 0.22, dd);
+  float edge = uFlame2.z;
+  float dens = smoothstep(0.0, edge, dd);
   float core = smoothstep(0.1, 0.5, dd);
-  // teplota: nejteplej\u0161\xED reak\u010Dn\xED z\xF3na na pl\xE1\u0161ti a ve st\u0159edn\xED v\xFD\u0161ce, chladn\u011Bj\u0161\xED tmav\xE9 j\xE1dro u paty (pyrol\xFDza)
-  float zone = smoothstep(0.0, 0.18, dd) * (1.0 - 0.45 * core * exp(-y * 4.0));
-  float T = uTamb + (uTpeak - uTamb) * zone * (1.0 - 0.55 * y * y) * (0.85 + 0.3 * n2);
-  // saze: nad \u0161pi\u010Dkou, kde plamen dohas\xEDn\xE1
+  // zat\xED\u017Een\xED sazemi kol\xEDs\xE1 (pruhy hust\xFDch a \u0159\xEDdk\xFDch saz\xED) \u2192 pr\u016Fhledn\xE9 mezery mezi jazyky
+  float big = clamp(uShapeK - 1.0, 0.0, 1.0);
+  dens *= mix(0.35 + 0.9 * smoothstep(0.3, 0.7, n1 + 0.15 * (n2 - 0.5)), smoothstep(0.4, 0.62, n1 + 0.2 * (n2 - 0.5)), big * 0.7);
+  // teplota: reak\u010Dn\xED z\xF3na na pl\xE1\u0161ti; hork\xE9 prou\u017Eky; u paty velk\xFDch po\u017E\xE1r\u016F chladn\xE9 tmav\xE9 j\xE1dro par paliva
+  float zone = smoothstep(0.0, 0.16, dd) * (1.0 - 0.5 * core * exp(-y * 4.0) * (0.4 + uFlame2.y));
+  float hotStreak = smoothstep(0.38, 0.78, n2);
+  float T = uTamb + (uTpeak - uTamb) * pow(zone, 0.8) * mix(0.62 - 0.17 * big, 1.04, hotStreak) * (1.0 - 0.42 * pow(y, 1.5));
+  // velk\xE9 sazov\xE9 po\u017E\xE1ry (Steinhaus, Takahashi): vn\u011Bj\u0161\xED vrstva saz\xED, sv\u011Btlo pror\xE1\u017Eej\xED jen \u201Eluminous zones\u201C
+  float shell = uFlame2.y * (1.0 - core) * smoothstep(0.15, 0.55, y + 0.25 * n1);
+  float lumPatch = smoothstep(0.52, 0.64, n4);
+  dens *= mix(1.0, 0.15 + 0.85 * lumPatch, shell);
+  // saze: nad \u0161pi\u010Dkou dohas\xEDnaj\xEDc\xED plamen a pl\xE1\u0161\u0165
   float soot = uSoot * smoothstep(0.35, 0.95, y) * smoothstep(-0.12, 0.08, dd) * (1.0 - core * 0.5);
+  soot += shell * (1.0 - lumPatch) * smoothstep(-0.2, 0.05, dd) * 1.2;
+  // chladn\xE9 sazov\xE9 kapsy uvnit\u0159 velk\xFDch plamen\u016F (tmav\xE9 skvrny ve 2. polovin\u011B v\xFD\u0161ky)
+  soot += big * uSoot * smoothstep(0.25, 0.6, y) * smoothstep(0.6, 0.8, 1.0 - n2) * smoothstep(0.0, 0.1, dd) * 0.8;
   return vec3(dens, T, soot);
 }
 
@@ -1262,6 +1318,7 @@ uniform mat4 uInvModel;
 uniform sampler2D tDepth; uniform vec2 uDepthRes;
 #endif
 uniform vec3 uCamPos;
+uniform float uStepLen, uFrame, uSigmaSoot;
 vec2 boxHit(vec3 ro, vec3 rd){
   vec3 inv = 1.0 / rd;
   vec3 t0 = (vec3(-0.5, 0.0, -0.5) - ro) * inv, t1 = (vec3(0.5, 1.0, 0.5) - ro) * inv;
@@ -1282,36 +1339,49 @@ void main(){
   t1 = min(t1, sceneZ * 1.02 / max(dot(rdW, normalize(-vec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]))), 0.05));
 #endif
   if (t1 <= t0) discard;
-  float steps = uSteps;
+  // d\xE9lka kroku: c\xEDl uStepLen [m], strop uSteps; prokl\xE1dan\xFD gradientn\xED \u0161um + zlat\xFD \u0159ez v \u010Dase (m\xE9n\u011B pruh\u016F)
+  float steps = clamp(ceil((t1 - t0) / max(uStepLen, 1e-4)), 6.0, uSteps);
   float dt = (t1 - t0) / steps;
-  float j = hash12(gl_FragCoord.xy + fract(uTime * 7.31) * 113.0);
+  float j = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))) + uFrame * 0.61803398);
   float t = t0 + dt * j;
   vec3 col = vec3(0.0); float trans = 1.0;
-  float sigmaW = uSigma; // extinkce plamenn\xE9ho plynu [1/m] (mal\xE1)
-  for (int i = 0; i < 128; i++) {
-    if (float(i) >= steps || trans < 0.02) break;
+#ifdef MODE_BALL
+  float sigmaW = uSigma;
+#endif
+  for (int i = 0; i < 192; i++) {
+    if (float(i) >= steps || trans < 0.015) break;
     vec3 p = ro + rd * t;
 #ifdef MODE_BALL
     vec3 f = fieldBall(p);
-#else
-    vec3 f = fieldFlame(p);
-#endif
     if (f.x > 0.002 || f.z > 0.002) {
       vec3 em = sootColor(f.y) * f.x;
-#ifndef MODE_BALL
-      float edge = smoothstep(0.0, 0.25, f.x) * (1.0 - smoothstep(0.3, 0.9, f.x));
-      em += vec3(0.08, 0.16, 1.0) * uBlue * exp(-p.y * 14.0) * edge * 0.6;
-#endif
       float ext = (sigmaW * f.x + f.z * 2.5);
       float a = exp(-ext * dt);
       col += trans * em * uIntensity * dt * (ext > 1e-4 ? (1.0 - a) / (ext * dt) : 1.0);
       trans *= a;
     }
+#else
+    gFpq = max(t * uPixAng, dt * 0.35) * 0.17 / max(uTurb.y, 1e-3);
+    vec3 f = fieldFlame(p);
+    if (f.x > 0.002 || f.z > 0.002) {
+      // emise\u2013absorpce v lok\xE1ln\xED rovnov\xE1ze: \u03BAe sv\xEDtiv\xE9 saze (zdroj = Planck), \u03BAs chladn\xE9 saze (jen pohlcuj\xED)
+      float ke = uFlame2.x * f.x * clamp(f.y / 1500.0, 0.3, 1.4);
+      float ks = f.z * uSigmaSoot;
+      float k = ke + ks + 1e-5;
+      float a = exp(-k * dt);
+      col += trans * (1.0 - a) * (ke / k) * sootColor(f.y) * uIntensity;
+      // modr\xE1 z\xF3na (CH*, C2*): jen u paty a jen tam, kde nesv\xEDt\xED saze (jinak modr\xE1 + oran\u017Eov\xE1 = r\u016F\u017Eov\xE1)
+      float edgeB = smoothstep(0.0, 0.25, f.x) * (1.0 - smoothstep(0.3, 0.9, f.x)) * (1.0 - smoothstep(0.08, 0.3, ke * dt));
+      col += trans * vec3(0.04, 0.12, 1.0) * uBlue * exp(-p.y * 30.0) * edgeB * uIntensity * uPreExp * 0.22 * (dt / max(uFlowL * 0.25, 1e-3));
+      trans *= a;
+    }
+#endif
     t += dt;
   }
   fragColor = vec4(col, 1.0 - trans);
 }`
 );
+var _vp = new THREE4.Vector4();
 function createVolumeMaterial({ ball = false, depth = null, steps = 48 } = {}) {
   const defines = {};
   if (ball) defines.MODE_BALL = 1;
@@ -1340,8 +1410,16 @@ function createVolumeMaterial({ ball = false, depth = null, steps = 48 } = {}) {
     uLoopT: { value: 0 },
     uRes: { value: new THREE4.Vector2(1, 1) },
     uCamPos: { value: new THREE4.Vector3() },
+    uPixAng: { value: 15e-4 },
+    uShapeK: { value: 1 },
     tDepth: { value: depth },
-    uDepthRes: { value: new THREE4.Vector2(1, 1) }
+    uDepthRes: { value: new THREE4.Vector2(1, 1) },
+    uFlame2: { value: new THREE4.Vector4(1.35, 0, 0.12, 0.6) },
+    uFlowL: { value: 1 },
+    uDetail: { value: 1 },
+    uStepLen: { value: 0.05 },
+    uFrame: { value: 0 },
+    uSigmaSoot: { value: 2.5 }
   };
   return new THREE4.ShaderMaterial({
     vertexShader: VS2,
@@ -1373,6 +1451,10 @@ var FlameVolume = class {
       this.mesh.updateMatrixWorld();
       u.uInvModel.value.copy(this.mesh.matrixWorld).invert();
       u.uCamPos.value.setFromMatrixPosition(cam.matrixWorld);
+      if (cam.isPerspectiveCamera) {
+        const vp = r.getCurrentViewport(_vp);
+        u.uPixAng.value = 2 * Math.tan(cam.fov * Math.PI / 360) / Math.max(vp.w, 1);
+      }
       if (u.tDepth.value) {
         const img = u.tDepth.value.image;
         u.uDepthRes.value.set(img.width, img.height);
@@ -1445,8 +1527,9 @@ var FireLights = class {
     this.req.length = 0;
   }
   /** I [cd], T [K], r = poloměr zdroje (proti singularitě), pos */
-  add(x, y, z, I, T, r = 0.3) {
-    if (I > 0) this.req.push({ x, y, z, I, T, r });
+  /** k [1/m] = extinkce kouře vlastního sloupce (stínění podsvícení kouře výš ve sloupci) */
+  add(x, y, z, I, T, r = 0.3, k = 0) {
+    if (I > 0) this.req.push({ x, y, z, I, T, r, k });
   }
   end(camera) {
     const reqs = this.req, n = this.pool.length;
@@ -1476,6 +1559,7 @@ var FireLights = class {
       k.T = (k.T * k.I + q.T * q.I) / s;
       k.r = Math.max(k.r, Math.sqrt(bd) * 0.5);
       k.I = s;
+      k.k = Math.max(k.k || 0, q.k || 0);
     }
     this.active = [];
     for (let i = 0; i < n; i++) {
@@ -1490,7 +1574,7 @@ var FireLights = class {
       L.intensity = q.I * PRE.value;
       const c2 = bbRGB(q.T * 1.28);
       L.color.setRGB(c2[0], c2[1], c2[2]);
-      this.active.push({ on: true, x: q.x, y: q.y, z: q.z, I: q.I, r: q.r, c: c2 });
+      this.active.push({ on: true, x: q.x, y: q.y, z: q.z, I: q.I, r: q.r, c: c2, k: q.k || 0 });
     }
     return this.active;
   }
@@ -1603,7 +1687,12 @@ function bakeAtlas(renderer, { res = 128, seed = 3, steps = 48 } = {}) {
     uLift: { value: 0 },
     uAge: { value: 0 },
     uLoopT: { value: 2 },
-    uRes: { value: new THREE6.Vector2(W, H) }
+    uRes: { value: new THREE6.Vector2(W, H) },
+    uFlame2: { value: new THREE6.Vector4(1.5, 0, 0.12, 0.75) },
+    uFlowL: { value: 1.3 },
+    uDetail: { value: 2 },
+    uShapeK: { value: 1 },
+    uPixAng: { value: 5e-4 }
   };
   const m = new THREE6.ShaderMaterial({ vertexShader: "void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }", fragmentShader: src, uniforms: u, glslVersion: THREE6.GLSL3, depthTest: false, depthWrite: false });
   const g2 = new THREE6.BufferGeometry();
@@ -1817,6 +1906,7 @@ var Scorch = class {
 // src/physics/fuels.js
 var FUELS = {
   paraffin: {
+    fv: 5,
     name: "Paraf\xEDn (sv\xED\u010Dka)",
     dHc: 42e6,
     rho: 900,
@@ -1831,6 +1921,7 @@ var FUELS = {
     conf: 4
   },
   woodDry: {
+    fv: 0.6,
     name: "D\u0159evo such\xE9 (smrk/buk)",
     dHc: 15e6,
     rho: 500,
@@ -1845,6 +1936,8 @@ var FUELS = {
     conf: 4
   },
   woodResin: {
+    fv: 1.2,
+    Tlum: 1300,
     name: "Lou\u010D (smoln\xE9 d\u0159evo)",
     dHc: 18e6,
     rho: 600,
@@ -1859,6 +1952,8 @@ var FUELS = {
     conf: 3
   },
   straw: {
+    fv: 0.4,
+    Tlum: 1300,
     name: "Sl\xE1ma (bal\xEDk)",
     dHc: 14e6,
     rho: 120,
@@ -1873,6 +1968,8 @@ var FUELS = {
     conf: 3
   },
   diesel: {
+    fv: 2,
+    Tlum: 1380,
     name: "Nafta",
     dHc: 444e5,
     mInf: 0.045,
@@ -1889,6 +1986,8 @@ var FUELS = {
     conf: 4
   },
   gasoline: {
+    fv: 1.5,
+    Tlum: 1400,
     name: "Benz\xEDn",
     dHc: 437e5,
     mInf: 0.055,
@@ -1905,6 +2004,8 @@ var FUELS = {
     conf: 4
   },
   rubber: {
+    fv: 4,
+    Tlum: 1350,
     name: "Pry\u017E (pneumatika, SBR)",
     dHc: 27e6,
     rho: 1150,
@@ -1919,6 +2020,8 @@ var FUELS = {
     conf: 3
   },
   vehicle: {
+    fv: 1.8,
+    Tlum: 1360,
     name: "Osobn\xED auto (plasty, pry\u017E, palivo)",
     dHc: 25e6,
     rho: 0,
@@ -1933,6 +2036,8 @@ var FUELS = {
     conf: 3
   },
   houseContents: {
+    fv: 1.4,
+    Tlum: 1350,
     name: "Obsah domu (d\u0159evo, PU p\u011Bna, plasty)",
     dHc: 2e7,
     rho: 0,
@@ -1947,6 +2052,7 @@ var FUELS = {
     conf: 3
   },
   forestLitter: {
+    fv: 0.5,
     name: "Lesn\xED hrabanka + podrost (borovice)",
     dHc: 186e5,
     rho: 0,
@@ -1967,6 +2073,7 @@ var FUELS = {
     tr: 90
   },
   crown: {
+    fv: 0.5,
     name: "Koruny jehli\u010Dnan\u016F",
     dHc: 186e5,
     rho: 0,
@@ -1986,6 +2093,7 @@ var FUELS = {
     tr: 35
   },
   brush: {
+    fv: 0.4,
     name: "Such\xE9 k\u0159ov\xED (ke\u0159e, tr\xE1va)",
     dHc: 18e6,
     rho: 0,
@@ -2005,6 +2113,7 @@ var FUELS = {
     tr: 40
   },
   steelSpark: {
+    fv: 0,
     name: "Ocelov\xE1 jiskra (brou\u0161en\xED)",
     dHc: 0,
     rho: 7850,
@@ -2102,7 +2211,7 @@ function smokeOpticalDepth(Q, D, z, fuel, vent) {
 function smokeColor(fuel, vent) {
   const f = FUELS[fuel];
   const soot = Math.min(1, f.ys * vent.sootMul * 9);
-  const white = [0.82, 0.83, 0.85], tar = [0.36, 0.29, 0.2], black = [0.035, 0.033, 0.032];
+  const white = [0.82, 0.83, 0.85], tar = [0.36, 0.29, 0.2], black = [0.05, 0.047, 0.045];
   const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
   let c2 = mix([0.5, 0.5, 0.5], white, f.water);
   c2 = mix(c2, tar, f.tar * 0.6);
@@ -2225,7 +2334,7 @@ function blastSummary(W, distances = [1, 2, 5, 10, 20, 50, 100, 200]) {
 }
 
 // src/fx/world.js
-var FLAME_LUM = 12e3;
+var FLAME_LUM = 2e4;
 var FXWorld = class {
   constructor(renderer, scene, tier, pipeline) {
     this.renderer = renderer;
@@ -2242,6 +2351,7 @@ var FXWorld = class {
     this.vent = ventilation(1);
     this.shake = 0;
     this.flameLum = FLAME_LUM;
+    this.lumRef = 12e3;
     this.layers = { flame: true, smoke: true, sparks: true, haze: true, light: true, volume: true };
     this.setTier(tier);
   }
@@ -2372,9 +2482,9 @@ var FXWorld = class {
       this.bb.mat.uniforms.uSunCol.value.setRGB(1, 0.95, 0.88).multiplyScalar((T.sun + T.moon) * k * 0.6);
     }
     this.bb.update(dt, a, camera, lights);
-    this.bb.mat.uniforms.uFlameLum.value = this.flameLum;
-    FLAMEK.value = this.flameLum;
-    this.sp.mat.uniforms.uLum.value = this.flameLum;
+    this.bb.mat.uniforms.uFlameLum.value = this.lumRef;
+    FLAMEK.value = this.lumRef;
+    this.sp.mat.uniforms.uLum.value = this.lumRef;
     this.sp.viewportH = this.pipeline.size?.H || 720;
     this.sp.update(dt, a, camera);
     this.sp.mesh.visible = this.layers.sparks;
@@ -2488,6 +2598,11 @@ var FireSource = class {
     const cw = Math.cos(w.air.dir), sw = Math.sin(w.air.dir);
     const lean = Math.tan(Math.min(ph.tilt.theta, 1.3));
     const flick = 0.8 + 0.2 * this.fl(gt * ph.fp * 0.6) + 0.12 * this.fl(gt * 0.4 + 9);
+    const kE = 2.7 * (f.fv ?? 0.6) * (0.7 + 0.6 * Math.min(1, ph.vent.sootMul - 0.5));
+    const tauD = kE * D * 0.5;
+    this.gainVol = Math.pow(1 + 0.6 * Math.max(0, tauD - 1), -0.6);
+    const Tvis = (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop - 60;
+    const kSpr = this.gainVol * w.flameLum / Math.max(w.lumRef, 1e-6);
     const useVol = this.vol && w.layers.volume;
     if (useVol) {
       const v = this.vol;
@@ -2495,19 +2610,36 @@ var FireSource = class {
       const Rz = this.o.footprint.type === "rect" ? Math.max(this.o.footprint.d * this.fpScale, 0.1) / 2 : null;
       const Rx = this.o.footprint.type === "rect" ? Math.max(this.o.footprint.w * this.fpScale, 0.1) / 2 : D / 2;
       v.place(this.pos, ph.L * (0.95 + 0.1 * flick), Math.max(Rx, 4e-3), ph.tilt.theta, w.air.dir, ph.tilt.drag, Rz);
-      const u = v.u;
-      u.uTpeak.value = ph.T + 80;
+      const u = v.u, tier = w.tier;
+      u.uTpeak.value = (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop;
       u.uTamb.value = 700;
-      u.uIntensity.value = w.flameLum * (1.3 / Math.max(D * 0.7 + ph.L * 0.15, 0.01)) * flick;
+      u.uIntensity.value = w.flameLum * flick * this.gainVol;
+      u.uFlame2.value.set(
+        kE,
+        Math.min(1, Math.max(0, (D - 1.5) / 4)) * Math.min(1, f.ys * ph.vent.sootMul * 20),
+        tier.flameEdge ?? 0.14,
+        0.65 + 0.2 * w.air.turb
+      );
+      this._volR = Math.max(Rx, 4e-3);
       u.uSigma.value = 0.6 / Math.max(D, 0.02);
+      u.uSigmaSoot.value = 3 / Math.max(Math.sqrt(D), 0.1);
       u.uSeed.value = (this.o.seed ?? 1) * 0.37;
-      const sc = Math.max(D, ph.L * 0.35);
-      u.uTurb.value.set(this.o.turbAmp ?? 0.5 + 0.25 * ph.vent.lift, sc * 0.55, Math.max(ph.L * ph.fp * 0.9, 0.05), 0.25 + 0.1 * w.air.turb + 0.25 * ph.vent.lift);
+      const eddy = Math.max(D, ph.L * 0.3) * 0.42;
+      const U = 1.75 * Math.pow(ph.Q / 1e3, 0.2);
+      const bigK = Math.min(1, Math.max(0, (3 - ph.L / Math.max(D, 0.01)) * 0.5));
+      u.uTurb.value.set(this.o.turbAmp ?? 0.55 + 0.25 * ph.vent.lift + 0.3 * bigK, eddy, Math.max(U, 0.05), 0.25 + 0.1 * w.air.turb + 0.25 * ph.vent.lift);
+      u.uFlowL.value = Math.max(ph.L, 0.01);
+      u.uShapeK.value = this.o.shapeK ?? Math.min(2.2, Math.max(1, 1 + (3 - ph.L / Math.max(D, 0.01)) * 0.5));
+      u.uDetail.value = tier.volumeDetail ?? 1;
+      const sc = v.mesh.scale, boxMax = Math.max(sc.x, sc.y, sc.z);
+      u.uStepLen.value = Math.max(Math.min(eddy * 0.1, 0.6 / Math.max(kE, 0.1)), boxMax / tier.volumeSteps * 0.85);
+      u.uFlame2.value.z = Math.max(tier.flameEdge ?? 0.14, 1.3 * u.uStepLen.value / this._volR * 0.5);
+      u.uFrame.value = (u.uFrame.value + 1) % 1024;
       u.uPuff.value.set(ph.fp, this.o.puffAmp ?? 0.5);
       u.uShape.value.y = this.o.taper ?? 0.85;
       u.uShape.value.z = this.o.baseWide ?? 0.25;
       u.uShape.value.w = this.o.neck ?? 0.2;
-      u.uSoot.value = Math.min(1.5, f.ys * ph.vent.sootMul * 18);
+      u.uSoot.value = Math.min(1, f.ys * ph.vent.sootMul * 18);
       u.uBlue.value = this.o.blue;
       u.uLift.value = ph.vent.lift;
     }
@@ -2515,8 +2647,8 @@ var FireSource = class {
     const uf = 1.5 * Math.pow(ph.Q / 1e3, 0.2);
     const life = Math.min(2.5, Math.max(0.22, L / uf));
     const s0 = 1.45 * Math.max(Math.min(0.9 * L, Math.max(0.5 * L, 0.65 * D)), 4e-3);
-    let nF = Math.min(160, 5 + 4 * (D / s0) ** 2 * (L / s0)) * m.flame * (useVol ? 0.3 : 1);
-    if (this.o.tongues) nF = this.o.tongues * (useVol ? 0.3 : 1);
+    let nF = Math.min(160, 5 + 4 * (D / s0) ** 2 * (L / s0)) * m.flame * (useVol ? 0.5 : 1);
+    if (this.o.tongues) nF = this.o.tongues * (useVol ? 0.5 : 1);
     this.demand.flame = nF;
     if (w.layers.flame && !(useVol && this.o.volumeOnly)) {
       this.acc.flame += nF * w.budgetScale.flame * dt / life;
@@ -2524,9 +2656,35 @@ var FireSource = class {
         this.acc.flame -= 1;
         const [x, y, z] = this.footprintPoint();
         const up = L / life * 0.75;
+        if (useVol) {
+          const h2 = L * (0.55 + 0.45 * r()), sz = s0 * (0.18 + 0.14 * r());
+          w.bb.spawnFlame({
+            x: x * 0.6 + this.pos.x * 0.4 + lean * h2 * cw,
+            y: y + h2,
+            z: z * 0.6 + this.pos.z * 0.4 + lean * h2 * sw,
+            vx: up * lean * cw + push[0],
+            vy: up * 1.2 + push[1],
+            vz: up * lean * sw + push[2],
+            life: life * (0.25 + 0.2 * r()),
+            s0: sz,
+            s1: sz * 0.3,
+            T: Tvis + (r() - 0.5) * 80,
+            lum: flick * 0.6 * kSpr,
+            tint: [1, 1, 1],
+            ox: this.pos.x,
+            oz: this.pos.z,
+            pq: 0,
+            pz0: 0,
+            drag: life * 4,
+            stretch: 0.8,
+            R0: D / 2,
+            seed: r()
+          });
+          continue;
+        }
         if (D > 1.2 && r() < 0.35) {
           const h2 = L * (0.25 + 0.5 * r());
-          w.bb.spawnFirePuff({ x: x + lean * h2 * cw, y: y + h2, z: z + lean * h2 * sw, vx: up * lean * cw + push[0], vy: up * 0.8 + push[1], vz: up * lean * sw + push[2], life: life * (0.8 + 0.6 * r()), s0: s0 * 0.7, s1: s0 * 1.1, T: ph.T * (0.95 + 0.1 * r()), lum: flick * 0.8, soot: Math.min(1, f.ys * ph.vent.sootMul * 10), drag: life * 3, seed: r() });
+          w.bb.spawnFirePuff({ x: x + lean * h2 * cw, y: y + h2, z: z + lean * h2 * sw, vx: up * lean * cw + push[0], vy: up * 0.8 + push[1], vz: up * lean * sw + push[2], life: life * (0.8 + 0.6 * r()), s0: s0 * 0.7, s1: s0 * 1.1, T: Tvis * (0.95 + 0.1 * r()), lum: flick * 0.8 * kSpr, soot: Math.min(1, f.ys * ph.vent.sootMul * 10), drag: life * 3, seed: r() });
           continue;
         }
         w.bb.spawnFlame({
@@ -2539,8 +2697,8 @@ var FireSource = class {
           life: life * (0.75 + 0.5 * r()),
           s0: s0 * (0.8 + 0.4 * r()),
           s1: s0 * 0.55,
-          T: ph.T + (r() - 0.5) * 100,
-          lum: flick * 0.75,
+          T: Tvis + (r() - 0.5) * 100,
+          lum: flick * 0.75 * kSpr,
           tint: [1, 1, 1],
           ox: this.pos.x,
           oz: this.pos.z,
@@ -2554,7 +2712,8 @@ var FireSource = class {
       }
     }
     const smokeLife = (this.o.smokeLife ?? 1) * Math.min(28, Math.max(2.5, 4 + Math.sqrt(ph.Q / 1e5) * 3));
-    const nS = Math.min(700, 8 + 22 * Math.sqrt(ph.Q / 1e5)) * m.smoke;
+    const sMul = w.tier.smokeMul ?? 1;
+    const nS = Math.min(700 * sMul, (8 + 22 * Math.sqrt(ph.Q / 1e5)) * sMul) * m.smoke;
     this.demand.smoke = ph.tau > 3e-3 ? nS : 0;
     if (w.layers.smoke && ph.tau > 3e-3) {
       this.acc.smoke += nS * w.budgetScale.smoke * dt / smokeLife;
@@ -2564,8 +2723,8 @@ var FireSource = class {
         this.acc.smoke -= 1;
         const [x, , z] = this.footprintPoint();
         const k = 0.45 + 0.4 * r();
-        const s0s = b * (1.2 + 0.6 * r());
-        const tau0 = Math.min(8, ph.tau * 0.5 * (1 / Math.max(this.w.budgetScale.smoke, 0.25)) ** 0.5);
+        const s0s = b * (1.2 + 0.6 * r()) / Math.pow(sMul, 0.25);
+        const tau0 = Math.min(8, ph.tau * 0.5 * (1 / Math.max(this.w.budgetScale.smoke * sMul, 0.25)) ** 0.7);
         w.bb.spawnSmoke({
           x: x + lean * L * cw * k + push[0] * 0.3,
           y: zs,
@@ -2649,7 +2808,7 @@ var FireSource = class {
       }
     }
     const lh = this.o.lightH ?? 0.65;
-    w.lights.add(this.pos.x + lean * L * lh * cw, this.pos.y + L * lh, this.pos.z + lean * L * lh * sw, ph.I * flick, ph.T - 80, Math.max(D * 0.6, L * 0.5));
+    w.lights.add(this.pos.x + lean * L * lh * cw, this.pos.y + L * lh, this.pos.z + lean * L * lh * sw, ph.I * flick, (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop - 40, Math.max(D * 0.6, L * 0.5), ph.tau / Math.max(2 * ph.b, 0.05));
   }
 };
 var Explosion = class {
@@ -2710,7 +2869,7 @@ var Explosion = class {
         u.uAge.value = age;
         u.uTpeak.value = fb.T;
         u.uTamb.value = 700;
-        u.uIntensity.value = w.flameLum * 1.8 / Math.max(R, 0.05) * (1 - age * 0.6);
+        u.uIntensity.value = w.lumRef * 1.8 / Math.max(R, 0.05) * (1 - age * 0.6);
         u.uSigma.value = 0.8 / Math.max(R, 0.05);
         u.uSoot.value = (fb.soot ?? 0.5) * 2 / Math.max(R, 0.1) * 0.5;
         u.uTurb.value.set(0.5, Math.max(R * 0.6, 0.05), Math.max(R / tf * 0.4, 0.2), 0);
@@ -2819,6 +2978,8 @@ var TIERS = [
     maxPixelRatio: 1,
     msaa: 0,
     particles: { flame: 900, smoke: 700, spark: 400, haze: 0 },
+    smokeMul: 1,
+    emberMul: 0.5,
     sortSmoke: false,
     softParticles: false,
     volumes: 0,
@@ -2844,11 +3005,15 @@ var TIERS = [
     maxPixelRatio: 1,
     msaa: 0,
     particles: { flame: 2200, smoke: 1800, spark: 1200, haze: 0 },
+    smokeMul: 1.5,
+    emberMul: 1,
     sortSmoke: true,
     softParticles: false,
     volumes: 2,
-    volumeSteps: 24,
+    volumeSteps: 32,
     volumeScale: 0.5,
+    volumeDetail: 0,
+    flameEdge: 0.2,
     bloom: 3,
     haze: false,
     shadows: false,
@@ -2869,11 +3034,15 @@ var TIERS = [
     maxPixelRatio: 1.25,
     msaa: 0,
     particles: { flame: 5e3, smoke: 5e3, spark: 3e3, haze: 600 },
+    smokeMul: 2.5,
+    emberMul: 1.5,
     sortSmoke: true,
     softParticles: true,
     volumes: 6,
-    volumeSteps: 48,
+    volumeSteps: 64,
     volumeScale: 0.75,
+    volumeDetail: 1,
+    flameEdge: 0.14,
     bloom: 5,
     haze: true,
     shadows: false,
@@ -2894,11 +3063,15 @@ var TIERS = [
     maxPixelRatio: 2,
     msaa: 0,
     particles: { flame: 14e3, smoke: 14e3, spark: 9e3, haze: 1500 },
+    smokeMul: 4,
+    emberMul: 2.5,
     sortSmoke: true,
     softParticles: true,
     volumes: 16,
-    volumeSteps: 96,
+    volumeSteps: 112,
     volumeScale: 1,
+    volumeDetail: 2,
+    flameEdge: 0.1,
     bloom: 6,
     haze: true,
     shadows: true,
@@ -2910,6 +3083,66 @@ var TIERS = [
     flameLight: "shadow",
     grain: true,
     frameBudgetMs: 16.7
+  },
+  {
+    id: 4,
+    name: "T4 \xB7 Ultra (siln\xE9 hern\xED GPU)",
+    hw: "RTX 4070 Super \u2013 4080 / RX 7900, 12\u201316 GB, 1440p",
+    renderScale: 1,
+    maxPixelRatio: 2,
+    msaa: 0,
+    particles: { flame: 22e3, smoke: 26e3, spark: 16e3, haze: 2500 },
+    smokeMul: 6,
+    emberMul: 3.5,
+    sortSmoke: true,
+    softParticles: true,
+    volumes: 24,
+    volumeSteps: 160,
+    volumeScale: 1,
+    volumeDetail: 2,
+    flameEdge: 0.08,
+    smokeVolumes: 2,
+    bloom: 6,
+    haze: true,
+    shadows: true,
+    lights: 10,
+    debris: 2e3,
+    lod: 3,
+    treeMax: 12e3,
+    flipbookRes: 256,
+    flameLight: "shadow",
+    grain: true,
+    frameBudgetMs: 16.7
+  },
+  {
+    id: 5,
+    name: "T5 \xB7 Kino (RTX 4090/5090, sn\xEDmky a videa)",
+    hw: "RTX 4090 / 5090, 24\u201332 GB, 4K",
+    renderScale: 1,
+    maxPixelRatio: 2,
+    msaa: 0,
+    particles: { flame: 32e3, smoke: 4e4, spark: 24e3, haze: 4e3 },
+    smokeMul: 8,
+    emberMul: 5,
+    sortSmoke: true,
+    softParticles: true,
+    volumes: 32,
+    volumeSteps: 192,
+    volumeScale: 1,
+    volumeDetail: 2,
+    flameEdge: 0.07,
+    smokeVolumes: 4,
+    bloom: 6,
+    haze: true,
+    shadows: true,
+    lights: 12,
+    debris: 3e3,
+    lod: 4,
+    treeMax: 16e3,
+    flipbookRes: 256,
+    flameLight: "shadow",
+    grain: true,
+    frameBudgetMs: 33
   }
 ];
 function guessTier(renderer) {
@@ -2926,6 +3159,8 @@ function guessTier(renderer) {
   else if (/Intel.*(HD|UHD) Graphics (4|5|6)\d\d/i.test(s) || /Intel.*HD Graphics$/i.test(s)) t = 0;
   else if (/Intel.*(Iris|UHD|Xe)|Radeon\(TM\) Graphics|Vega \d|Apple M1/i.test(s)) t = 1;
   else if (/GTX (7|9)\d\d|GTX 10[1-5]0|RX (4|5)[0-6]0|MX\d{3}/i.test(s)) t = 1;
+  else if (/RTX (4090|5080|5090)/i.test(s)) t = 5;
+  else if (/RTX (4070|4080|5070)|RX 79\d\d|RX 9070/i.test(s)) t = 4;
   else if (/RTX (40|50)\d\d|RTX 30[6-9]0|RX (7|9)\d{3}|RX 6[7-9]\d\d|Apple M[2-4]/i.test(s)) t = 3;
   return { tier: t, gpu: s };
 }
@@ -4512,7 +4747,7 @@ var SCENARIOS = [
         Q: 80,
         D: 0.016,
         L: () => 0.045,
-        T: 1380,
+        T: 1450,
         blue: 1,
         volume: true,
         taper: 1.25,
@@ -4670,7 +4905,7 @@ var SCENARIOS = [
       const p = tirePile({ lod: Math.max(0, ctx.lod - 1), n: 5 });
       ctx.add(p);
       const curve = { alpha: T2_ALPHA.medium, Qpeak: 15e5, tPlateau: 500, tau: 300 };
-      const src = ctx.fx.addSource({ pos: V(0, 0.25, 0), fuel: "rubber", Q: (t) => hrrCurve(t + 60, curve), D: 0.66, volume: true, seed: 8, mult: { smoke: 1.3 } });
+      const src = ctx.fx.addSource({ pos: V(0, 0.25, 0), fuel: "rubber", Q: (t) => hrrCurve(t + 60, curve), D: 0.95, volume: true, seed: 8, mult: { smoke: 1.3 } });
       const pool = ctx.fx.addSource({ pos: V(0, 0.01, 0), fuel: "rubber", Q: (t) => 3e5 * Math.min(1, t / 60), D: 1.5, start: 120, volume: false, seed: 9, mult: { smoke: 0.6, embers: 0 } });
       ctx.fx.addScorch({ pos: V(0, 0, 0), radius: 1.6, rate: 1 / 200, glow: 0.3, seed: 3 });
       return { update(dt, t) {

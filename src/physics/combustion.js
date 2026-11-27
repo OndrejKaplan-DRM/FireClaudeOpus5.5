@@ -107,7 +107,7 @@ export function smokeOpticalDepth(Q, D, z, fuel, vent) {
 export function smokeColor(fuel, vent) {
   const f = FUELS[fuel];
   const soot = Math.min(1, f.ys * vent.sootMul * 9);
-  const white = [0.82, 0.83, 0.85], tar = [0.36, 0.29, 0.2], black = [0.035, 0.033, 0.032];
+  const white = [0.82, 0.83, 0.85], tar = [0.36, 0.29, 0.2], black = [0.05, 0.047, 0.045];
   const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
   let c = mix([0.5, 0.5, 0.5], white, f.water);
   c = mix(c, tar, f.tar * 0.6);

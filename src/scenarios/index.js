@@ -93,7 +93,7 @@ export const SCENARIOS = [
       const c = P.candle({ lod: ctx.lod }); ctx.add(c);
       const at = c.userData.flameAt;
       const src = ctx.fx.addSource({
-        pos: V(at.x, at.y - 0.004, at.z), fuel: 'paraffin', Q: 80, D: 0.016, L: () => 0.045, T: 1380, blue: 1.0, volume: true,
+        pos: V(at.x, at.y - 0.004, at.z), fuel: 'paraffin', Q: 80, D: 0.016, L: () => 0.045, T: 1450, blue: 1.0, volume: true,
         taper: 1.25, baseWide: -0.1, neck: 0.55, puffAmp: 0.12, turbAmp: 0.12, tongues: 3, lightH: 0.4,
         mult: { smoke: 0.4, embers: 0, sparks: 0, haze: 0.5 }, seed: 2,
       });
@@ -185,7 +185,7 @@ export const SCENARIOS = [
     build(ctx) {
       const p = P.tirePile({ lod: Math.max(0, ctx.lod - 1), n: 5 }); ctx.add(p);
       const curve = { alpha: C.T2_ALPHA.medium, Qpeak: 1.5e6, tPlateau: 500, tau: 300 };
-      const src = ctx.fx.addSource({ pos: V(0, 0.25, 0), fuel: 'rubber', Q: (t) => C.hrrCurve(t + 60, curve), D: 0.66, volume: true, seed: 8, mult: { smoke: 1.3 } });
+      const src = ctx.fx.addSource({ pos: V(0, 0.25, 0), fuel: 'rubber', Q: (t) => C.hrrCurve(t + 60, curve), D: 0.95, volume: true, seed: 8, mult: { smoke: 1.3 } });
       const pool = ctx.fx.addSource({ pos: V(0, 0.01, 0), fuel: 'rubber', Q: (t) => 3e5 * Math.min(1, t / 60), D: 1.5, start: 120, volume: false, seed: 9, mult: { smoke: 0.6, embers: 0 } });
       ctx.fx.addScorch({ pos: V(0, 0, 0), radius: 1.6, rate: 1 / 200, glow: 0.3, seed: 3 });
       return { update(dt, t) { p.userData.char.uChar.value = Math.min(1, 0.2 + t / 900); p.userData.char.uGlow.value = 0.5; }, info: () => [...fireRows(src), ...fireRows(pool, 'louže taveniny').slice(1, 3)] };
