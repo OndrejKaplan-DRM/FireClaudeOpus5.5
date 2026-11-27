@@ -319,7 +319,7 @@ export const SCENARIOS = [
   {
     id: 'tnt', group: 'Exploze', name: 'Exploze 1 t TNT', ground: 'dryGrass', time: 'den', duration: 60, loop: true,
     desc: '1 000 kg TNT v sudu na zemi. Ohnivá koule ~25 m (0,5 s), rázová vlna (kondenzace a prach), stoupající černý mrak (TNT má nedostatek kyslíku → saze), kráter.',
-    cams: [{ name: '160 m', pos: [130, 8, 95], target: [0, 30, 0] }, { name: '400 m', pos: [330, 25, 230], target: [0, 60, 0] }, { name: 'blízko (60 m)', pos: [50, 4, 35], target: [0, 12, 0] }],
+    cams: [{ name: '160 m', pos: [130, 8, 95], target: [0, 50, 0] }, { name: '400 m', pos: [330, 25, 230], target: [0, 60, 0] }, { name: 'blízko (60 m)', pos: [50, 4, 35], target: [0, 12, 0] }],
     build(ctx) {
       const d = P.tntDrum({ lod: ctx.lod }); ctx.add(d);
       const W = 1000, fb = heFireball(W);
@@ -328,7 +328,7 @@ export const SCENARIOS = [
         update(dt, t) {
           if (!boom && t > 2) {
             boom = true; d.visible = false;
-            ctx.fx.addExplosion({ pos: V(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, wilson: 2.5 });
+            ctx.fx.addExplosion({ pos: V(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, ring: true, wilson: 2.5 });
           }
         },
         info: () => [...blastRows(W), ['Ohnivá koule', fb.D.toFixed(0) + ' m / ' + fb.t.toFixed(2) + ' s', '★2'], ['Rychlost čela v 10 m', '≈ ' + (343 * Math.sqrt(1 + (6 * blastSummary(W, [10])[0].Ps) / (7 * 101325))).toFixed(0) + ' m/s', 'Rankine–Hugoniot ★5']],
@@ -391,7 +391,10 @@ function landscapeFire(ctx, o) {
     if (r() > fuelMap[cj * nx + ci] * o.density * 0.6) continue;
     items.push({ x, z, s: o.kind === 'pine' ? 10 + r() * 8 : 0.9 + r() * 0.9, sy: 1, rot: r() * 6.28, cell: cj * nx + ci });
   }
-  const flora = new InstancedFlora(ctx.scene, o.kind, items, { lodNear: Math.min(ctx.lod, o.kind === 'pine' ? 2 : 3), lodFar: 0, nearDist: o.kind === 'pine' ? 45 : 25, seed: o.seed });
+  // borovice: blízko karty větví (LOD 3, T1–T2 LOD 2), daleko kužely; keře: blízko 14 m plné, střed do 40 m LOD 1 (iterace 5)
+  const flora = new InstancedFlora(ctx.scene, o.kind, items, o.kind === 'pine'
+    ? { lodNear: Math.min(ctx.lod, 3), lodFar: ctx.lod >= 3 ? 1 : 0, nearDist: 45, seed: o.seed }
+    : { lodNear: Math.min(ctx.lod, 3), lodMid: Math.min(ctx.lod, 1), lodFar: 0, nearDist: 40, nearFrac: 0.35, seed: o.seed });
   ctx.addDisposable(flora); ctx.flora.push(flora);
   const fuel = FUELS[o.fuel];
   // zapálení: krátká linie napříč větru (např. od cesty), palivo v ní zajištěné

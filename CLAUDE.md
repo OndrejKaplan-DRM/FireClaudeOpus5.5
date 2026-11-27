@@ -19,6 +19,9 @@ npm run test:ui        # kliky na záložky, atlas, assety, časovou osu
 npm run perf           # CPU cena simulace všech scénářů na T0–T3 → dataset/physics/perf_cpu.json
 npm run bake           # dataset/: flipbooky PNG, GLB modely, náhledy, presety JSON (~25 min)
 npm run test:xengine   # integrace s xEngine (jádro + vykreslení z klonu, systém fx.fire)
+npm run test:audio     # zvuk bez reproduktoru (OfflineAudioContext): hlasy ohně, zpoždění rány, útlum výšek
+node tools/audio-demo.mjs [outdir]                        # ukázky zvuku do WAV
+node tools/tri.mjs <scn> <tier> <seek s> <sim s>          # volání kreslení a △ jednoho snímku
 node tools/look.mjs <scn> <tier> <s> "x,y,z" "tx,ty,tz" out.png "<js>"   # snímek s úpravou stavu
 node tools/sweep.mjs <tier> "scn1,scn2" "a.flameKey=v" "40,100" out.png [s]  # mřížka scénář × parametr
 node tools/seq.mjs <scn> <tier> <t1,t2,..> out.png [cam]   # časová řada snímků
@@ -68,6 +71,10 @@ Parametry URL: `?scn=<id>&tier=0..5&wind=0..3&o2=0..1&t=<s>&ui=0`.
   nastaví jinde, přepíše hřib.
 - Scénáře s polem podle `tier.id` (`[..][ctx.tier.id]`) musí mít 6 hodnot (T0–T5) nebo `??` – jinak T4/T5 tiše nic (les, D-032).
 - Laminární plamen se zapíná malým `turbAmp` (< 0,05); modrá zóna pak jen v plášti (`gBlue`), jinak levandulový nádech.
+- Bodové světlo se stínem kreslí stínovou mapu 6×: co vrhá stín, se počítá šestkrát. Porost vrhá stín jen přes náhrady
+  ve vrstvě `LAYER_SHADOW` (7); nový instancovaný porost musí udělat totéž (D-034).
+- Zvuk se zapíná jen gestem; `fx.audioEvents` se bez zvuku drží na 64 (hostitel bez FireAudio je nevybírá).
+- Objemový kouř: kvádr musí mít poloměr ≥ 2 b, jinak jsou vidět svislé hrany (D-036).
 
 ## Co nedělat
 - Nepřidávat CDN závislosti (artefakt i `file://` musí běžet offline).

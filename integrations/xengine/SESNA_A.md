@@ -16,6 +16,12 @@ Pravda o FireLab je v repu `OndrejKaplan-DRM/FireClaudeOpus5.5`. Když se tenhle
   (`hostTier` – hostitel kreslí přímo na plátno bez hloubky a historie). Objemy proto na high mírně zrní; když to bude
   vadit, napiš – řešením je hloubková textura hostitele (návrh pro svodnou, zatím ne).
 - Pin submodulu: commit iterace 4 (hash poslední změny `integrations/xengine`, příkaz v 2.1).
+- **Sud je filmový** (Ondřej 27. 11.): `combat:exploded` se zbraní `*barrel*`/`*sud*` vykreslí `barrelFilm` (větší koule, prach,
+  víc trosek). Poškození zůstává tvoje v `combat` – filmový vzhled nemění tlak ani dosah zranění.
+- **Komponenta `fire` do dat hned po zkoušce F-7**: až B dodá level s jedním táborákem a sudem, při načtení levelu
+  pro entity s `fire` volej `fire.ignite(c.preset, pos, { Q: preset.Q × c.scale })` a výstup `io` přepíná `extinguish`/`ignite`;
+  `explosive` při `combat:destroyed` → tvoje `combat.explode` + `fire.explode(c.preset, pos)`. Kontroly dat:
+  `integrations/xengine/xspace.js`.
 
 ---
 

@@ -10,13 +10,15 @@
 export { FXWorld, FireSource, Explosion, FLAME_LUM } from './fx/world.js';
 export { BillboardSystem, SparkSystem, HazeSystem, AirField, PTYPE } from './fx/particles.js';
 export { FlameVolume, VOLUME_FIELDS, VOLUME_FS } from './fx/volume.js';
+export { SmokeVolume } from './fx/smokeVolume.js';
+export { FireAudio, fireVoice, boom, pop, noiseBuffer, crackleBuffer } from './audio/fireAudio.js';
 export { bakeAtlas, atlasToCanvas } from './fx/bake.js';
 export { applyChar } from './fx/char.js';
 export { FireLights } from './fx/lights.js';
 export { Debris } from './fx/debris.js';
 export { Scorch } from './fx/decal.js';
 export { PRE, FLAMEK, GLSL_COMMON, sharedUniforms, noiseTexture, bbTexture } from './fx/shared.js';
-export { Pipeline, LAYER_FX, LAYER_HAZE } from './engine/pipeline.js';
+export { Pipeline, LAYER_FX, LAYER_HAZE, LAYER_SHADOW } from './engine/pipeline.js';
 export { TIERS, guessTier } from './engine/tiers.js';
 export { Environment, TIMES } from './engine/env.js';
 export { ASSETS, assetById } from './assets/index.js';

@@ -65,7 +65,7 @@ const V = (a) => (Array.isArray(a) ? new THREE.Vector3(a[0], a[1], a[2]) : a.clo
 export function defaultExplosionFor(e) {
   const w = String(e?.weapon || e?.kind || '').toLowerCase();
   if (EXPLOSION_PRESETS[w]) return w;
-  if (/barrel|sud/.test(w)) return 'barrel';
+  if (/barrel|sud/.test(w)) return 'barrelFilm'; // Ondřej 27. 11.: sud ve hře filmový (fyzikální = 'barrel')
   if (/grenade|granat|rocket|raketa|mortar/.test(w)) return 'grenade';
   if (/tnt|c4|charge|nalož/.test(w)) return 'tnt';
   return null;

@@ -11,6 +11,7 @@ import { ASSETS, assetById } from '../assets/index.js';
 import { tris } from '../assets/geo.js';
 import { setTextureSize } from '../assets/textures.js';
 import { fbm1 } from './rng.js';
+import { FireAudio } from '../audio/fireAudio.js';
 
 export class App {
   constructor(canvas, q = {}) {
@@ -33,6 +34,7 @@ export class App {
     this.pipeline = new Pipeline(this.renderer, this.tier);
     this.env = new Environment(this.scene);
     this.fx = new FXWorld(this.renderer, this.scene, this.tier, this.pipeline);
+    this.audio = new FireAudio();
     this.fx.env = this.env;
     this.objects = []; this.disposables = []; this.flora = [];
     this.timeScale = 1; this.paused = false; this.t = 0; this.wind = 0; this.windDir = 0; this.o2 = 1;
@@ -87,6 +89,7 @@ export class App {
   }
 
   loadScenario(id, { keepCamera = false } = {}) {
+    this.audio?.clear();
     const s = scenarioById(id) || SCENARIOS[0];
     this.mode = 'scenario'; this.scnId = s.id; this.scn = s;
     this.clearScene(); this.pipeline.resetHistory();
@@ -154,6 +157,7 @@ export class App {
       this.run.update?.(dtS, this.t);
     }
     this.fx.update(dtVis, this.camera);
+    this.audio.update(this.fx, this.camera); // zvuk (jen po zapnutí gestem uživatele)
     for (const f of this.flora) if (f !== this.run?.flora) f.update?.(this.camera, this.fx.time);
   }
 

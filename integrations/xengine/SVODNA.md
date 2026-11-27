@@ -18,9 +18,9 @@ návrhy s čísly F-1 až F-8: [`NAVRHY.md`](NAVRHY.md), práce sešen: [`SESNA_
    `src/app/game.js` (jediné místo). `package-lock.json` se nemění (FireLab nepřidává závislosti za běhu).
    Pin = hash z `git -C vendor/firelab log -1 --format=%H -- integrations/xengine`. Do `DECISIONS.md`:
    *„D-0xx FireLab je mělký submodul ve `vendor/firelab`, pin na poslední změnu `integrations/xengine`; three jen z xEngine.“*
-2. **Pole `fire` a `explosive` (F-2):** až po zkoušce na jednom kusu (D-030). Zápis do `src/xspace/formats.js`, `npm run doc`,
-   mutace validátoru (neznámá předvolba, plamen nad stropem). Seznam jmen předvoleb se čte z FireLab
-   `integrations/xengine/presets.js` (jedna pravda) – validátor ho importuje, nekopíruje.
+2. **Pole `fire` a `explosive` (F-2):** Ondřej 27. 11.: **hned po zkoušce na jednom kusu** (F-7 od B). Zápis do
+   `src/xspace/formats.js` podle `FIRE_COMPONENTS` z FireLab `integrations/xengine/xspace.js`, `npm run doc`, mutace
+   validátoru se stálými kódy z `CODES` (`checkFire`, `checkExplosive` – validátor je importuje, nekopíruje).
 3. **Kontrakt `world.cellAt` (F-3)** do `docs/02_KONTRAKTY.md`.
 4. **Čísla poškození (F-5)** do `docs/02_KONTRAKTY.md` nebo `06_ROZPOCTY.md` jako závazná pro hru (zdroje a ★ u čísel).
 5. **Rozpočet T460 pro oheň** do `docs/06_ROZPOCTY.md` až z měření F-4 (do té doby jen „odhad, neměřeno“).

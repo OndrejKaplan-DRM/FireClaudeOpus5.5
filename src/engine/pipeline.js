@@ -6,6 +6,7 @@ import * as THREE from 'three';
 export let LAYER_FX = 1;
 export const LAYER_HAZE = 2;
 export const LAYER_VOL = 3; // objemy s časovou akumulací (T3+), kreslí se do vlastního cíle
+export const LAYER_SHADOW = 7; // jen do stínové mapy (levné náhradní tvary porostu); hlavní kamera vrstvu nevidí
 export function setFxLayer(n) { LAYER_FX = n; }
 
 const FS_TRI = new THREE.BufferGeometry();

@@ -221,3 +221,43 @@ Formát: **D-xxx · datum · rozhodnutí** — proč, alternativy, důsledky, ji
   `SESNA_B.md` (prefaby, validátor, generátor, tabulka předvoleb s výškou plamene a vzdálenostmi sálání).
 - Do xEngine se nic nezapisuje (pravidlo rolí); texty jsou připravené k přenesení sešnami.
 - `hostTier` vypíná `volumeTAA` (hostitel kreslí bez hloubky a historie); předvolby `candle` a `tnt` srovnané se scénáři.
+
+### D-034 · 2026-11-27 · Výkon porostu: stín z levných náhrad, tři prstence LOD (Ondřej: d)
+- Příčina 26 M △ u křoví na T3 (stejné v iteraci 3 i 4): bodové světlo ohně se stínem kreslí stínovou mapu 6× (stěny
+  krychle) a vrhaly ji všechny blízké instance porostu v plném LOD (3,6 M △ × 6). Oprava: blízké kusy porostu stín nevrhají;
+  vrhají ho jejich náhrady (LOD o 2 níž, nejvýš kužely LOD 1) ve vrstvě `LAYER_SHADOW` = 7, kterou vidí jen stínová kamera
+  (`shadow.camera.layers`; three.js pak bere masku stínové kamery, ne hlavní). Dosah stínu 200 → 80 m.
+- Křoví: blízko (do 14 m) plné LOD, střed (do 40 m) LOD 1, dál LOD 0. Borovice: blízko karty větví (LOD 3), daleko LOD 1.
+- Změřeno (`tools/tri.mjs`, sandbox, jeden snímek T3): křoví 26,2 → 3,8 M △, les 6,4 → 2,9 M △ (les víc stromů v kartách,
+  ale bez stínu v plném LOD). Na GPU neměřeno.
+
+### D-035 · 2026-11-27 · Koruny z karet a plameny po kmeni (Ondřej: a)
+- Borovice LOD ≥ 2: přesleny větví (válec) s kartami jehličí (alfa ořez 0,45, oboustranné, textura kreslená canvasem: páry
+  jehlic, vlevo pruh kůry pro válce větví), normála karet „ven a nahoru“ (měkké světlo listí). LOD 3 ≈ 2,7 k △ (dřív 12,9 k
+  kuželů). LOD 0–1 zůstávají kužele (daleko). Koruna na horních ~60 % výšky ★3.
+- Plameny na kmeni: volba zdroje `attach` (0..1) zmenší náklon větrem na 30 % (stěnový plamen přilne k povrchu ★2) a osa ohně
+  sedí na závětrné straně kůry (posun o poloměr kmene). Dřív dlouhé šikmé pásy přes les.
+
+### D-036 · 2026-11-27 · Objemový kouř T4/T5 (Ondřej: b)
+- `src/fx/smokeVolume.js`: raymarch sloupce nad nejdůležitějšími zdroji (τ·L / vzdálenost; T4 4 sloupce × 48 kroků, T5 8 × 72).
+  Gaussův profil s b(z) = b0 + 0,12·Δz ★4, σ ∝ τ/b² podle zředění ★3, turbulence fbm s ohybem pole, ohyb větrem.
+  Světlo: slunce s HG (g = 0,4) a vlastním stínem (4 kroky), obloha, podsvícení ohněm zastíněné sloupcem (3 kroky).
+- Kvádr má poloměr 2,1 b (dřív 1,3 b → viditelné svislé hrany). Podsvícení je slabší než u částic (0,02 místo 0,05 × I a
+  zjemnění poloměrem plamene) – objem sčítá rozptyl po celé dráze a bez toho sloup svítil jako plamen. Umělecké ★2.
+- Částicový kouř zdroje s objemem ×0,4 (doplňuje vzdálenou vlečku). Kreslí se s časovou akumulací objemů (MRT).
+
+### D-037 · 2026-11-27 · Zvuk (Ondřej: c)
+- `src/audio/fireAudio.js`, WebAudio, bez nahrávek: hukot = hnědý šum → dolní propust (níž pro větší plameny ★3), pulzace
+  frekvencí puffingu ★4, praskání = řídké impulzy 2–15 ms podle paliva ★2–3, lupnutí synchronně s výstřely jisker (události
+  `fx.audioEvents`). Hladina Lw ≈ 60 + 10·log10(Q/10 kW) dB ★1–2, prostor PannerNode (1/r), útlum výšek vzduchem ★2.
+- Rána: zpoždění vzdálenost/343 m/s ★5, SPL z přetlaku Kinney–Graham ★4 stlačený 2:1 do rozsahu reproduktoru ★1,
+  podbasový úder 60 → 22 Hz, doznění τ = (0,15 + 0,35·W^⅓)/3. Výstup: kompresor + omezovač (rány s náběhem 4 ms by jinak ořezávaly).
+- Zapíná se tlačítkem 🔇/🔊 (prohlížeče nedovolí zvuk bez gesta). Test bez reproduktoru `npm run test:audio` (OfflineAudioContext),
+  ukázky do WAV `node tools/audio-demo.mjs`.
+
+### D-038 · 2026-11-27 · Hřib TNT: kondenzační prstenec; sud ve hře filmový; komponenta ohně hned
+- Prstenec (Ondřej: a): bílé částice v kruhu 0,6–0,9 a pod kloboukem (zc − a), 5–26 s, stoupají s mrakem. Filmové ★1.
+- xEngine: `combat:exploded` se sudem → `barrelFilm` (W 4, koule ×1,2, prach, 120 trosek). Fyzikální `barrel` zůstává.
+- Komponenta `fire`/`explosive` do dat hned po zkoušce na jednom kusu: jedna pravda polí, kódů nálezů a čísel předvoleb
+  v `integrations/xengine/xspace.js` (bez Three.js, import v Node pro validátor a generátor xEngine).
+- Svíčka: bělavé jádro zůstává (Ondřej: b).

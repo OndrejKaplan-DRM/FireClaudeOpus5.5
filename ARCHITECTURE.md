@@ -25,6 +25,9 @@
 ```
 
 Spark kreslí i hořící oharky (typ 2); jejich plamínek a kouřová stopa jdou do Billboard (`sp.trail`).
+`src/fx/smokeVolume.js` – objemový kouř T4/T5 (raymarch sloupce, D-036). `src/audio/fireAudio.js` – zvuk (WebAudio, D-037),
+`App.step` volá `audio.update(fx, camera)`. Porost: tři prstence LOD a stín z náhrad ve vrstvě `LAYER_SHADOW` (D-034).
+`integrations/xengine/xspace.js` – pole a kontroly dat ohně pro xEngine (bez Three.js).
 
 ## Tok jednoho snímku
 1. `App.step(dt)` – čas scénáře `t += dt × timeScale` (průběh požáru), efekty běží v reálném čase `dt`.

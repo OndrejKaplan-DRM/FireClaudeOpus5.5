@@ -22,7 +22,8 @@ Pro všechny sešny xEngine. Cesty ve FireLab jsou od kořene repa `OndrejKaplan
 | Potřeba | Kde | Poznámka |
 |---|---|---|
 | Nová předvolba ohně | `integrations/xengine/presets.js` → `FIRE_PRESETS` | `{ fuel, Q [W], D [m], L?(Q), mult? }`; jméno pak smí do dat (F-2) |
-| Nová předvolba výbuchu | `presets.js` → `EXPLOSION_PRESETS` | `{ ex: volby Explosion, fires: [doprovodné ohně], dy }` |
+| Nová předvolba výbuchu | `presets.js` → `EXPLOSION_PRESETS` | `{ ex: volby Explosion, fires: [doprovodné ohně], dy }`; sud ve hře `barrelFilm` |
+| Pole a kontroly dat xSpace | `integrations/xengine/xspace.js` (`FIRE_COMPONENTS`, `CODES`, `checkFire`, `checkExplosive`, `fireNumbers`) | bez Three.js, pro validátor a generátor |
 | Nové palivo | `src/physics/fuels.js` | každé číslo se zdrojem a ★; `fv` (saze ppm), `Tlum`, `ys`, `chiR`, `embers`, `sparks` |
 | Výška plamene, výkon, tok | `src/physics/combustion.js` (Heskestad, McCaffrey, Modak) | čisté funkce, testované v Node |
 | Šíření požáru po ploše | `src/physics/spread.js` (Anderson, Byram, Van Wagner) | jen scénáře FireLab; v xEngine zatím ne |
@@ -38,6 +39,8 @@ Pro všechny sešny xEngine. Cesty ve FireLab jsou od kořene repa `OndrejKaplan
 | Výbuchy, houbový mrak, Wilsonův dóm | `src/fx/world.js` (`Explosion`, `flow`, `makeWilsonDome`) | `lumRef` neměnit (sud se Ondřejovi líbí) |
 | Zuhelnatění povrchů | `src/fx/char.js` (`applyChar`) | jen pro hostitele s osvětlenými materiály (ne low) |
 | Jas plamene × výbuchů | `flameLum` vs `lumRef` (`src/engine/app.js`, `world.js`) | dvě různé adaptace – nesahat bez srovnání |
+| Objemový kouř (T4/T5 FireLab) | `src/fx/smokeVolume.js` | v xEngine zatím ne (high = T2) |
+| Zvuk ohně a výbuchů | `src/audio/fireAudio.js` (`FireAudio`, `fireVoice`, `boom`, `pop`) | v xEngine zatím ne – otázka v `NAVRHY.md` |
 
 ## D. Chci ověřit
 | Co | Příkaz (ve FireLab) |

@@ -1,5 +1,6 @@
 // Světla ohně: pevný bazén PointLight (stálý počet = žádné překládání shaderů), požadavky se slučují podle důležitosti.
 import * as THREE from 'three';
+import { LAYER_SHADOW } from '../engine/pipeline.js';
 import { blackbody } from '../physics/blackbody.js';
 import { PRE } from './shared.js';
 
@@ -25,7 +26,8 @@ export class FireLights {
       const L = new THREE.PointLight(0xffaa66, 0, 0, 2);
       if (tier.shadows && i < 1) {
         L.castShadow = true; L.shadow.mapSize.set(1024, 1024); L.shadow.bias = -0.002; L.shadow.normalBias = 0.02; L.shadow.radius = 6;
-        L.shadow.camera.near = 0.05; L.shadow.camera.far = 200;
+        // dosah stínu 80 m (dál je oheň jen bod, stín nečitelný); vrstva LAYER_SHADOW = levné náhrady porostu (iterace 5)
+        L.shadow.camera.near = 0.05; L.shadow.camera.far = 80; L.shadow.camera.layers.set(0); L.shadow.camera.layers.enable(LAYER_SHADOW);
       }
       this.scene.add(L); this.pool.push(L);
     }

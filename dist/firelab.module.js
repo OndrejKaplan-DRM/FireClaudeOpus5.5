@@ -5,7 +5,7 @@ var __export = (target, all) => {
 };
 
 // src/fx/world.js
-import * as THREE9 from "three";
+import * as THREE10 from "three";
 
 // src/fx/particles.js
 import * as THREE3 from "three";
@@ -240,6 +240,7 @@ import * as THREE2 from "three";
 var LAYER_FX = 1;
 var LAYER_HAZE = 2;
 var LAYER_VOL = 3;
+var LAYER_SHADOW = 7;
 var FS_TRI = new THREE2.BufferGeometry();
 FS_TRI.setAttribute("position", new THREE2.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
 FS_TRI.setAttribute("uv", new THREE2.Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2));
@@ -1359,9 +1360,198 @@ var HazeSystem = class extends BaseSystem {
   }
 };
 
-// src/fx/volume.js
+// src/fx/smokeVolume.js
 import * as THREE4 from "three";
 var VS2 = (
+  /* glsl */
+  `
+out vec3 vWorld;
+void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`
+);
+var FS = (
+  /* glsl */
+  `
+precision highp float; precision highp sampler3D;
+${GLSL_COMMON}
+in vec3 vWorld;
+layout(location = 0) out vec4 fragColor;
+#ifdef VOL_MRT
+layout(location = 1) out vec4 fragDist;
+#endif
+uniform mat4 uInvModel;
+uniform vec3 uScale, uCamPos, uAlb, uAmb, uSun, uSunDir, uGlowCol, uGlowPos;
+uniform float uTime, uSeed, uSteps, uStepLen, uFrame;
+uniform float uB0, uDb, uSig0, uBref, uEddy, uRise, uBend, uGlowK, uFade, uGlowR2;
+#ifdef USE_DEPTH
+uniform sampler2D tDepth; uniform vec2 uDepthRes;
+#endif
+vec2 boxHit(vec3 ro, vec3 rd){
+  vec3 inv = 1.0 / rd;
+  vec3 t0 = (vec3(-0.5, 0.0, -0.5) - ro) * inv, t1 = (vec3(0.5, 1.0, 0.5) - ro) * inv;
+  vec3 tmin = min(t0, t1), tmax = max(t0, t1);
+  return vec2(max(max(tmin.x, tmin.y), tmin.z), min(min(tmax.x, tmax.y), tmax.z));
+}
+// hustota (extinkce \u03C3 [1/m]) v bod\u011B objektov\xE9ho prostoru kv\xE1dru
+float sigmaAt(vec3 p){
+  float zm = p.y * uScale.y;                                 // v\xFD\u0161ka nad patou objemu [m]
+  float b = uB0 + uDb * zm;                                  // polom\u011Br sloupce [m]
+  vec3 w = p * uScale;
+  float ax = -0.5 * uScale.x + uB0 * 2.1 + uBend * pow(p.y, 1.5) * uScale.x;  // osa (ohyb po v\u011Btru, osa x kv\xE1dru)
+  vec2 d = vec2(w.x - ax, w.z);
+  float r2 = dot(d, d) / (b * b);
+  if (r2 > 4.0) return 0.0;  // kv\xE1dr m\xE1 polom\u011Br \u2265 2,1 b \u2192 okraj kv\xE1dru nen\xED vid\u011Bt
+  vec3 q = vec3(w.x, w.y - uRise * uTime, w.z) / uEddy + vec3(uSeed * 3.7, 0.0, uSeed * 1.3);
+  vec3 wq = q + (vec3(n3(q * 0.11), n3(q * 0.11 + 0.31), n3(q * 0.11 + 0.67)) - 0.5) * 1.6;
+  float n = fbm3(wq * 0.17);
+  float prof = exp(-r2 * (1.0 + 0.8 * (n - 0.5)));
+  float dens = max(prof * (0.35 + 1.3 * smoothstep(0.25, 0.75, n)) - 0.02, 0.0);
+  // n\xE1b\u011Bh nad plamenem a \xFAtlum u stropu kv\xE1dru (\u017E\xE1dn\xE1 viditeln\xE1 hranice)
+  dens *= smoothstep(0.0, 0.1, p.y) * (1.0 - smoothstep(0.7, 1.0, p.y));
+  return dens * uSig0 * (uBref * uBref) / (b * b);           // \u03C4 \u221D 1/b \u2192 \u03C3 \u221D 1/b\xB2
+}
+void main(){
+  vec3 rdW = normalize(vWorld - uCamPos);
+  vec3 ro = (uInvModel * vec4(uCamPos, 1.0)).xyz, rd = (uInvModel * vec4(rdW, 0.0)).xyz;
+  float rl = length(rd); rd /= rl;                           // objektov\xFD prostor je jednotkov\xFD kv\xE1dr \u2192 p\u0159epo\u010Det d\xE9lek
+  vec2 tt = boxHit(ro, rd);
+  float t0 = max(tt.x, 0.0), t1 = tt.y;
+#ifdef USE_DEPTH
+  float sceneZ = texture(tDepth, gl_FragCoord.xy / uDepthRes).r;
+  t1 = min(t1, sceneZ * 1.02 * rl / max(dot(rdW, normalize(-vec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]))), 0.05));
+#endif
+  if (t1 <= t0) discard;
+  float lenW = (t1 - t0) / rl;                               // d\xE9lka \xFAseku ve sv\u011Bt\u011B [m]
+  float steps = clamp(ceil(lenW / max(uStepLen, 1e-3)), 8.0, uSteps);
+  float dt = (t1 - t0) / steps, dtW = dt / rl;
+  float j = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))) + uFrame * 0.61803398);
+  float t = t0 + dt * j;
+  vec3 sunO = (uInvModel * vec4(uSunDir, 0.0)).xyz;          // 1 m ke slunci v objektov\xE9m prostoru
+  vec3 gpos = (uInvModel * vec4(uGlowPos, 1.0)).xyz;
+  float cosT = dot(rdW, uSunDir), g = 0.4;
+  float phase = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * cosT, 1.5) * 0.5;   // HG normovan\xE9 na ~1 pro izotropn\xED
+  vec3 col = vec3(0.0); float trans = 1.0, dW = 0.0;
+  for (int i = 0; i < 96; i++) {
+    if (float(i) >= steps || trans < 0.02) break;
+    vec3 p = ro + rd * t;
+    float s = sigmaAt(p);
+    if (s > 1e-4) {
+      // st\xEDn ke slunci (4 kroky, d\xE9lka ~ polom\u011Br sloupce)
+      float sh = 0.0, ls = (uB0 + uDb * p.y * uScale.y) * 0.6;
+      for (int k = 1; k <= 4; k++) { vec3 ps = p + sunO * (float(k) * ls); if (ps.y > 1.0) break; sh += sigmaAt(ps) * ls; }
+      float sunVis = exp(-sh);
+      // podsv\xEDcen\xED ohn\u011Bm: k pat\u011B (3 kroky), \xFAtlum vzd\xE1lenost\xED
+      vec3 toF = gpos - p; float dF = length(toF * uScale);
+      float gsh = 0.0;
+      for (int k = 1; k <= 3; k++) { vec3 pf = p + toF * (float(k) / 4.0); gsh += sigmaAt(pf) * dF / 4.0; }
+      vec3 glow = uGlowCol / (dF * dF + uGlowR2) * exp(-gsh * uGlowK);
+      vec3 Ls = uAlb * (uAmb * (0.55 + 0.45 * sunVis) + uSun * sunVis * phase + glow) * uPreExp;
+      float a = exp(-s * dtW);
+      col += trans * (1.0 - a) * Ls;
+      dW += trans * (1.0 - a) * t / rl;
+      trans *= a;
+    }
+    t += dt;
+  }
+  float al = (1.0 - trans) * uFade;
+  fragColor = fxOut(vec4(col * uFade, al));
+#ifdef VOL_MRT
+  fragDist = vec4(dW * uFade, 0.0, 0.0, al);
+#endif
+}`
+);
+var BOX = new THREE4.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
+var _vp = new THREE4.Vector4();
+var SmokeVolume = class {
+  constructor({ depth = null, steps = 48, mrt = false } = {}) {
+    const defines = {};
+    if (mrt) defines.VOL_MRT = 1;
+    if (depth) defines.USE_DEPTH = 1;
+    const u = {
+      ...sharedUniforms(),
+      uInvModel: { value: new THREE4.Matrix4() },
+      uScale: { value: new THREE4.Vector3(1, 1, 1) },
+      uCamPos: { value: new THREE4.Vector3() },
+      uAlb: { value: new THREE4.Color(0.2, 0.2, 0.2) },
+      uAmb: { value: new THREE4.Color() },
+      uSun: { value: new THREE4.Color() },
+      uSunDir: { value: new THREE4.Vector3(0.3, 1, 0.2).normalize() },
+      uGlowCol: { value: new THREE4.Color() },
+      uGlowPos: { value: new THREE4.Vector3(0, 0, 0) },
+      uTime: { value: 0 },
+      uSeed: { value: 0 },
+      uSteps: { value: steps },
+      uStepLen: { value: 0.3 },
+      uFrame: { value: 0 },
+      uB0: { value: 0.3 },
+      uDb: { value: 0.12 },
+      uSig0: { value: 1 },
+      uBref: { value: 0.5 },
+      uEddy: { value: 1 },
+      uRise: { value: 2 },
+      uBend: { value: 0 },
+      uGlowK: { value: 1 },
+      uFade: { value: 1 },
+      uGlowR2: { value: 1 },
+      tDepth: { value: depth },
+      uDepthRes: { value: new THREE4.Vector2(1, 1) }
+    };
+    this.mat = new THREE4.ShaderMaterial({
+      vertexShader: VS2,
+      fragmentShader: FS,
+      uniforms: u,
+      defines,
+      glslVersion: THREE4.GLSL3,
+      transparent: true,
+      depthWrite: false,
+      side: THREE4.BackSide,
+      blending: THREE4.CustomBlending,
+      blendSrc: THREE4.OneFactor,
+      blendDst: THREE4.OneMinusSrcAlphaFactor,
+      blendSrcAlpha: THREE4.OneFactor,
+      blendDstAlpha: THREE4.OneMinusSrcAlphaFactor
+    });
+    this.mesh = new THREE4.Mesh(BOX, this.mat);
+    this.mesh.layers.set(mrt ? LAYER_VOL : LAYER_FX);
+    this.mesh.frustumCulled = false;
+    this.mesh.renderOrder = 3;
+    this.mesh.visible = false;
+    this.mesh.onBeforeRender = (r, s, cam) => {
+      this.mesh.updateMatrixWorld();
+      u.uInvModel.value.copy(this.mesh.matrixWorld).invert();
+      u.uCamPos.value.setFromMatrixPosition(cam.matrixWorld);
+      u.uFrame.value = (u.uFrame.value + 1) % 1024;
+      if (u.tDepth.value) {
+        const img = u.tDepth.value.image;
+        u.uDepthRes.value.set(img.width, img.height);
+      }
+    };
+  }
+  get u() {
+    return this.mat.uniforms;
+  }
+  /**
+   * Umístí sloup: pata `base` (nad plamenem), výška H [m], poloměr u paty b0 [m], ohyb lean [m] na vršku po větru windDir.
+   * glowPos = poloha ohně (svět), glowCol = barva × intenzita [cd] světla ohně.
+   */
+  place(base, H, b0, lean, windDir) {
+    const db = 0.12, bTop = b0 + db * H;
+    const Wx = 4.2 * bTop + Math.max(lean, 0) + b0, Wz = 4.2 * bTop;
+    const shift = Wx / 2 - 2.1 * b0;
+    this.mesh.position.set(base.x + Math.cos(windDir) * shift, base.y, base.z + Math.sin(windDir) * shift);
+    this.mesh.rotation.set(0, -windDir, 0);
+    this.mesh.scale.set(Wx, H, Wz);
+    const u = this.u;
+    u.uScale.value.set(Wx, H, Wz);
+    u.uB0.value = b0;
+    u.uDb.value = db;
+    u.uBend.value = lean / Wx;
+    u.uStepLen.value = Math.max(0.05, Math.min(Wz, H) / 40);
+  }
+};
+
+// src/fx/volume.js
+import * as THREE5 from "three";
+var VS3 = (
   /* glsl */
   `
 out vec3 vWorld;
@@ -1635,7 +1825,7 @@ void main(){
 #endif
 }`
 );
-var _vp = new THREE4.Vector4();
+var _vp2 = new THREE5.Vector4();
 function createVolumeMaterial({ ball = false, depth = null, steps = 48, mrt = false } = {}) {
   const defines = {};
   if (mrt) defines.VOL_MRT = 1;
@@ -1643,61 +1833,61 @@ function createVolumeMaterial({ ball = false, depth = null, steps = 48, mrt = fa
   if (depth) defines.USE_DEPTH = 1;
   const u = {
     ...sharedUniforms(),
-    uInvModel: { value: new THREE4.Matrix4() },
-    uScale: { value: new THREE4.Vector3(1, 1, 1) },
+    uInvModel: { value: new THREE5.Matrix4() },
+    uScale: { value: new THREE5.Vector3(1, 1, 1) },
     uTime: { value: 0 },
     uSeed: { value: 0 },
     uSteps: { value: steps },
     uTpeak: { value: 1300 },
     uTamb: { value: 600 },
     uIntensity: { value: 1 },
-    uShape: { value: new THREE4.Vector4(0.45, 0.8, 0.3, 0.2) },
+    uShape: { value: new THREE5.Vector4(0.45, 0.8, 0.3, 0.2) },
     uAxis0: { value: 0 },
     uShear: { value: 0 },
     uRz: { value: 0.45 },
-    uTurb: { value: new THREE4.Vector4(0.45, 0.4, 2, 0.15) },
-    uPuff: { value: new THREE4.Vector2(1.5, 0.5) },
+    uTurb: { value: new THREE5.Vector4(0.45, 0.4, 2, 0.15) },
+    uPuff: { value: new THREE5.Vector2(1.5, 0.5) },
     uSoot: { value: 0 },
     uBlue: { value: 0 },
     uSigma: { value: 0.3 },
     uLift: { value: 0 },
     uAge: { value: 0 },
     uLoopT: { value: 0 },
-    uRes: { value: new THREE4.Vector2(1, 1) },
-    uCamPos: { value: new THREE4.Vector3() },
+    uRes: { value: new THREE5.Vector2(1, 1) },
+    uCamPos: { value: new THREE5.Vector3() },
     uPixAng: { value: 15e-4 },
     uShapeK: { value: 1 },
     uTongues: { value: 0 },
     tDepth: { value: depth },
-    uDepthRes: { value: new THREE4.Vector2(1, 1) },
-    uFlame2: { value: new THREE4.Vector4(1.35, 0, 0.12, 0.6) },
+    uDepthRes: { value: new THREE5.Vector2(1, 1) },
+    uFlame2: { value: new THREE5.Vector4(1.35, 0, 0.12, 0.6) },
     uFlowL: { value: 1 },
     uDetail: { value: 1 },
     uStepLen: { value: 0.05 },
     uFrame: { value: 0 },
     uSigmaSoot: { value: 2.5 }
   };
-  return new THREE4.ShaderMaterial({
-    vertexShader: VS2,
+  return new THREE5.ShaderMaterial({
+    vertexShader: VS3,
     fragmentShader: VOLUME_FS,
     uniforms: u,
     defines,
-    glslVersion: THREE4.GLSL3,
+    glslVersion: THREE5.GLSL3,
     transparent: true,
     depthWrite: false,
-    side: THREE4.BackSide,
-    blending: THREE4.CustomBlending,
-    blendSrc: THREE4.OneFactor,
-    blendDst: THREE4.OneMinusSrcAlphaFactor,
-    blendSrcAlpha: THREE4.OneFactor,
-    blendDstAlpha: THREE4.OneMinusSrcAlphaFactor
+    side: THREE5.BackSide,
+    blending: THREE5.CustomBlending,
+    blendSrc: THREE5.OneFactor,
+    blendDst: THREE5.OneMinusSrcAlphaFactor,
+    blendSrcAlpha: THREE5.OneFactor,
+    blendDstAlpha: THREE5.OneMinusSrcAlphaFactor
   });
 }
-var BOX = new THREE4.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
+var BOX2 = new THREE5.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
 var FlameVolume = class {
   constructor({ ball = false, depth = null, steps = 48, mrt = false } = {}) {
     this.mat = createVolumeMaterial({ ball, depth, steps, mrt });
-    this.mesh = new THREE4.Mesh(BOX, this.mat);
+    this.mesh = new THREE5.Mesh(BOX2, this.mat);
     this.mesh.layers.set(mrt ? LAYER_VOL : LAYER_FX);
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 2;
@@ -1709,7 +1899,7 @@ var FlameVolume = class {
       u.uCamPos.value.setFromMatrixPosition(cam.matrixWorld);
       u.uFrame.value = (u.uFrame.value + 1) % 1024;
       if (cam.isPerspectiveCamera) {
-        const vp = r.getCurrentViewport(_vp);
+        const vp = r.getCurrentViewport(_vp2);
         u.uPixAng.value = 2 * Math.tan(cam.fov * Math.PI / 360) / Math.max(vp.w, 1);
       }
       if (u.tDepth.value) {
@@ -1743,7 +1933,7 @@ var FlameVolume = class {
 };
 
 // src/fx/lights.js
-import * as THREE5 from "three";
+import * as THREE6 from "three";
 var bbCache = /* @__PURE__ */ new Map();
 function bbRGB(T) {
   const k = Math.round(T / 25) * 25;
@@ -1767,10 +1957,10 @@ var FireLights = class {
     this.virtual = tier.lightObjects === false;
     for (let i = 0; i < tier.lights; i++) {
       if (this.virtual) {
-        this.pool.push({ intensity: 0, position: new THREE5.Vector3(), color: new THREE5.Color(), userData: {} });
+        this.pool.push({ intensity: 0, position: new THREE6.Vector3(), color: new THREE6.Color(), userData: {} });
         continue;
       }
-      const L = new THREE5.PointLight(16755302, 0, 0, 2);
+      const L = new THREE6.PointLight(16755302, 0, 0, 2);
       if (tier.shadows && i < 1) {
         L.castShadow = true;
         L.shadow.mapSize.set(1024, 1024);
@@ -1778,7 +1968,9 @@ var FireLights = class {
         L.shadow.normalBias = 0.02;
         L.shadow.radius = 6;
         L.shadow.camera.near = 0.05;
-        L.shadow.camera.far = 200;
+        L.shadow.camera.far = 80;
+        L.shadow.camera.layers.set(0);
+        L.shadow.camera.layers.enable(LAYER_SHADOW);
       }
       this.scene.add(L);
       this.pool.push(L);
@@ -1856,8 +2048,8 @@ var FireLights = class {
 };
 
 // src/fx/bake.js
-import * as THREE6 from "three";
-var FS = (
+import * as THREE7 from "three";
+var FS2 = (
   /* glsl */
   `
 precision highp float; precision highp sampler3D;
@@ -1920,51 +2112,51 @@ void main(){
   }
 }`
 );
-var FS_FULL = FS.replace(VOLUME_FIELDS, VOLUME_FIELDS + `
+var FS_FULL = FS2.replace(VOLUME_FIELDS, VOLUME_FIELDS + `
 vec3 fieldFlameAt(vec3 p, float t){ return fieldFlame(p); }
 `);
 function bakeAtlas(renderer, { res = 128, seed = 3, steps = 48 } = {}) {
   const W = res * 16, H = res * 8;
-  const rt = new THREE6.WebGLRenderTarget(W, H, { type: THREE6.UnsignedByteType, depthBuffer: false, generateMipmaps: true, minFilter: THREE6.LinearMipmapLinearFilter, magFilter: THREE6.LinearFilter });
+  const rt = new THREE7.WebGLRenderTarget(W, H, { type: THREE7.UnsignedByteType, depthBuffer: false, generateMipmaps: true, minFilter: THREE7.LinearMipmapLinearFilter, magFilter: THREE7.LinearFilter });
   const src = FS_FULL.replace("uniform float uTime, uSeed, uSteps;", "uniform float uSeed, uSteps; float uTime;").replace("vec3 fieldFlameAt(vec3 p, float t){ return fieldFlame(p); }", "vec3 fieldFlameAt(vec3 p, float t){ uTime = t; return fieldFlame(p); }");
   const u = {
     ...sharedUniforms(),
-    uCell: { value: new THREE6.Vector2(res, res) },
+    uCell: { value: new THREE7.Vector2(res, res) },
     uBakeSteps: { value: steps },
-    uScale: { value: new THREE6.Vector3(0.5, 1.4, 0.5) },
+    uScale: { value: new THREE7.Vector3(0.5, 1.4, 0.5) },
     uSeed: { value: seed },
     uSteps: { value: steps },
     uTpeak: { value: 1400 },
     uTamb: { value: 500 },
     uIntensity: { value: 1 },
-    uShape: { value: new THREE6.Vector4(0.36, 1.3, 0, 0.95) },
+    uShape: { value: new THREE7.Vector4(0.36, 1.3, 0, 0.95) },
     uAxis0: { value: 0 },
     uShear: { value: 0 },
     uRz: { value: 0.33 },
-    uTurb: { value: new THREE6.Vector4(0.75, 0.4, 1.6, 2) },
-    uPuff: { value: new THREE6.Vector2(1 / 2, 0.35) },
+    uTurb: { value: new THREE7.Vector4(0.75, 0.4, 1.6, 2) },
+    uPuff: { value: new THREE7.Vector2(1 / 2, 0.35) },
     uSoot: { value: 0.35 },
     uBlue: { value: 0 },
     uSigma: { value: 0.2 },
     uLift: { value: 0 },
     uAge: { value: 0 },
     uLoopT: { value: 2 },
-    uRes: { value: new THREE6.Vector2(W, H) },
-    uFlame2: { value: new THREE6.Vector4(1.5, 0, 0.12, 0.75) },
+    uRes: { value: new THREE7.Vector2(W, H) },
+    uFlame2: { value: new THREE7.Vector4(1.5, 0, 0.12, 0.75) },
     uFlowL: { value: 1.3 },
     uDetail: { value: 2 },
     uShapeK: { value: 1 },
     uPixAng: { value: 5e-4 },
     uTongues: { value: 3 }
   };
-  const m = new THREE6.ShaderMaterial({ vertexShader: "void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }", fragmentShader: src, uniforms: u, glslVersion: THREE6.GLSL3, depthTest: false, depthWrite: false });
-  const g2 = new THREE6.BufferGeometry();
-  g2.setAttribute("position", new THREE6.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
-  const mesh2 = new THREE6.Mesh(g2, m);
+  const m = new THREE7.ShaderMaterial({ vertexShader: "void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }", fragmentShader: src, uniforms: u, glslVersion: THREE7.GLSL3, depthTest: false, depthWrite: false });
+  const g2 = new THREE7.BufferGeometry();
+  g2.setAttribute("position", new THREE7.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+  const mesh2 = new THREE7.Mesh(g2, m);
   mesh2.frustumCulled = false;
-  const sc = new THREE6.Scene();
+  const sc = new THREE7.Scene();
   sc.add(mesh2);
-  const cam = new THREE6.OrthographicCamera();
+  const cam = new THREE7.OrthographicCamera();
   const t0 = performance.now();
   const prev = renderer.getRenderTarget();
   renderer.setRenderTarget(rt);
@@ -1974,7 +2166,7 @@ function bakeAtlas(renderer, { res = 128, seed = 3, steps = 48 } = {}) {
   m.dispose();
   g2.dispose();
   rt.texture.userData = { res, frames: 64, layout: "16x8: 0-7 flame, 8-15 smoke", bakeMs: ms };
-  rt.texture.colorSpace = THREE6.NoColorSpace;
+  rt.texture.colorSpace = THREE7.NoColorSpace;
   return rt;
 }
 function atlasToCanvas(renderer, rt) {
@@ -1992,9 +2184,9 @@ function atlasToCanvas(renderer, rt) {
 }
 
 // src/fx/debris.js
-import * as THREE7 from "three";
+import * as THREE8 from "three";
 function chunkGeo(seed) {
-  const g2 = new THREE7.IcosahedronGeometry(0.5, 0);
+  const g2 = new THREE8.IcosahedronGeometry(0.5, 0);
   const r = mulberry32(seed), p = g2.attributes.position;
   const sx = 0.6 + r(), sy = 0.3 + r() * 0.6, sz = 0.6 + r();
   for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) * sx * (0.8 + r() * 0.4), p.getY(i) * sy * (0.8 + r() * 0.4), p.getZ(i) * sz * (0.8 + r() * 0.4));
@@ -2006,27 +2198,27 @@ var Debris = class {
     this.scene = scene;
     this.cap = cap;
     this.n = 0;
-    this.mat = new THREE7.MeshStandardMaterial({ color: 3814962, roughness: 0.8, metalness: 0.3 });
+    this.mat = new THREE8.MeshStandardMaterial({ color: 3814962, roughness: 0.8, metalness: 0.3 });
     this.mat.onBeforeCompile = (s) => {
       s.uniforms.uPreExp = PRE;
       s.uniforms.uFlameK = FLAMEK;
       s.fragmentShader = s.fragmentShader.replace("#include <common>", "#include <common>\nuniform float uPreExp, uFlameK;").replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n#ifdef USE_INSTANCING_COLOR\n totalEmissiveRadiance += vColor * uFlameK * 0.4 * uPreExp;\n diffuseColor.rgb = vec3(0.12, 0.11, 0.1);\n#endif");
     };
-    this.mesh = new THREE7.InstancedMesh(chunkGeo(3), this.mat, Math.max(cap, 1));
-    this.mesh.instanceMatrix.setUsage(THREE7.DynamicDrawUsage);
-    this.mesh.setColorAt(0, new THREE7.Color(0, 0, 0));
+    this.mesh = new THREE8.InstancedMesh(chunkGeo(3), this.mat, Math.max(cap, 1));
+    this.mesh.instanceMatrix.setUsage(THREE8.DynamicDrawUsage);
+    this.mesh.setColorAt(0, new THREE8.Color(0, 0, 0));
     this.mesh.count = 0;
     this.mesh.castShadow = true;
     this.mesh.frustumCulled = false;
     scene.add(this.mesh);
     if (cap <= 0) this.mesh.visible = false;
     this.s = new Float32Array(Math.max(cap, 1) * 16);
-    this._m = new THREE7.Matrix4();
-    this._q = new THREE7.Quaternion();
-    this._e = new THREE7.Euler();
-    this._v = new THREE7.Vector3();
-    this._sv = new THREE7.Vector3();
-    this._c = new THREE7.Color();
+    this._m = new THREE8.Matrix4();
+    this._q = new THREE8.Quaternion();
+    this._e = new THREE8.Euler();
+    this._v = new THREE8.Vector3();
+    this._sv = new THREE8.Vector3();
+    this._c = new THREE8.Color();
   }
   dispose() {
     this.scene.remove(this.mesh);
@@ -2112,8 +2304,8 @@ var Debris = class {
 };
 
 // src/fx/decal.js
-import * as THREE8 from "three";
-var FS2 = (
+import * as THREE9 from "three";
+var FS3 = (
   /* glsl */
   `
 precision highp float; precision highp sampler3D;
@@ -2141,9 +2333,9 @@ var Scorch = class {
   constructor(scene, { pos, radius = 2, seed = 1, grow = 0, glow = 0, crater = 0, rate = 0 }) {
     this.scene = scene;
     this.rate = rate;
-    this.mat = new THREE8.ShaderMaterial({
+    this.mat = new THREE9.ShaderMaterial({
       vertexShader: "varying vec2 vUv; varying vec3 vW; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }",
-      fragmentShader: FS2,
+      fragmentShader: FS3,
       transparent: true,
       depthWrite: false,
       polygonOffset: true,
@@ -2151,7 +2343,7 @@ var Scorch = class {
       polygonOffsetUnits: -2,
       uniforms: { ...sharedUniforms(), uGrow: { value: grow || (rate ? 0 : 1) }, uGlow: { value: glow }, uCrater: { value: crater }, uSeed: { value: seed * 0.13 } }
     });
-    this.mesh = new THREE8.Mesh(new THREE8.PlaneGeometry(radius * 2, radius * 2), this.mat);
+    this.mesh = new THREE9.Mesh(new THREE9.PlaneGeometry(radius * 2, radius * 2), this.mat);
     this.mesh.rotation.x = -Math.PI / 2;
     this.mesh.position.set(pos.x, (pos.y || 0) + 0.01, pos.z);
     this.mesh.renderOrder = 1;
@@ -2614,6 +2806,7 @@ var FXWorld = class {
     this.sources = [];
     this.explosions = [];
     this.decals = [];
+    this.audioEvents = [];
     this.gustNoise = fbm1(77);
     this.o2 = 1;
     this.vent = ventilation(1);
@@ -2664,6 +2857,16 @@ var FXWorld = class {
       this.scene.add(v.mesh);
       this.balls.push(v);
     }
+    if (this.svols) this.svols.forEach((v) => {
+      this.scene.remove(v.mesh);
+      v.mat.dispose();
+    });
+    this.svols = [];
+    for (let i = 0; i < (tier.smokeVolumes ?? 0); i++) {
+      const v = new SmokeVolume({ depth, steps: tier.smokeSteps ?? 48, mrt });
+      this.scene.add(v.mesh);
+      this.svols.push(v);
+    }
     if (this.lights) this.lights.setTier(tier);
     else this.lights = new FireLights(this.scene, tier);
     if (this.debris) this.debris.dispose();
@@ -2695,6 +2898,7 @@ var FXWorld = class {
     this.decals = [];
     this.vols.forEach((v) => v.mesh.visible = false);
     this.balls.forEach((v) => v.mesh.visible = false);
+    this.svols?.forEach((v) => v.mesh.visible = false);
   }
   addSource(opts) {
     const s = new FireSource(this, opts);
@@ -2737,6 +2941,15 @@ var FXWorld = class {
     this.sources.forEach((s) => s.vol = null);
     want.slice(0, this.vols.length).forEach((s, i) => s.vol = this.vols[i]);
     this.vols.forEach((v) => v.mesh.visible = false);
+    this.sources.forEach((s) => s.svol = null);
+    this.svols.forEach((v) => v.mesh.visible = false);
+    if (this.svols.length && this.layers.smoke) {
+      const sw = this.sources.filter((s) => s.enabled && s.active && s.ph && s.ph.Q > 3e4 && s.ph.tau > 0.05);
+      sw.forEach((s) => {
+        s._simp = s.ph.tau * s.ph.L / (s.pos.distanceTo(cp) + 1);
+      });
+      sw.sort((x, y) => y._simp - x._simp).slice(0, this.svols.length).forEach((s, i) => s.svol = this.svols[i]);
+    }
     for (const s of this.sources) s.update(dt, this.time);
     this.sources = this.sources.filter((s) => !s.dead);
     let bi = 0;
@@ -2756,7 +2969,7 @@ var FXWorld = class {
     this.bb.mesh.visible = this.layers.flame || this.layers.smoke;
     const dtex = this.pipeline.depthTexture;
     if (this.bb.mat.uniforms.tDepth.value !== dtex && dtex) this.bb.mat.uniforms.tDepth.value = dtex;
-    for (const v of [...this.vols, ...this.balls]) if (dtex) v.u.tDepth.value = dtex;
+    for (const v of [...this.vols, ...this.balls, ...this.svols]) if (dtex) v.u.tDepth.value = dtex;
     this.bb.pre = PRE.value;
     if (this.env) {
       const T = this.env.T, k = 1 / Math.PI;
@@ -2796,7 +3009,7 @@ var FireSource = class {
     this.w = world;
     this.o = { volume: true, blue: 0, start: 0, end: Infinity, footprint: { type: "disk" }, mult: {}, ...o };
     this.o.mult = { flame: 1, smoke: 1, embers: 1, sparks: 1, haze: 1, light: 1, ...o.mult };
-    this.pos = o.pos.clone ? o.pos.clone() : new THREE9.Vector3(...o.pos);
+    this.pos = o.pos.clone ? o.pos.clone() : new THREE10.Vector3(...o.pos);
     this.rnd = mulberry32(o.seed ?? 1);
     this.fl = fbm1((o.seed ?? 1) * 13 + 5);
     this.acc = { flame: 0, smoke: 0, ember: 0, spark: 0, haze: 0 };
@@ -2825,7 +3038,8 @@ var FireSource = class {
     const Lb = this.o.L ? this.o.L(Q) : flameHeight(Q, D);
     const L = Lb * (1 + 0.35 * vent.lift);
     const U = this.w.air.windAt(Math.max(L * 0.5, 0.05) + this.pos.y);
-    const tilt = flameTilt(U, Math.max(Q, 1), D);
+    let tilt = flameTilt(U, Math.max(Q, 1), D);
+    if (this.o.attach) tilt = { ...tilt, theta: tilt.theta * (1 - 0.7 * this.o.attach) };
     const T = this.o.T ?? flameColorTemp(this.o.fuel, vent);
     const fp = puffingFrequency(D);
     const Qc = (1 - f.chiR) * Q / 1e3;
@@ -3037,9 +3251,33 @@ var FireSource = class {
         });
       }
     }
+    const sv = this.svol;
+    if (sv) {
+      const H = Math.min(60, Math.max(6 * L, 8 * D)), b0 = Math.max(ph.b * 0.8, D * 0.35, 0.05);
+      const wr = 1.9 * Math.pow(ph.Q / 1e3, 0.2) * 0.6;
+      const lean2 = H * Math.min(2.5, (ph.U || 0) / Math.max(wr, 0.5)) * 0.5;
+      sv.mesh.visible = true;
+      sv.place(new THREE10.Vector3(this.pos.x, this.pos.y + L * 0.7, this.pos.z), H, b0, lean2, w.air.dir);
+      const u = sv.u, bu = w.bb.mat.uniforms;
+      u.uAlb.value.setRGB(ph.smoke.rgb[0], ph.smoke.rgb[1], ph.smoke.rgb[2]);
+      u.uAmb.value.copy(bu.uAmb.value);
+      u.uSun.value.copy(bu.uSunCol.value);
+      u.uSig0.value = ph.tau / (1.7725 * Math.max(ph.b, 0.02)) * m.smoke;
+      u.uBref.value = Math.max(ph.b, 0.02);
+      u.uEddy.value = b0 + 0.06 * H;
+      u.uRise.value = wr;
+      u.uTime.value = gt;
+      u.uSeed.value = (this.o.seed ?? 1) * 0.29;
+      u.uGlowPos.value.set(this.pos.x, this.pos.y + L * 0.35, this.pos.z);
+      const gc = bbRGB(ph.T);
+      u.uGlowCol.value.setRGB(gc[0], gc[1], gc[2]).multiplyScalar(ph.I * 0.02 * (0.85 + 0.15 * flick));
+      u.uGlowK.value = 1.2;
+      u.uGlowR2.value = (0.6 * L) ** 2 + 0.25;
+      u.uFade.value = Math.min(1, ph.tau * 8);
+    }
     const smokeLife = (this.o.smokeLife ?? 1) * Math.min(28, Math.max(2.5, 4 + Math.sqrt(ph.Q / 1e5) * 3));
     const sMul = w.tier.smokeMul ?? 1;
-    const nS = Math.min(700 * sMul, (8 + 22 * Math.sqrt(ph.Q / 1e5)) * sMul) * m.smoke;
+    const nS = Math.min(700 * sMul, (8 + 22 * Math.sqrt(ph.Q / 1e5)) * sMul) * m.smoke * (sv ? 0.4 : 1);
     this.demand.smoke = ph.tau > 3e-3 ? nS : 0;
     if (w.layers.smoke && ph.tau > 3e-3) {
       this.acc.smoke += nS * w.budgetScale.smoke * dt / smokeLife;
@@ -3110,7 +3348,9 @@ var FireSource = class {
         this.acc.pop = (this.acc.pop || 0) + 0.25 * qk * m.sparks * Math.min(1.5, eMul) * dt;
         if (this.acc.pop >= 1 && r() < 0.5) {
           this.acc.pop = 0;
-          const [px, py, pz] = this.footprintPoint(), cnt = Math.round((6 + 18 * r()) * Math.min(1.5, eMul) * w.budgetScale.spark);
+          const [px, py, pz] = this.footprintPoint();
+          if (w.audioEvents && w.audioEvents.length < 64) w.audioEvents.push({ type: "pop", pos: new THREE10.Vector3(px, py, pz) });
+          const cnt = Math.round((6 + 18 * r()) * Math.min(1.5, eMul) * w.budgetScale.spark);
           const ay = 0.6 + 0.4 * r(), az = r() * 6.283;
           for (let k = 0; k < cnt; k++) {
             const a = az + (r() - 0.5) * 2.2, el = ay + (r() - 0.5) * 0.7, sp = 3 + 6 * r();
@@ -3205,18 +3445,18 @@ var FireSource = class {
   }
 };
 function makeWilsonDome() {
-  const u = { ...sharedUniforms(), uA: { value: 0 }, uCov: { value: 0.35 }, uTime: { value: 0 }, uAmb: { value: new THREE9.Color() }, uSun: { value: new THREE9.Color() } };
-  const mat = new THREE9.ShaderMaterial({
-    glslVersion: THREE9.GLSL3,
+  const u = { ...sharedUniforms(), uA: { value: 0 }, uCov: { value: 0.35 }, uTime: { value: 0 }, uAmb: { value: new THREE10.Color() }, uSun: { value: new THREE10.Color() } };
+  const mat = new THREE10.ShaderMaterial({
+    glslVersion: THREE10.GLSL3,
     transparent: true,
     depthWrite: false,
-    side: THREE9.DoubleSide,
+    side: THREE10.DoubleSide,
     uniforms: u,
-    blending: THREE9.CustomBlending,
-    blendSrc: THREE9.OneFactor,
-    blendDst: THREE9.OneMinusSrcAlphaFactor,
-    blendSrcAlpha: THREE9.OneFactor,
-    blendDstAlpha: THREE9.OneMinusSrcAlphaFactor,
+    blending: THREE10.CustomBlending,
+    blendSrc: THREE10.OneFactor,
+    blendDst: THREE10.OneMinusSrcAlphaFactor,
+    blendSrcAlpha: THREE10.OneFactor,
+    blendDstAlpha: THREE10.OneMinusSrcAlphaFactor,
     vertexShader: `out vec3 vW; out vec3 vN; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }`,
     fragmentShader: `precision highp float; precision highp sampler3D;
 ${GLSL_COMMON}
@@ -3234,7 +3474,7 @@ void main(){
   o = fxOut(vec4(c * a, a));
 }`
   });
-  const mesh2 = new THREE9.Mesh(new THREE9.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+  const mesh2 = new THREE10.Mesh(new THREE10.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
   mesh2.layers.set(LAYER_FX);
   mesh2.renderOrder = 4;
   mesh2.frustumCulled = false;
@@ -3245,7 +3485,7 @@ var Explosion = class {
     this.w = world;
     this.o = o;
     this.t = 0;
-    this.pos = o.pos.clone ? o.pos.clone() : new THREE9.Vector3(...o.pos);
+    this.pos = o.pos.clone ? o.pos.clone() : new THREE10.Vector3(...o.pos);
     this.rnd = mulberry32(o.seed ?? 5);
     this.table = o.W > 0 ? shockTable(o.W, Math.max(60, Math.cbrt(o.W) * 60)) : null;
     this.started = false;
@@ -3405,6 +3645,29 @@ var Explosion = class {
       const zr = 1.8 * Math.pow(B * tt * tt, 0.25), y0 = this.pos.y;
       const zc = Math.max(this.fbY ?? y0, y0 + zr), wv = 0.5 * zr / tt;
       this.mf = { x: this.pos.x, z: this.pos.z, y0, zc, a: Math.max(fb.D * 0.45, 0.34 * (zc - y0)), w: Math.min(wv, 25), k: Math.exp(-t / 50) };
+      if (o.ring && t > 5 && t < 26) {
+        const m = this.mf, fade = Math.min(1, (t - 5) / 3) * Math.min(1, (26 - t) / 6);
+        this.ringAcc = (this.ringAcc || 0) + dt * 70 * fade * Math.min(1.5, w.tier.smokeMul ?? 1) * w.budgetScale.smoke;
+        while (this.ringAcc >= 1) {
+          this.ringAcc -= 1;
+          const a = r() * 6.283, rr = m.a * (0.6 + 0.3 * r()), yy = m.zc - m.a * (0.95 + 0.12 * r());
+          w.bb.spawnSmoke({
+            x: m.x + Math.cos(a) * rr,
+            y: yy,
+            z: m.z + Math.sin(a) * rr,
+            vx: Math.cos(a) * 0.4,
+            vy: m.w * 0.55,
+            vz: Math.sin(a) * 0.4,
+            life: 2.2 + 1.5 * r(),
+            s0: 0.12 * m.a,
+            s1: 0.24 * m.a,
+            tau: 0.3 + 0.25 * r(),
+            albedo: [0.92, 0.92, 0.94],
+            drag: 6,
+            seed: r()
+          });
+        }
+      }
       if (o.dust && t > fb.t * 1.5 && t < 30) {
         const m = this.mf;
         this.stemAcc = (this.stemAcc || 0) + dt * 32 * Math.min(1.5, w.tier.smokeMul ?? 1) * w.budgetScale.smoke * Math.exp(-t / 12);
@@ -3487,11 +3750,274 @@ var Explosion = class {
   }
 };
 
+// src/audio/fireAudio.js
+var C_SOUND = 343;
+function noiseBuffer(ctx, seconds, seed = 1, color = "brown") {
+  const n = Math.round(seconds * ctx.sampleRate), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0), r = mulberry32(seed);
+  let last = 0, b0 = 0, b1 = 0, b2 = 0;
+  for (let i = 0; i < n; i++) {
+    const w = r() * 2 - 1;
+    if (color === "brown") {
+      last = (last + 0.02 * w) / 1.02;
+      d[i] = last * 3.5;
+    } else {
+      b0 = 0.99765 * b0 + w * 0.099046;
+      b1 = 0.963 * b1 + w * 0.2965164;
+      b2 = 0.57 * b2 + w * 1.0526913;
+      d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.11;
+    }
+  }
+  const f = Math.min(n >> 2, Math.round(0.02 * ctx.sampleRate));
+  for (let i = 0; i < f; i++) {
+    const k = i / f;
+    d[i] = d[i] * k + d[n - f + i] * (1 - k);
+  }
+  return b;
+}
+function crackleBuffer(ctx, seconds, seed = 2, rate = 6) {
+  const sr = ctx.sampleRate, n = Math.round(seconds * sr), b = ctx.createBuffer(1, n, sr), d = b.getChannelData(0), r = mulberry32(seed);
+  let t = 0;
+  while (true) {
+    t += -Math.log(Math.max(r(), 1e-6)) / rate;
+    const i0 = Math.round(t * sr);
+    if (i0 >= n) break;
+    const len = Math.round(sr * (2e-3 + 0.013 * r() * r())), amp = Math.min(1, 0.15 * Math.exp(0.9 * (r() + r() - 1)));
+    let prev = 0;
+    for (let k = 0; k < len && i0 + k < n; k++) {
+      const w = r() * 2 - 1, hp = w - prev;
+      prev = w;
+      d[i0 + k] += hp * amp * Math.exp(-k / (len * 0.25));
+    }
+    if (r() < 0.25) {
+      const j = i0 + Math.round(sr * (4e-3 + 0.02 * r()));
+      for (let k = 0; k < 60 && j + k < n; k++) d[j + k] += (r() * 2 - 1) * amp * 0.5 * Math.exp(-k / 12);
+    }
+  }
+  return b;
+}
+function fireVoice(ctx, dest, { seed = 1, crackle = 1 } = {}) {
+  const panner = ctx.createPanner();
+  panner.panningModel = "equalpower";
+  panner.distanceModel = "inverse";
+  panner.refDistance = 1;
+  panner.rolloffFactor = 1;
+  panner.maxDistance = 1e4;
+  panner.connect(dest);
+  const roar = ctx.createBufferSource();
+  roar.buffer = noiseBuffer(ctx, 4, seed, "brown");
+  roar.loop = true;
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.Q.value = 0.7;
+  lp.frequency.value = 800;
+  const air = ctx.createBiquadFilter();
+  air.type = "lowpass";
+  air.frequency.value = 18e3;
+  air.Q.value = 0.5;
+  const g2 = ctx.createGain();
+  g2.gain.value = 0;
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 1.5;
+  const lfoG = ctx.createGain();
+  lfoG.gain.value = 0;
+  lfo.connect(lfoG);
+  lfoG.connect(g2.gain);
+  roar.connect(lp);
+  lp.connect(g2);
+  g2.connect(air);
+  air.connect(panner);
+  const cr = ctx.createBufferSource();
+  cr.buffer = crackleBuffer(ctx, 6, seed + 7, 7);
+  cr.loop = true;
+  const bp = ctx.createBiquadFilter();
+  bp.type = "highpass";
+  bp.frequency.value = 1200;
+  const cg = ctx.createGain();
+  cg.gain.value = 0;
+  cr.connect(bp);
+  bp.connect(cg);
+  cg.connect(air);
+  roar.start();
+  cr.start();
+  lfo.start();
+  return {
+    panner,
+    nodes: [roar, lp, g2, lfo, lfoG, cr, bp, cg, air, panner],
+    /** Q [W], fp [Hz] pulzace, flare 0..1, crackle 0..1, dist [m] (pro útlum výšek), at = AudioContext čas. */
+    set({ Q, fp, flare = 0, crackleK = crackle, dist = 10, x = 0, y = 0, z = 0 }, at) {
+      const Lw = 60 + 10 * Math.log10(Math.max(Q, 1) / 1e4);
+      const amp = Math.pow(10, (Lw - 11 - 80) / 20) * (1 + 0.6 * flare);
+      const T = 0.15;
+      g2.gain.setTargetAtTime(amp, at, T);
+      lfoG.gain.setTargetAtTime(amp * 0.25, at, T);
+      lfo.frequency.setTargetAtTime(Math.min(8, Math.max(0.3, fp)), at, 0.5);
+      lp.frequency.setTargetAtTime(Math.min(2e3, Math.max(150, 1800 * Math.pow(Math.max(Q, 1) / 1e4, -0.15))), at, 0.5);
+      cg.gain.setTargetAtTime(amp * 2.2 * crackleK * Math.pow(Math.max(Q, 1) / 2e5, -0.1), at, T);
+      air.frequency.setTargetAtTime(Math.max(2500, 18e3 / (1 + dist / 120)), at, 0.3);
+      if (panner.positionX) {
+        panner.positionX.setValueAtTime(x, at);
+        panner.positionY.setValueAtTime(y, at);
+        panner.positionZ.setValueAtTime(z, at);
+      } else panner.setPosition(x, y, z);
+    },
+    stop(at) {
+      g2.gain.setTargetAtTime(0, at, 0.3);
+      cg.gain.setTargetAtTime(0, at, 0.3);
+      for (const n of [roar, cr, lfo]) {
+        try {
+          n.stop(at + 2);
+        } catch (e) {
+        }
+      }
+    }
+  };
+}
+function boom(ctx, dest, { when, W, dist, seed = 3 }) {
+  const Ps = W > 0 ? blastSummary(W, [Math.max(dist, 1)])[0].Ps : 200;
+  const spl = 20 * Math.log10(Math.max(Ps, 1e-3) / 2e-5);
+  const amp = Math.min(1, Math.max(0.02, Math.pow(10, (spl - 150) / 40)));
+  const k = Math.cbrt(Math.max(W, 0.01)), dur = 0.15 + 0.35 * k;
+  const len = Math.min(12, dur * 3 + 0.3), src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(ctx, len, seed, "pink");
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = Math.max(250, Math.min(9e3, 9e3 / (1 + dist / 150) / (0.6 + 0.4 * k)));
+  const g2 = ctx.createGain();
+  g2.gain.value = 0;
+  g2.gain.setValueAtTime(0, when);
+  g2.gain.linearRampToValueAtTime(amp, when + 4e-3);
+  g2.gain.setTargetAtTime(amp * 0.35, when + 4e-3, 0.05 * (0.5 + k * 0.2));
+  g2.gain.setTargetAtTime(0, when + 0.08, dur / 3);
+  src.connect(lp);
+  lp.connect(g2);
+  g2.connect(dest);
+  src.start(when);
+  src.stop(when + len);
+  const o = ctx.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(60 / (0.7 + 0.3 * k), when);
+  o.frequency.exponentialRampToValueAtTime(22, when + 0.25 + 0.2 * k);
+  const og = ctx.createGain();
+  og.gain.setValueAtTime(0, when);
+  og.gain.linearRampToValueAtTime(amp * 0.9, when + 0.01);
+  og.gain.setTargetAtTime(0, when + 0.02, 0.12 + 0.1 * k);
+  o.connect(og);
+  og.connect(dest);
+  o.start(when);
+  o.stop(when + 1 + k);
+  return spl;
+}
+function pop(ctx, dest, { when, dist, seed = 5 }) {
+  const src = ctx.createBufferSource();
+  src.buffer = crackleBuffer(ctx, 0.08, seed, 60);
+  const g2 = ctx.createGain();
+  g2.gain.value = Math.min(1, 1.2 / Math.max(dist, 1));
+  src.connect(g2);
+  g2.connect(dest);
+  src.start(when);
+}
+var FireAudio = class {
+  constructor() {
+    this.ctx = null;
+    this.on = false;
+    this.voices = /* @__PURE__ */ new Map();
+    this.heard = /* @__PURE__ */ new WeakSet();
+    this.maxVoices = 12;
+    this.seed = 1;
+  }
+  enable() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      this.ctx = new AC();
+      this.comp = this.ctx.createDynamicsCompressor();
+      this.comp.threshold.value = -14;
+      this.comp.ratio.value = 6;
+      this.comp.attack.value = 3e-3;
+      this.comp.release.value = 0.25;
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.8;
+      this.lim = this.ctx.createDynamicsCompressor();
+      this.lim.threshold.value = -2;
+      this.lim.knee.value = 0;
+      this.lim.ratio.value = 20;
+      this.lim.attack.value = 1e-3;
+      this.lim.release.value = 0.1;
+      this.master.connect(this.comp);
+      this.comp.connect(this.lim);
+      this.lim.connect(this.ctx.destination);
+    }
+    this.ctx.resume();
+    this.on = true;
+    return true;
+  }
+  disable() {
+    this.on = false;
+    if (this.ctx) this.ctx.suspend();
+  }
+  clear() {
+    if (!this.ctx) return;
+    const at = this.ctx.currentTime;
+    for (const v of this.voices.values()) v.stop(at);
+    this.voices.clear();
+  }
+  /** Každý snímek: posluchač = kamera, hlasy nejbližších ohňů, nové výbuchy a lupnutí (fx.audioEvents). */
+  update(fx, camera) {
+    if (!this.on || !this.ctx) {
+      if (fx.audioEvents) fx.audioEvents.length = 0;
+      return;
+    }
+    const ctx = this.ctx, at = ctx.currentTime, L = ctx.listener, cp = camera.position;
+    const f = camera.getWorldDirection(this._f || (this._f = cp.clone())), u = camera.up;
+    if (L.positionX) {
+      L.positionX.value = cp.x;
+      L.positionY.value = cp.y;
+      L.positionZ.value = cp.z;
+      L.forwardX.value = f.x;
+      L.forwardY.value = f.y;
+      L.forwardZ.value = f.z;
+      L.upX.value = u.x;
+      L.upY.value = u.y;
+      L.upZ.value = u.z;
+    } else {
+      L.setPosition(cp.x, cp.y, cp.z);
+      L.setOrientation(f.x, f.y, f.z, u.x, u.y, u.z);
+    }
+    const act = fx.sources.filter((s) => s.enabled && s.active && s.ph && s.ph.Q > 500);
+    act.forEach((s) => {
+      s._aimp = s.ph.Q / (s.pos.distanceToSquared(cp) + 1);
+    });
+    const keep = new Set(act.sort((a, b) => b._aimp - a._aimp).slice(0, this.maxVoices));
+    for (const [s, v] of this.voices) if (!keep.has(s)) {
+      v.stop(at);
+      this.voices.delete(s);
+    }
+    for (const s of keep) {
+      let v = this.voices.get(s);
+      const wood = (s.fuel.embers ?? 0) > 0.3 ? 1 : (s.fuel.sparks ?? 0) > 0.2 ? 0.5 : 0.15;
+      if (!v) {
+        v = fireVoice(ctx, this.master, { seed: (s.o.seed ?? 1) + 11, crackle: wood });
+        this.voices.set(s, v);
+      }
+      v.set({ Q: s.ph.Q, fp: s.ph.fp, flare: s.flare || 0, crackleK: wood, dist: s.pos.distanceTo(cp), x: s.pos.x, y: s.pos.y + s.ph.L * 0.4, z: s.pos.z }, at);
+    }
+    for (const e of fx.explosions) {
+      if (this.heard.has(e)) continue;
+      this.heard.add(e);
+      const dist = e.pos.distanceTo(cp), delay = dist / C_SOUND - e.t;
+      if (delay < -0.5) continue;
+      boom(ctx, this.master, { when: at + Math.max(0.01, delay), W: e.o.W || 0.05, dist, seed: (e.o.seed ?? 3) + this.seed++ });
+    }
+    for (const ev of fx.audioEvents || []) if (ev.type === "pop") pop(ctx, this.master, { when: at + ev.pos.distanceTo(cp) / C_SOUND, dist: ev.pos.distanceTo(cp), seed: this.seed++ });
+    if (fx.audioEvents) fx.audioEvents.length = 0;
+  }
+};
+
 // src/fx/char.js
-import * as THREE10 from "three";
+import * as THREE11 from "three";
 function applyChar(mat, { instanced = false, scale = 2, bias = "y", alligator = null, coal = false, hole = false } = {}) {
   const sh = sharedUniforms();
-  mat.userData.char = { uChar: { value: 0 }, uGlow: { value: 0 }, uCharScale: { value: scale }, uCharBase: { value: 0 }, uCharH: { value: 1 }, uHole: { value: new THREE10.Vector4(0, 0, 0, 0) } };
+  mat.userData.char = { uChar: { value: 0 }, uGlow: { value: 0 }, uCharScale: { value: scale }, uCharBase: { value: 0 }, uCharH: { value: 1 }, uHole: { value: new THREE11.Vector4(0, 0, 0, 0) } };
   const U = mat.userData.char;
   mat.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, sh, U);
@@ -3718,6 +4244,8 @@ var TIERS = [
     flameEdge: 0.08,
     flameEdgeM: 0.03,
     volumeTAA: true,
+    smokeVolumes: 4,
+    smokeSteps: 48,
     bloom: 6,
     haze: true,
     shadows: true,
@@ -3749,6 +4277,8 @@ var TIERS = [
     flameEdge: 0.07,
     flameEdgeM: 0.025,
     volumeTAA: true,
+    smokeVolumes: 8,
+    smokeSteps: 72,
     bloom: 6,
     haze: true,
     shadows: true,
@@ -3783,10 +4313,10 @@ function guessTier(renderer) {
 }
 
 // src/engine/env.js
-import * as THREE12 from "three";
+import * as THREE13 from "three";
 
 // src/assets/textures.js
-import * as THREE11 from "three";
+import * as THREE12 from "three";
 var cache = /* @__PURE__ */ new Map();
 function makeNoise2(seed, P) {
   const r = mulberry32(seed), v = new Float32Array(P * P);
@@ -3825,9 +4355,9 @@ function canvasTex(size, fn, { srgb = true, repeat = true } = {}) {
     d[i + 3] = 255;
   }
   g2.putImageData(img, 0, 0);
-  const t = new THREE11.CanvasTexture(c2);
-  if (srgb) t.colorSpace = THREE11.SRGBColorSpace;
-  if (repeat) t.wrapS = t.wrapT = THREE11.RepeatWrapping;
+  const t = new THREE12.CanvasTexture(c2);
+  if (srgb) t.colorSpace = THREE12.SRGBColorSpace;
+  if (repeat) t.wrapS = t.wrapT = THREE12.RepeatWrapping;
   t.anisotropy = 4;
   t.userData.canvas = c2;
   return t;
@@ -4033,7 +4563,7 @@ function groundTexture(kind) {
 }
 function makeMaterial(name, extra = {}) {
   const s = texSet(name);
-  return new THREE11.MeshStandardMaterial({
+  return new THREE12.MeshStandardMaterial({
     map: s.map,
     normalMap: s.normalMap || null,
     roughness: s.roughness ?? 0.8,
@@ -4071,14 +4601,14 @@ void main(){
 var Environment = class {
   constructor(scene) {
     this.scene = scene;
-    this.skyMat = new THREE12.ShaderMaterial({
+    this.skyMat = new THREE13.ShaderMaterial({
       vertexShader: "varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }",
       fragmentShader: SKY_FS,
-      side: THREE12.BackSide,
+      side: THREE13.BackSide,
       depthWrite: false,
-      uniforms: { c0: { value: new THREE12.Color() }, c1: { value: new THREE12.Color() }, sunDir: { value: new THREE12.Vector3(0.55, 0.6, 0.7) }, stars: { value: 0 } }
+      uniforms: { c0: { value: new THREE13.Color() }, c1: { value: new THREE13.Color() }, sunDir: { value: new THREE13.Vector3(0.55, 0.6, 0.7) }, stars: { value: 0 } }
     });
-    this.sky = new THREE12.Mesh(new THREE12.SphereGeometry(1, 32, 16), this.skyMat);
+    this.sky = new THREE13.Mesh(new THREE13.SphereGeometry(1, 32, 16), this.skyMat);
     this.sky.frustumCulled = false;
     this.sky.renderOrder = -10;
     this.sky.onBeforeRender = (r, s, cam) => {
@@ -4087,18 +4617,18 @@ var Environment = class {
       this.sky.updateMatrixWorld();
     };
     scene.add(this.sky);
-    this.hemi = new THREE12.HemisphereLight(10135752, 5917242, 0.1);
+    this.hemi = new THREE13.HemisphereLight(10135752, 5917242, 0.1);
     scene.add(this.hemi);
-    this.sun = new THREE12.DirectionalLight(16773341, 0.1);
+    this.sun = new THREE13.DirectionalLight(16773341, 0.1);
     this.sun.position.set(55, 60, 70);
     scene.add(this.sun);
-    this.moon = new THREE12.DirectionalLight(9414360, 0);
+    this.moon = new THREE13.DirectionalLight(9414360, 0);
     this.moon.position.set(40, 60, 30);
     scene.add(this.moon);
-    this.fog = new THREE12.FogExp2(0, 4e-3);
+    this.fog = new THREE13.FogExp2(0, 4e-3);
     scene.fog = this.fog;
-    this.groundMat = new THREE12.MeshStandardMaterial({ map: groundTexture("dirt"), roughness: 0.95, metalness: 0 });
-    this.ground = new THREE12.Mesh(new THREE12.PlaneGeometry(1, 1, 1, 1), this.groundMat);
+    this.groundMat = new THREE13.MeshStandardMaterial({ map: groundTexture("dirt"), roughness: 0.95, metalness: 0 });
+    this.ground = new THREE13.Mesh(new THREE13.PlaneGeometry(1, 1, 1, 1), this.groundMat);
     this.ground.rotation.x = -Math.PI / 2;
     this.ground.receiveShadow = true;
     this.ground.name = "ground";
@@ -4139,10 +4669,10 @@ var Environment = class {
 };
 
 // src/assets/props.js
-import * as THREE14 from "three";
+import * as THREE15 from "three";
 
 // src/assets/geo.js
-import * as THREE13 from "three";
+import * as THREE14 from "three";
 import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 var segs = (lod, l0, ...more) => [l0, ...more][Math.min(lod, more.length)];
 function noise3(seed = 1) {
@@ -4189,19 +4719,19 @@ function displace(geo, fn) {
   return geo;
 }
 function lathe(profile, seg, phi = Math.PI * 2) {
-  return new THREE13.LatheGeometry(profile.map(([r, y]) => new THREE13.Vector2(r, y)), seg, 0, phi);
+  return new THREE14.LatheGeometry(profile.map(([r, y]) => new THREE14.Vector2(r, y)), seg, 0, phi);
 }
 function tube(a, b, r0, r1, radial = 8, hseg = 1, open = false) {
   const len = a.distanceTo(b);
-  const g2 = new THREE13.CylinderGeometry(r1, r0, len, radial, hseg, open);
+  const g2 = new THREE14.CylinderGeometry(r1, r0, len, radial, hseg, open);
   g2.translate(0, len / 2, 0);
-  const q = new THREE13.Quaternion().setFromUnitVectors(new THREE13.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+  const q = new THREE14.Quaternion().setFromUnitVectors(new THREE14.Vector3(0, 1, 0), b.clone().sub(a).normalize());
   g2.applyQuaternion(q);
   g2.translate(a.x, a.y, a.z);
   return g2;
 }
 function mesh(geo, mat, { cast = true, recv = true, name = "" } = {}) {
-  const m = new THREE13.Mesh(geo, mat);
+  const m = new THREE14.Mesh(geo, mat);
   m.castShadow = cast;
   m.receiveShadow = recv;
   m.name = name;
@@ -4213,12 +4743,12 @@ function mergeByMaterial(parts, name = "") {
     if (!byMat.has(m)) byMat.set(m, []);
     byMat.get(m).push(g2.index ? g2.toNonIndexed() : g2);
   }
-  const grp = new THREE13.Group();
+  const grp = new THREE14.Group();
   grp.name = name;
   for (const [m, gs] of byMat) {
     gs.forEach((g2) => {
       for (const k of Object.keys(g2.attributes)) if (!["position", "normal", "uv"].includes(k)) g2.deleteAttribute(k);
-      if (!g2.attributes.uv) g2.setAttribute("uv", new THREE13.Float32BufferAttribute(new Float32Array(g2.attributes.position.count * 2), 2));
+      if (!g2.attributes.uv) g2.setAttribute("uv", new THREE14.Float32BufferAttribute(new Float32Array(g2.attributes.position.count * 2), 2));
     });
     const merged = mergeGeometries(gs, false);
     grp.add(mesh(merged, m, { name: name + ":" + (m.name || "mat") }));
@@ -4226,7 +4756,7 @@ function mergeByMaterial(parts, name = "") {
   return grp;
 }
 function blob(radius, detail, seed, rough = 0.25, stretch = [1, 1, 1]) {
-  const g2 = new THREE13.IcosahedronGeometry(radius, detail);
+  const g2 = new THREE14.IcosahedronGeometry(radius, detail);
   const n = noise3(seed);
   const p = g2.attributes.position;
   for (let i = 0; i < p.count; i++) {
@@ -4267,7 +4797,7 @@ function candle({ lod = 2 }) {
   if (lod >= 2) displace(g2, (x, y, z) => (y > H * 0.55 ? 9e-4 * Math.max(0, n.fbm(Math.atan2(z, x) * 3, y * 120, 0, 3)) * ((y - H * 0.55) / (H * 0.45)) : 0) + 15e-5 * n(x * 900, y * 900, z * 900));
   const wax = makeMaterial("wax", { roughness: 0.4 });
   wax.name = "wax";
-  wax.emissive = new THREE14.Color(1, 0.5, 0.18);
+  wax.emissive = new THREE15.Color(1, 0.5, 0.18);
   wax.emissiveIntensity = 0;
   {
     const c2 = document.createElement("canvas");
@@ -4282,14 +4812,14 @@ function candle({ lod = 2 }) {
     gr.addColorStop(1, "#fff");
     g3.fillStyle = gr;
     g3.fillRect(0, 0, 4, 64);
-    wax.emissiveMap = new THREE14.CanvasTexture(c2);
-    wax.emissiveMap.colorSpace = THREE14.SRGBColorSpace;
+    wax.emissiveMap = new THREE15.CanvasTexture(c2);
+    wax.emissiveMap.colorSpace = THREE15.SRGBColorSpace;
   }
-  const wick = tube(new THREE14.Vector3(0, H - 5e-3, 0), new THREE14.Vector3(12e-4, H + 9e-3, 4e-4), 6e-4, 4e-4, segs(lod, 4, 6, 8, 16, 32), segs(lod, 1, 2, 4, 8, 16));
-  const wickM = new THREE14.MeshStandardMaterial({ color: 460293, roughness: 0.9, name: "wick" });
+  const wick = tube(new THREE15.Vector3(0, H - 5e-3, 0), new THREE15.Vector3(12e-4, H + 9e-3, 4e-4), 6e-4, 4e-4, segs(lod, 4, 6, 8, 16, 32), segs(lod, 1, 2, 4, 8, 16));
+  const wickM = new THREE15.MeshStandardMaterial({ color: 460293, roughness: 0.9, name: "wick" });
   const plate = lathe(resample([[0, 0], [0.04, 0], [0.042, 4e-3], [0.04, 6e-3], [R * 1.25, 6e-3], [R * 1.25, 0.018], [R * 1.1, 0.018], [R * 1.1, 8e-3], [0, 8e-3]], segs(lod, 6, 12, 30, 90, 280)), rad);
-  const brass = new THREE14.MeshStandardMaterial({ color: 11570519, metalness: 0.9, roughness: 0.35, name: "brass" });
-  const grp = new THREE14.Group();
+  const brass = new THREE15.MeshStandardMaterial({ color: 11570519, metalness: 0.9, roughness: 0.35, name: "brass" });
+  const grp = new THREE15.Group();
   const cm = mesh(g2, wax, { name: "wax" });
   cm.position.y = 8e-3;
   grp.add(cm);
@@ -4297,7 +4827,7 @@ function candle({ lod = 2 }) {
   wm.position.y = 8e-3;
   grp.add(wm);
   grp.add(mesh(plate, brass, { name: "holder" }));
-  grp.userData = { flameAt: new THREE14.Vector3(12e-4, H + 8e-3 + 9e-3, 4e-4), wax };
+  grp.userData = { flameAt: new THREE15.Vector3(12e-4, H + 8e-3 + 9e-3, 4e-4), wax };
   return grp;
 }
 function torch({ lod = 2 }) {
@@ -4313,18 +4843,18 @@ function torch({ lod = 2 }) {
   const { m, u } = charMat("bark", { scale: 30 });
   u.uCharBase.value = 0.5;
   u.uCharH.value = -0.3;
-  const grp = new THREE14.Group();
+  const grp = new THREE15.Group();
   const t = mesh(g2, m, { name: "torch" });
   t.rotation.z = 0.12;
   grp.add(t);
-  const iron = new THREE14.MeshStandardMaterial({ color: 2236704, metalness: 0.8, roughness: 0.6, name: "iron" });
-  const spike = tube(new THREE14.Vector3(0, -0.25, 0), new THREE14.Vector3(-0.03, 0.42, 0), 6e-3, 6e-3, segs(lod, 4, 6, 10, 24, 64), 1);
+  const iron = new THREE15.MeshStandardMaterial({ color: 2236704, metalness: 0.8, roughness: 0.6, name: "iron" });
+  const spike = tube(new THREE15.Vector3(0, -0.25, 0), new THREE15.Vector3(-0.03, 0.42, 0), 6e-3, 6e-3, segs(lod, 4, 6, 10, 24, 64), 1);
   grp.add(mesh(spike, iron, { name: "spike" }));
-  const ring = new THREE14.TorusGeometry(0.019, 4e-3, segs(lod, 3, 6, 10, 24, 60), segs(lod, 8, 16, 32, 96, 300));
+  const ring = new THREE15.TorusGeometry(0.019, 4e-3, segs(lod, 3, 6, 10, 24, 60), segs(lod, 8, 16, 32, 96, 300));
   ring.rotateX(Math.PI / 2);
   ring.translate(-0.035, 0.42, 0);
   grp.add(mesh(ring, iron, { name: "ring" }));
-  const tip = new THREE14.Vector3(0, 0.72, 0).applyEuler(new THREE14.Euler(0, 0, 0.12));
+  const tip = new THREE15.Vector3(0, 0.72, 0).applyEuler(new THREE15.Euler(0, 0, 0.12));
   grp.userData = { flameAt: tip, char: u };
   return grp;
 }
@@ -4333,7 +4863,7 @@ function campfire({ lod = 2, size = "medium", seed = 11 }) {
   const S = { small: 0.45, medium: 1, large: 1.6 }[size] || 1;
   const nStones = { small: 7, medium: 12, large: 16 }[size];
   const nLogs = { small: 4, medium: 6, large: 9 }[size];
-  const grp = new THREE14.Group();
+  const grp = new THREE15.Group();
   const stone = makeMaterial("stone");
   stone.name = "stone";
   const parts = [];
@@ -4353,25 +4883,25 @@ function campfire({ lod = 2, size = "medium", seed = 11 }) {
   const logs = [];
   for (let i = 0; i < nLogs; i++) {
     const a = i / nLogs * Math.PI * 2 + r() * 0.3;
-    const base = new THREE14.Vector3(Math.cos(a) * 0.38 * S, 0.02, Math.sin(a) * 0.38 * S);
-    const top = new THREE14.Vector3(Math.cos(a + 0.4) * 0.05 * S, 0.62 * S * (0.85 + r() * 0.3), Math.sin(a + 0.4) * 0.05 * S);
+    const base = new THREE15.Vector3(Math.cos(a) * 0.38 * S, 0.02, Math.sin(a) * 0.38 * S);
+    const top = new THREE15.Vector3(Math.cos(a + 0.4) * 0.05 * S, 0.62 * S * (0.85 + r() * 0.3), Math.sin(a + 0.4) * 0.05 * S);
     const rr = 0.045 * S * (0.8 + r() * 0.5);
     const g2 = tube(base, top, rr, rr * 0.8, segs(lod, 5, 8, 16, 48, 160), segs(lod, 1, 4, 16, 64, 220));
     displace(g2, (x, y, z) => 4e-3 * S * n.fbm(x * 30, y * 30, z * 30, 3));
     logs.push(g2);
   }
   if (size !== "small") for (let i = 0; i < 3; i++) {
-    const a = r() * 6.28, b = new THREE14.Vector3(Math.cos(a) * 0.5 * S, 0.05 * S, Math.sin(a) * 0.5 * S), c2 = new THREE14.Vector3(-Math.cos(a) * 0.1 * S, 0.12 * S, -Math.sin(a) * 0.1 * S);
+    const a = r() * 6.28, b = new THREE15.Vector3(Math.cos(a) * 0.5 * S, 0.05 * S, Math.sin(a) * 0.5 * S), c2 = new THREE15.Vector3(-Math.cos(a) * 0.1 * S, 0.12 * S, -Math.sin(a) * 0.1 * S);
     const g2 = tube(b, c2, 0.05 * S, 0.05 * S, segs(lod, 5, 8, 16, 48, 160), segs(lod, 1, 4, 12, 48, 180));
     displace(g2, (x, y, z) => 4e-3 * S * n.fbm(x * 30, y * 30, z * 30, 3));
     logs.push(g2);
   }
   grp.add(mergeByMaterial(logs.map((g2) => [g2, bark]), "logs"));
-  const ash = new THREE14.CircleGeometry(0.5 * S, segs(lod, 8, 24, 64, 200, 500), 0, Math.PI * 2);
+  const ash = new THREE15.CircleGeometry(0.5 * S, segs(lod, 8, 24, 64, 200, 500), 0, Math.PI * 2);
   ash.rotateX(-Math.PI / 2);
   if (lod >= 2) {
   }
-  const ashM = new THREE14.MeshStandardMaterial({ color: 3815478, roughness: 1, name: "ash" });
+  const ashM = new THREE15.MeshStandardMaterial({ color: 3815478, roughness: 1, name: "ash" });
   const au = applyChar(ashM, { scale: 25 });
   au.uChar.value = 0.9;
   au.uGlow.value = 0.6;
@@ -4380,7 +4910,7 @@ function campfire({ lod = 2, size = "medium", seed = 11 }) {
   grp.add(am);
   const coals = coalBed({ lod, R: 0.42 * S, S, seed: seed + 17 });
   if (coals) grp.add(coals);
-  grp.userData = { char: u, ashChar: au, coals, flameAt: new THREE14.Vector3(0, 0.05, 0), D: 0.75 * S };
+  grp.userData = { char: u, ashChar: au, coals, flameAt: new THREE15.Vector3(0, 0.05, 0), D: 0.75 * S };
   return grp;
 }
 function coalBed({ lod = 2, R = 0.42, S = 1, seed = 5, n = null }) {
@@ -4388,15 +4918,15 @@ function coalBed({ lod = 2, R = 0.42, S = 1, seed = 5, n = null }) {
   if (!N) return null;
   const r = mulberry32(seed);
   const g2 = blob(0.5, [0, 0, 1, 2, 3][Math.min(lod, 4)], seed, 0.45, [1.3, 0.55, 1]);
-  const aChar = new THREE14.InstancedBufferAttribute(new Float32Array(N * 2), 2);
+  const aChar = new THREE15.InstancedBufferAttribute(new Float32Array(N * 2), 2);
   g2.setAttribute("aChar", aChar);
-  const m = new THREE14.MeshStandardMaterial({ color: 1315344, roughness: 0.95, name: "coal" });
+  const m = new THREE15.MeshStandardMaterial({ color: 1315344, roughness: 0.95, name: "coal" });
   applyChar(m, { instanced: true, scale: 30, coal: true });
-  const im = new THREE14.InstancedMesh(g2, m, N);
+  const im = new THREE15.InstancedMesh(g2, m, N);
   im.name = "coals";
   im.castShadow = false;
   im.receiveShadow = true;
-  const M = new THREE14.Matrix4(), q = new THREE14.Quaternion(), e = new THREE14.Euler(), p = new THREE14.Vector3(), sc = new THREE14.Vector3();
+  const M = new THREE15.Matrix4(), q = new THREE15.Quaternion(), e = new THREE15.Euler(), p = new THREE15.Vector3(), sc = new THREE15.Vector3();
   for (let i = 0; i < N; i++) {
     const a = r() * Math.PI * 2, rr = R * Math.pow(r(), 0.75);
     const sz = 0.03 * S * Math.exp((r() - 0.5) * 1.1);
@@ -4438,7 +4968,7 @@ function tireGeometry(lod) {
   return g2;
 }
 function tire({ lod = 2, rim = true }) {
-  const grp = new THREE14.Group();
+  const grp = new THREE15.Group();
   const { m, u } = charMat("rubber", { scale: 20 });
   u.uCharBase.value = 0;
   u.uCharH.value = 0.6;
@@ -4459,7 +4989,7 @@ function tire({ lod = 2, rim = true }) {
   return grp;
 }
 function tirePile({ lod = 2, n = 5, seed = 3 }) {
-  const r = mulberry32(seed), grp = new THREE14.Group();
+  const r = mulberry32(seed), grp = new THREE15.Group();
   const { m, u } = charMat("rubber", { scale: 20 });
   u.uCharH.value = 1.2;
   const g2 = tireGeometry(lod);
@@ -4484,10 +5014,10 @@ function barrel({ lod = 2, paint = "metalRed" }) {
   const { m, u } = charMat(paint, { scale: 4 });
   u.uCharBase.value = 0;
   u.uCharH.value = H;
-  const grp = new THREE14.Group();
+  const grp = new THREE15.Group();
   grp.add(mesh(g2, m, { name: "drum" }));
   for (const [x, rr] of [[0.18, 0.03], [-0.17, 0.018]]) {
-    const b = new THREE14.CylinderGeometry(rr, rr, 0.012, segs(lod, 6, 10, 20, 48, 120));
+    const b = new THREE15.CylinderGeometry(rr, rr, 0.012, segs(lod, 6, 10, 20, 48, 120));
     b.translate(x, H - 0, 0);
     grp.add(mesh(b, m, { name: "bung" }));
   }
@@ -4495,8 +5025,8 @@ function barrel({ lod = 2, paint = "metalRed" }) {
   return grp;
 }
 function grenade({ lod = 2 }) {
-  const grp = new THREE14.Group();
-  const body = new THREE14.SphereGeometry(0.032, segs(lod, 8, 16, 48, 200, 640), segs(lod, 6, 12, 36, 150, 480));
+  const grp = new THREE15.Group();
+  const body = new THREE15.SphereGeometry(0.032, segs(lod, 8, 16, 48, 200, 640), segs(lod, 6, 12, 36, 150, 480));
   const olive = makeMaterial("metalOlive");
   olive.name = "body";
   grp.add(mesh(body, olive, { name: "body" }));
@@ -4504,7 +5034,7 @@ function grenade({ lod = 2 }) {
   steel.name = "fuze";
   const fz = lathe(resample([[0, 0.028], [0.012, 0.028], [0.012, 0.05], [8e-3, 0.055], [0, 0.055]], segs(lod, 4, 8, 16, 48, 160)), segs(lod, 6, 12, 32, 120, 400));
   grp.add(mesh(fz, steel, { name: "fuze" }));
-  const lever = new THREE14.BoxGeometry(8e-3, 0.07, 2e-3, 1, segs(lod, 1, 4, 12, 40, 120), 1);
+  const lever = new THREE15.BoxGeometry(8e-3, 0.07, 2e-3, 1, segs(lod, 1, 4, 12, 40, 120), 1);
   const lp = lever.attributes.position;
   for (let i = 0; i < lp.count; i++) {
     const y = lp.getY(i);
@@ -4513,7 +5043,7 @@ function grenade({ lod = 2 }) {
   lever.computeVertexNormals();
   lever.translate(0, 0.015, 0);
   grp.add(mesh(lever, steel, { name: "lever" }));
-  const ring = new THREE14.TorusGeometry(0.012, 12e-4, segs(lod, 3, 6, 10, 24, 48), segs(lod, 8, 16, 32, 96, 300));
+  const ring = new THREE15.TorusGeometry(0.012, 12e-4, segs(lod, 3, 6, 10, 24, 48), segs(lod, 8, 16, 32, 96, 300));
   ring.translate(0.022, 0.05, 0);
   grp.add(mesh(ring, steel, { name: "pin" }));
   grp.userData = { H: 0.087 };
@@ -4532,9 +5062,9 @@ function labelTexture(lines) {
   g2.font = "bold 54px monospace";
   g2.textAlign = "center";
   lines.forEach((l, i) => g2.fillText(l, 256 + 512 * (i % 2), 70 + 150 * Math.floor(i / 2) + (i > 1 ? 20 : 0)));
-  const t = new THREE14.CanvasTexture(c2);
-  t.colorSpace = THREE14.SRGBColorSpace;
-  t.wrapS = THREE14.RepeatWrapping;
+  const t = new THREE15.CanvasTexture(c2);
+  t.colorSpace = THREE15.SRGBColorSpace;
+  t.wrapS = THREE15.RepeatWrapping;
   return t;
 }
 function tntDrum({ lod = 2 }) {
@@ -4543,19 +5073,19 @@ function tntDrum({ lod = 2 }) {
   for (const hy of [0.33, 0.66]) p.push([R, hy - 0.03], [R + 0.015, hy - 0.012], [R + 0.015, hy + 0.012], [R, hy + 0.03]);
   p.push([R, H - 0.03], [R + 0.012, H - 0.015], [R, H], [R - 0.02, H - 0.01], [0, H - 0.01]);
   const g2 = lathe(resample(p, segs(lod, 8, 24, 80, 220, 400)), segs(lod, 10, 28, 96, 420, 1200));
-  const mat = new THREE14.MeshStandardMaterial({ map: labelTexture(["TNT", "1000 kg", "V\xDDBU\u0160NINA 1.1D", "UN 0209"]), roughness: 0.55, metalness: 0.4, name: "tnt" });
-  const grp = new THREE14.Group();
+  const mat = new THREE15.MeshStandardMaterial({ map: labelTexture(["TNT", "1000 kg", "V\xDDBU\u0160NINA 1.1D", "UN 0209"]), roughness: 0.55, metalness: 0.4, name: "tnt" });
+  const grp = new THREE15.Group();
   grp.add(mesh(g2, mat, { name: "drum" }));
   const wood = makeMaterial("woodPlank");
   wood.name = "pallet";
   const parts = [];
   for (let i = 0; i < 5; i++) {
-    const b = new THREE14.BoxGeometry(1.2, 0.022, 0.14);
+    const b = new THREE15.BoxGeometry(1.2, 0.022, 0.14);
     b.translate(0, 0.133, -0.5 + i * 0.25);
     parts.push([b, wood]);
   }
   for (let i = 0; i < 3; i++) {
-    const b = new THREE14.BoxGeometry(0.1, 0.1, 1.2);
+    const b = new THREE15.BoxGeometry(0.1, 0.1, 1.2);
     b.translate(-0.55 + i * 0.55, 0.05 + 0.022, 0);
     parts.push([b, wood]);
   }
@@ -4566,7 +5096,7 @@ function tntDrum({ lod = 2 }) {
   return grp;
 }
 function acetyleneBag({ lod = 2 }) {
-  const grp = new THREE14.Group();
+  const grp = new THREE15.Group();
   const prof = [];
   for (let i = 0; i <= 30; i++) {
     const t = i / 30, y = t * 0.62;
@@ -4577,15 +5107,15 @@ function acetyleneBag({ lod = 2 }) {
   const g2 = lathe(resample(prof, segs(lod, 6, 16, 48, 180, 600)), segs(lod, 8, 20, 64, 240, 800));
   const n = noise3(13);
   displace(g2, (x, y, z) => 8e-3 * n.fbm(x * 8, y * 8, z * 8, 3));
-  const pe = new THREE14.MeshStandardMaterial({ color: 14674156, roughness: 0.25, metalness: 0, transparent: true, opacity: 0.38, depthWrite: false, name: "pe" });
+  const pe = new THREE15.MeshStandardMaterial({ color: 14674156, roughness: 0.25, metalness: 0, transparent: true, opacity: 0.38, depthWrite: false, name: "pe" });
   const bag = mesh(g2, pe, { name: "bag", cast: false });
   bag.position.y = 0.05;
   grp.add(bag);
   const wood = makeMaterial("woodPlank");
   wood.name = "stake";
-  grp.add(mesh(tube(new THREE14.Vector3(0.35, -0.2, 0), new THREE14.Vector3(0.35, 0.5, 0), 0.015, 0.012, segs(lod, 4, 6, 12, 32, 96), 1), wood, { name: "stake" }));
-  const cord = new THREE14.MeshStandardMaterial({ color: 7035450, roughness: 0.9, name: "cord" });
-  grp.add(mesh(tube(new THREE14.Vector3(0, 0.75, 0), new THREE14.Vector3(0.35, 0.45, 0), 2e-3, 2e-3, 4, segs(lod, 1, 4, 8, 16, 32)), cord, { name: "cord" }));
+  grp.add(mesh(tube(new THREE15.Vector3(0.35, -0.2, 0), new THREE15.Vector3(0.35, 0.5, 0), 0.015, 0.012, segs(lod, 4, 6, 12, 32, 96), 1), wood, { name: "stake" }));
+  const cord = new THREE15.MeshStandardMaterial({ color: 7035450, roughness: 0.9, name: "cord" });
+  grp.add(mesh(tube(new THREE15.Vector3(0, 0.75, 0), new THREE15.Vector3(0.35, 0.45, 0), 2e-3, 2e-3, 4, segs(lod, 1, 4, 8, 16, 32)), cord, { name: "cord" }));
   const cyl = lathe(resample([[0, 0], [0.1, 0], [0.11, 0.02], [0.11, 0.85], [0.08, 0.95], [0.035, 0.98], [0.035, 1.05], [0, 1.05]], segs(lod, 6, 16, 40, 120, 300)), segs(lod, 8, 20, 64, 200, 600));
   const am = makeMaterial("acetylene");
   am.name = "cylinder";
@@ -4596,10 +5126,10 @@ function acetyleneBag({ lod = 2 }) {
   return grp;
 }
 function grinderRig({ lod = 2 }) {
-  const grp = new THREE14.Group();
+  const grp = new THREE15.Group();
   const steel = makeMaterial("steel");
   steel.name = "beam";
-  const sh = new THREE14.Shape();
+  const sh = new THREE15.Shape();
   const b = 0.082, h2 = 0.16, tw = 5e-3, tf = 74e-4;
   sh.moveTo(-b / 2, 0);
   sh.lineTo(b / 2, 0);
@@ -4614,29 +5144,29 @@ function grinderRig({ lod = 2 }) {
   sh.lineTo(-tw / 2, tf);
   sh.lineTo(-b / 2, tf);
   sh.closePath();
-  const beam = new THREE14.ExtrudeGeometry(sh, { depth: 1.2, steps: segs(lod, 1, 4, 24, 200, 900), bevelEnabled: false });
+  const beam = new THREE15.ExtrudeGeometry(sh, { depth: 1.2, steps: segs(lod, 1, 4, 24, 200, 900), bevelEnabled: false });
   beam.translate(0, 0.45, -0.6);
   grp.add(mesh(beam, steel, { name: "beam" }));
   const wood = makeMaterial("woodPlank");
   wood.name = "trestle";
   for (const z of [-0.45, 0.45]) {
-    const t = new THREE14.BoxGeometry(0.5, 0.45, 0.08, 1, segs(lod, 1, 2, 4, 16, 40), 1);
+    const t = new THREE15.BoxGeometry(0.5, 0.45, 0.08, 1, segs(lod, 1, 2, 4, 16, 40), 1);
     t.translate(0, 0.225, z);
     grp.add(mesh(t, wood, { name: "trestle" }));
   }
-  const body = new THREE14.Group();
-  const dark = new THREE14.MeshStandardMaterial({ color: 1849950, roughness: 0.6, name: "grinder" });
-  const blk = new THREE14.MeshStandardMaterial({ color: 1381653, roughness: 0.7, name: "grip" });
-  body.add(mesh(new THREE14.CylinderGeometry(0.03, 0.033, 0.28, segs(lod, 6, 12, 32, 96, 300), segs(lod, 1, 2, 8, 32, 96)).rotateZ(Math.PI / 2).translate(-0.14, 0, 0), dark, { name: "motor" }));
-  body.add(mesh(new THREE14.BoxGeometry(0.07, 0.06, 0.07, 1, 1, 1).translate(0.02, 0, 0), dark, { name: "head" }));
-  const disc = new THREE14.CylinderGeometry(0.0625, 0.0625, 25e-4, segs(lod, 10, 24, 64, 240, 800), 1);
+  const body = new THREE15.Group();
+  const dark = new THREE15.MeshStandardMaterial({ color: 1849950, roughness: 0.6, name: "grinder" });
+  const blk = new THREE15.MeshStandardMaterial({ color: 1381653, roughness: 0.7, name: "grip" });
+  body.add(mesh(new THREE15.CylinderGeometry(0.03, 0.033, 0.28, segs(lod, 6, 12, 32, 96, 300), segs(lod, 1, 2, 8, 32, 96)).rotateZ(Math.PI / 2).translate(-0.14, 0, 0), dark, { name: "motor" }));
+  body.add(mesh(new THREE15.BoxGeometry(0.07, 0.06, 0.07, 1, 1, 1).translate(0.02, 0, 0), dark, { name: "head" }));
+  const disc = new THREE15.CylinderGeometry(0.0625, 0.0625, 25e-4, segs(lod, 10, 24, 64, 240, 800), 1);
   disc.translate(0.03, -0.045, 0);
-  body.add(mesh(disc, new THREE14.MeshStandardMaterial({ color: 6052437, roughness: 0.9, name: "disc" }), { name: "disc" }));
-  body.add(mesh(new THREE14.CylinderGeometry(0.012, 0.012, 0.1, 8).translate(0.02, 0.06, 0), blk, { name: "handle" }));
+  body.add(mesh(disc, new THREE15.MeshStandardMaterial({ color: 6052437, roughness: 0.9, name: "disc" }), { name: "disc" }));
+  body.add(mesh(new THREE15.CylinderGeometry(0.012, 0.012, 0.1, 8).translate(0.02, 0.06, 0), blk, { name: "handle" }));
   body.rotation.set(0.25, 0.4, -0.35);
   body.position.set(-0.02, 0.45 + 0.16 + 0.07, 0.05);
   grp.add(body);
-  grp.userData = { sparkAt: new THREE14.Vector3(0, 0.45 + 0.16, 0.05), sparkDir: new THREE14.Vector3(-0.8, 0.25, 0.55).normalize() };
+  grp.userData = { sparkAt: new THREE15.Vector3(0, 0.45 + 0.16, 0.05), sparkDir: new THREE15.Vector3(-0.8, 0.25, 0.55).normalize() };
   return grp;
 }
 function puddle({ lod = 2, R = 2, seed = 21 }) {
@@ -4656,12 +5186,12 @@ function puddle({ lod = 2, R = 2, seed = 21 }) {
     const a = 1 + (j - 1) * around + i, b = 1 + (j - 1) * around + (i + 1) % around, c2 = a + around, d = b + around;
     idx.push(a, b, d, a, d, c2);
   }
-  const g2 = new THREE14.BufferGeometry();
-  g2.setAttribute("position", new THREE14.Float32BufferAttribute(pos, 3));
-  g2.setAttribute("uv", new THREE14.Float32BufferAttribute(uv, 2));
+  const g2 = new THREE15.BufferGeometry();
+  g2.setAttribute("position", new THREE15.Float32BufferAttribute(pos, 3));
+  g2.setAttribute("uv", new THREE15.Float32BufferAttribute(uv, 2));
   g2.setIndex(idx);
   g2.computeVertexNormals();
-  const m = new THREE14.MeshStandardMaterial({ color: 723464, roughness: 0.04, metalness: 0, name: "diesel" });
+  const m = new THREE15.MeshStandardMaterial({ color: 723464, roughness: 0.04, metalness: 0, name: "diesel" });
   m.onBeforeCompile = (s) => {
     s.fragmentShader = s.fragmentShader.replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
       { float fr = pow(1.0 - abs(dot(normalize(vViewPosition), normal)), 3.0);
@@ -4671,9 +5201,9 @@ function puddle({ lod = 2, R = 2, seed = 21 }) {
   };
   const pm = mesh(g2, m, { name: "puddle", cast: false });
   pm.position.y = 4e-3;
-  const grp = new THREE14.Group();
+  const grp = new THREE15.Group();
   grp.add(pm);
-  const can = new THREE14.BoxGeometry(0.34, 0.47, 0.16, 1, segs(lod, 1, 2, 6, 24, 80), 1);
+  const can = new THREE15.BoxGeometry(0.34, 0.47, 0.16, 1, segs(lod, 1, 2, 6, 24, 80), 1);
   can.rotateZ(Math.PI / 2 - 0.1);
   can.translate(R * 0.95, 0.09, 0.3);
   const cm = makeMaterial("metalRed");
@@ -4684,7 +5214,7 @@ function puddle({ lod = 2, R = 2, seed = 21 }) {
 }
 
 // src/assets/big.js
-import * as THREE15 from "three";
+import * as THREE16 from "three";
 function strawStack({ lod = 2, nx = 4, ny = 3, nz = 3, seed = 31 }) {
   const r = mulberry32(seed), n = noise3(seed);
   const bx = 2.4, by = 0.9, bz = 1.2;
@@ -4695,14 +5225,14 @@ function strawStack({ lod = 2, nx = 4, ny = 3, nz = 3, seed = 31 }) {
   u.uCharH.value = ny * by;
   const parts = [];
   if (lod === 0) {
-    const g2 = new THREE15.BoxGeometry(nx * bx * 0.5 + 0.2, ny * by, nz * bz, 2, 2, 2);
+    const g2 = new THREE16.BoxGeometry(nx * bx * 0.5 + 0.2, ny * by, nz * bz, 2, 2, 2);
     g2.translate(0, ny * by / 2, 0);
     parts.push([g2, m]);
   } else {
     const [sx, sy, sz] = [segs(lod, 1, 2, 8, 24, 80), segs(lod, 1, 1, 4, 10, 30), segs(lod, 1, 1, 4, 12, 40)];
     for (let k = 0; k < ny; k++) for (let j = 0; j < nz; j++) for (let i = 0; i < nx / 2; i++) {
       if (k === ny - 1 && (j === 0 || j === nz - 1) && r() < 0.5) continue;
-      const g2 = new THREE15.BoxGeometry(bx, by, bz, sx, sy, sz);
+      const g2 = new THREE16.BoxGeometry(bx, by, bz, sx, sy, sz);
       const p = g2.attributes.position;
       const ox = (i - (nx / 2 - 1) / 2) * bx + (r() - 0.5) * 0.06, oy = by / 2 + k * by, oz = (j - (nz - 1) / 2) * bz + (r() - 0.5) * 0.06;
       for (let q = 0; q < p.count; q++) {
@@ -4748,7 +5278,7 @@ function car({ lod = 2, color = "carPaint" }) {
   };
   const wheelX = [-1.35, 1.35], wheelR = 0.36;
   const pos = [], col = [], idx = [], uv = [];
-  const paint = new THREE15.Color(1, 1, 1), glass = new THREE15.Color(0.04, 0.05, 0.06), trim = new THREE15.Color(0.08, 0.08, 0.08);
+  const paint = new THREE16.Color(1, 1, 1), glass = new THREE16.Color(0.04, 0.05, 0.06), trim = new THREE16.Color(0.08, 0.08, 0.08);
   for (let i = 0; i <= nu; i++) {
     const x = -L / 2 + L * i / nu;
     const y0 = bot(x), y1 = top(x);
@@ -4779,10 +5309,10 @@ function car({ lod = 2, color = "carPaint" }) {
     const a = i * (nv + 1) + j, b = a + 1, c2 = a + nv + 1, d = c2 + 1;
     idx.push(a, c2, b, b, c2, d);
   }
-  const g2 = new THREE15.BufferGeometry();
-  g2.setAttribute("position", new THREE15.Float32BufferAttribute(pos, 3));
-  g2.setAttribute("color", new THREE15.Float32BufferAttribute(col, 3));
-  g2.setAttribute("uv", new THREE15.Float32BufferAttribute(uv, 2));
+  const g2 = new THREE16.BufferGeometry();
+  g2.setAttribute("position", new THREE16.Float32BufferAttribute(pos, 3));
+  g2.setAttribute("color", new THREE16.Float32BufferAttribute(col, 3));
+  g2.setAttribute("uv", new THREE16.Float32BufferAttribute(uv, 2));
   g2.setIndex(idx);
   g2.computeVertexNormals();
   const bm = makeMaterial(color, { vertexColors: true, roughness: 0.35, metalness: 0.35 });
@@ -4790,7 +5320,7 @@ function car({ lod = 2, color = "carPaint" }) {
   const u = applyChar(bm, { scale: 2 });
   u.uCharBase.value = 0.3;
   u.uCharH.value = 1.2;
-  const grp = new THREE15.Group();
+  const grp = new THREE16.Group();
   grp.add(mesh(g2, bm, { name: "body" }));
   const tg = tireGeometry(Math.max(0, lod - 1));
   const rm = makeMaterial("rubber");
@@ -4799,7 +5329,7 @@ function car({ lod = 2, color = "carPaint" }) {
   tu.uCharH.value = 0.7;
   const steel = makeMaterial("steel");
   steel.name = "rim";
-  const rimG = new THREE15.CylinderGeometry(0.2, 0.2, 0.19, segs(lod, 6, 12, 32, 96, 300));
+  const rimG = new THREE16.CylinderGeometry(0.2, 0.2, 0.19, segs(lod, 6, 12, 32, 96, 300));
   for (const wx of wheelX) for (const wz of [-0.78, 0.78]) {
     const t = mesh(tg, rm, { name: "tire" });
     t.rotation.x = Math.PI / 2;
@@ -4811,13 +5341,13 @@ function car({ lod = 2, color = "carPaint" }) {
     rr.position.set(wx, wheelR, wz);
     grp.add(rr);
   }
-  const lightM = new THREE15.MeshStandardMaterial({ color: 14540253, emissive: 3353120, roughness: 0.2, name: "lamp" });
-  const tailM = new THREE15.MeshStandardMaterial({ color: 5572616, emissive: 2097152, roughness: 0.3, name: "tail" });
+  const lightM = new THREE16.MeshStandardMaterial({ color: 14540253, emissive: 3353120, roughness: 0.2, name: "lamp" });
+  const tailM = new THREE16.MeshStandardMaterial({ color: 5572616, emissive: 2097152, roughness: 0.3, name: "tail" });
   for (const z of [-0.6, 0.6]) {
-    const h2 = new THREE15.BoxGeometry(0.05, 0.1, 0.32);
+    const h2 = new THREE16.BoxGeometry(0.05, 0.1, 0.32);
     h2.translate(L / 2 - 0.02, 0.8, z);
     grp.add(mesh(h2, lightM, { name: "lamp" }));
-    const t = new THREE15.BoxGeometry(0.05, 0.1, 0.3);
+    const t = new THREE16.BoxGeometry(0.05, 0.1, 0.3);
     t.translate(-L / 2 + 0.03, 0.86, z);
     grp.add(mesh(t, tailM, { name: "tail" }));
   }
@@ -4827,7 +5357,7 @@ function car({ lod = 2, color = "carPaint" }) {
 function house({ lod = 2, seed = 41 }) {
   const r = mulberry32(seed);
   const W = 9, D = 7, Hw = 2.9, pitch = 0.62, ov = 0.45, th = 0.3;
-  const grp = new THREE15.Group();
+  const grp = new THREE16.Group();
   const plaster = makeMaterial("plaster");
   plaster.name = "plaster";
   const pu = applyChar(plaster, { scale: 3 });
@@ -4843,7 +5373,7 @@ function house({ lod = 2, seed = 41 }) {
   const wu = applyChar(wood, { scale: 6, hole: true });
   const brick = makeMaterial("brick");
   brick.name = "brick";
-  const glassM = new THREE15.MeshStandardMaterial({ color: 725012, roughness: 0.05, metalness: 0.5, transparent: true, opacity: 0.55, name: "glass" });
+  const glassM = new THREE16.MeshStandardMaterial({ color: 725012, roughness: 0.05, metalness: 0.5, transparent: true, opacity: 0.55, name: "glass" });
   const wins = [
     { wall: "S", u: -2.8, w: 1.2, h: 1.3, y: 0.9 },
     { wall: "S", u: 2.8, w: 1.2, h: 1.3, y: 0.9 },
@@ -4869,7 +5399,7 @@ function house({ lod = 2, seed = 41 }) {
     if (cur < len / 2) pieces.push([cur, len / 2, 0, Hw]);
     for (const [a, b, y0, y1] of pieces) {
       if (b - a < 1e-3 || y1 - y0 < 1e-3) continue;
-      const g2 = new THREE15.BoxGeometry(b - a, y1 - y0, th, Math.max(1, Math.round((b - a) * subdiv)), Math.max(1, Math.round((y1 - y0) * subdiv)), 1);
+      const g2 = new THREE16.BoxGeometry(b - a, y1 - y0, th, Math.max(1, Math.round((b - a) * subdiv)), Math.max(1, Math.round((y1 - y0) * subdiv)), 1);
       g2.translate((a + b) / 2, (y0 + y1) / 2, 0);
       place(g2);
       parts.push([g2, plaster]);
@@ -4880,23 +5410,23 @@ function house({ lod = 2, seed = 41 }) {
         const fr = [[o.w + fw * 2, fw, 0, o.y + o.h + fw / 2], [fw, o.h, -o.w / 2 - fw / 2, o.y + o.h / 2], [fw, o.h, o.w / 2 + fw / 2, o.y + o.h / 2]];
         if (!o.door) fr.push([o.w + fw * 2, fw, 0, o.y - fw / 2]);
         for (const [w, h2, du, y] of fr) {
-          const g2 = new THREE15.BoxGeometry(w, h2, th * 0.55);
+          const g2 = new THREE16.BoxGeometry(w, h2, th * 0.55);
           g2.translate(o.u + du, y, th * 0.25);
           place(g2);
           parts.push([g2, wood]);
         }
         if (!o.door && lod >= 2) {
-          const g2 = new THREE15.BoxGeometry(0.05, o.h, 0.06);
+          const g2 = new THREE16.BoxGeometry(0.05, o.h, 0.06);
           g2.translate(o.u, o.y + o.h / 2, 0.05);
           place(g2);
           parts.push([g2, wood]);
-          const g22 = new THREE15.BoxGeometry(o.w, 0.05, 0.06);
+          const g22 = new THREE16.BoxGeometry(o.w, 0.05, 0.06);
           g22.translate(o.u, o.y + o.h * 0.6, 0.05);
           place(g22);
           parts.push([g22, wood]);
         }
       }
-      const pane = new THREE15.BoxGeometry(o.w, o.h, 0.01);
+      const pane = new THREE16.BoxGeometry(o.w, o.h, 0.01);
       pane.translate(o.u, o.y + o.h / 2, 0.02);
       place(pane);
       parts.push([pane, o.door ? wood : glassM]);
@@ -4916,41 +5446,41 @@ function house({ lod = 2, seed = 41 }) {
     g2.translate(-W / 2 + th / 2, 0, 0);
   });
   for (const [w, d, x, z] of [[W + 0.06, 0.04, 0, D / 2 + 0.01], [W + 0.06, 0.04, 0, -D / 2 - 0.01], [0.04, D, W / 2 + 0.01, 0], [0.04, D, -W / 2 - 0.01, 0]]) {
-    const g2 = new THREE15.BoxGeometry(w, 0.45, d);
+    const g2 = new THREE16.BoxGeometry(w, 0.45, d);
     g2.translate(x, 0.225, z);
     parts.push([g2, brick]);
   }
   const rh = D / 2 * Math.tan(pitch);
   for (const sx of [1, -1]) {
-    const sh = new THREE15.Shape();
+    const sh = new THREE16.Shape();
     sh.moveTo(-D / 2, 0);
     sh.lineTo(D / 2, 0);
     sh.lineTo(0, rh);
     sh.closePath();
-    const g2 = new THREE15.ExtrudeGeometry(sh, { depth: th, bevelEnabled: false });
+    const g2 = new THREE16.ExtrudeGeometry(sh, { depth: th, bevelEnabled: false });
     g2.rotateY(Math.PI / 2);
     g2.translate(sx * (W / 2) - (sx > 0 ? th : 0), Hw, 0);
     parts.push([g2, plaster]);
   }
   {
-    const g2 = new THREE15.BoxGeometry(W - 2 * th, 0.1, D - 2 * th);
+    const g2 = new THREE16.BoxGeometry(W - 2 * th, 0.1, D - 2 * th);
     g2.translate(0, 0.05, 0);
     parts.push([g2, wood]);
   }
   {
-    const g2 = new THREE15.BoxGeometry(0.15, Hw, D - 2 * th);
+    const g2 = new THREE16.BoxGeometry(0.15, Hw, D - 2 * th);
     g2.translate(0.8, Hw / 2, 0);
     parts.push([g2, plaster]);
   }
   {
-    const g2 = new THREE15.BoxGeometry(W - 2 * th, 0.15, D - 2 * th);
+    const g2 = new THREE16.BoxGeometry(W - 2 * th, 0.15, D - 2 * th);
     g2.translate(0, Hw - 0.07, 0);
     parts.push([g2, wood]);
   }
   const slopeL = (D / 2 + ov) / Math.cos(pitch);
   if (lod < 3) {
     for (const sz of [1, -1]) {
-      const g2 = new THREE15.BoxGeometry(W + 2 * ov, 0.12, slopeL, Math.max(1, subdiv * 3), 1, Math.max(1, subdiv * 2));
+      const g2 = new THREE16.BoxGeometry(W + 2 * ov, 0.12, slopeL, Math.max(1, subdiv * 3), 1, Math.max(1, subdiv * 2));
       g2.translate(0, 0, sz * slopeL / 2);
       g2.rotateX(sz * pitch);
       g2.translate(0, Hw + rh + 0.06 - 0, 0);
@@ -4959,7 +5489,7 @@ function house({ lod = 2, seed = 41 }) {
   } else {
     const tw = 0.18, tl = 0.38, step = 0.15;
     const tseg = segs(lod, 1, 1, 1, 1, 4);
-    const tile = new THREE15.CylinderGeometry(tw * 0.55, tw * 0.55, tl, 4 * tseg, 2 * tseg, true, 0, Math.PI);
+    const tile = new THREE16.CylinderGeometry(tw * 0.55, tw * 0.55, tl, 4 * tseg, 2 * tseg, true, 0, Math.PI);
     tile.rotateX(Math.PI / 2);
     tile.scale(1, 0.25, 1);
     const cols = Math.ceil((W + 2 * ov) / tw), rows = Math.ceil(slopeL / step);
@@ -4974,7 +5504,7 @@ function house({ lod = 2, seed = 41 }) {
     }
     parts.push(...tgs);
     for (const sz of [1, -1]) {
-      const g2 = new THREE15.BoxGeometry(W + 2 * ov, 0.06, slopeL);
+      const g2 = new THREE16.BoxGeometry(W + 2 * ov, 0.06, slopeL);
       g2.translate(0, 0, sz * slopeL / 2);
       g2.rotateX(sz * pitch);
       g2.translate(0, Hw + rh, 0);
@@ -4982,7 +5512,7 @@ function house({ lod = 2, seed = 41 }) {
     }
   }
   {
-    const g2 = new THREE15.BoxGeometry(0.6, 1.8, 0.6, 1, Math.max(1, subdiv * 2), 1);
+    const g2 = new THREE16.BoxGeometry(0.6, 1.8, 0.6, 1, Math.max(1, subdiv * 2), 1);
     g2.translate(-2.2, Hw + rh, -0.8);
     parts.push([g2, brick]);
   }
@@ -5004,44 +5534,148 @@ function house({ lod = 2, seed = 41 }) {
 }
 
 // src/assets/vegetation.js
-import * as THREE16 from "three";
+import * as THREE17 from "three";
 function strip(g2) {
   const c2 = g2.index ? g2.toNonIndexed() : g2;
   for (const k of Object.keys(c2.attributes)) if (!["position", "normal", "uv"].includes(k)) c2.deleteAttribute(k);
   return c2;
 }
+var _needleTex = null;
+function needleCardTexture() {
+  if (_needleTex) return _needleTex;
+  if (typeof document === "undefined") return null;
+  const S = 256, cv = document.createElement("canvas");
+  cv.width = cv.height = S;
+  const g2 = cv.getContext("2d"), r = mulberry32(11);
+  g2.clearRect(0, 0, S, S);
+  g2.fillStyle = "#3b2b1d";
+  g2.fillRect(0, 0, S * 0.1, S);
+  const x0 = S * 0.12, w = S * 0.88;
+  for (let k = 0; k < 3; k++) {
+    const cx = x0 + w * (0.2 + 0.3 * k + (r() - 0.5) * 0.08);
+    g2.strokeStyle = "#4a3a22";
+    g2.lineWidth = 2.2;
+    g2.beginPath();
+    g2.moveTo(cx, S * 0.98);
+    g2.lineTo(cx + (r() - 0.5) * 8, S * 0.05);
+    g2.stroke();
+    for (let i = 0; i < 70; i++) {
+      const t = 0.04 + 0.92 * (i / 70), y = S * (0.98 - 0.93 * t), side = i % 2 ? 1 : -1;
+      const L = S * (0.13 + 0.07 * r()) * (1 - 0.35 * t), a = side * (0.55 + 0.35 * r()) - Math.PI / 2;
+      const c2 = [20 + 30 * r(), 55 + 40 * r(), 25 + 25 * r()].map((v) => v | 0);
+      g2.strokeStyle = `rgb(${c2[0]},${c2[1]},${c2[2]})`;
+      g2.lineWidth = 1.6 + r();
+      g2.beginPath();
+      g2.moveTo(cx, y);
+      g2.lineTo(cx + Math.cos(a) * L, y + Math.sin(a) * L * 0.9);
+      g2.stroke();
+    }
+  }
+  _needleTex = new THREE17.CanvasTexture(cv);
+  _needleTex.colorSpace = THREE17.SRGBColorSpace;
+  _needleTex.anisotropy = 4;
+  return _needleTex;
+}
+function needleCardMaterial() {
+  const m = new THREE17.MeshStandardMaterial({ map: needleCardTexture(), alphaTest: 0.45, side: THREE17.DoubleSide, roughness: 0.85 });
+  m.name = "needle-cards";
+  return m;
+}
+function barkStripUV(g2) {
+  const uv = g2.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setX(i, 0.02 + uv.getX(i) * 0.06);
+  return g2;
+}
 function pineGeometry(lod, seed = 1) {
   const n = noise3(seed), r = mulberry32(seed);
   const radial = segs(lod, 4, 7, 14, 40, 120), hs = segs(lod, 1, 3, 10, 30, 90);
-  const trunk = tube(new THREE16.Vector3(0, -0.02, 0), new THREE16.Vector3(0, 0.98, 0), 0.016, 3e-3, Math.max(4, radial >> 1), hs);
-  const layers = segs(lod, 2, 4, 7, 10, 14);
+  const cards = lod >= 2;
+  const trunk = tube(
+    new THREE17.Vector3(0, -0.02, 0),
+    new THREE17.Vector3(0, 0.98, 0),
+    0.016,
+    3e-3,
+    cards ? segs(lod, 4, 6, 8, 10, 16) : Math.max(4, radial >> 1),
+    cards ? segs(lod, 1, 2, 6, 10, 20) : hs
+  );
   const crowns = [];
-  for (let i = 0; i < layers; i++) {
-    const t = i / (layers - 1 || 1);
-    const y0 = 0.25 + t * 0.62, h2 = 0.32 - t * 0.12, rad = 0.2 * (1 - t * 0.75) + 0.03;
-    const g2 = new THREE16.ConeGeometry(rad, h2, radial, Math.max(1, hs >> 1), true);
-    g2.translate(0, y0 + h2 / 2, 0);
-    const p = g2.attributes.position;
-    for (let q = 0; q < p.count; q++) {
-      const x = p.getX(q), y = p.getY(q), z = p.getZ(q), a = Math.atan2(z, x);
-      const k = 1 + 0.25 * n.fbm(Math.cos(a) * 2 + i, y * 8, Math.sin(a) * 2, 3) + (lod >= 2 ? 0.12 * Math.sin(a * 7 + i) : 0);
-      p.setXYZ(q, x * k, y - (1 - (y - y0) / h2) * 0.03 * r(), z * k);
+  if (!cards) {
+    const layers = segs(lod, 2, 4);
+    for (let i = 0; i < layers; i++) {
+      const t = i / (layers - 1 || 1);
+      const y0 = 0.25 + t * 0.62, h2 = 0.32 - t * 0.12, rad = 0.2 * (1 - t * 0.75) + 0.03;
+      const g2 = new THREE17.ConeGeometry(rad, h2, radial, Math.max(1, hs >> 1), true);
+      g2.translate(0, y0 + h2 / 2, 0);
+      const p = g2.attributes.position;
+      for (let q = 0; q < p.count; q++) {
+        const x = p.getX(q), y = p.getY(q), z = p.getZ(q), a = Math.atan2(z, x);
+        const k = 1 + 0.25 * n.fbm(Math.cos(a) * 2 + i, y * 8, Math.sin(a) * 2, 3);
+        p.setXYZ(q, x * k, y - (1 - (y - y0) / h2) * 0.03 * r(), z * k);
+      }
+      g2.computeVertexNormals();
+      crowns.push(strip(g2));
     }
-    g2.computeVertexNormals();
-    crowns.push(strip(g2));
+    return { trunk: strip(trunk), crown: mergeGeometries(crowns, false) };
   }
-  if (lod >= 2) for (let i = 0; i < 6; i++) {
-    const a = r() * 6.28, y = 0.12 + r() * 0.15;
-    crowns.push(strip(tube(new THREE16.Vector3(0, y, 0), new THREE16.Vector3(Math.cos(a) * 0.12, y + 0.03, Math.sin(a) * 0.12), 4e-3, 1e-3, 4, 1)));
+  const whorls = segs(lod, 0, 0, 8, 11, 15), perW = segs(lod, 0, 0, 5, 6, 8), clumps = segs(lod, 0, 0, 3, 5, 7);
+  const pos = [], nor = [], uvs = [], idx = [];
+  const quad = (a, b, c2, d, nrm) => {
+    const o = pos.length / 3;
+    for (const [v, u, vv] of [[a, 0.12, 0], [b, 1, 0], [d, 1, 1], [c2, 0.12, 1]]) {
+      pos.push(v.x, v.y, v.z);
+      nor.push(nrm.x, nrm.y, nrm.z);
+      uvs.push(u, vv);
+    }
+    idx.push(o, o + 1, o + 2, o, o + 2, o + 3);
+  };
+  const up = new THREE17.Vector3(0, 1, 0), tmp = new THREE17.Vector3();
+  const branches = [];
+  for (let i = 0; i < whorls; i++) {
+    const t = i / (whorls - 1), y = 0.4 + t * 0.55;
+    const Lb = (0.21 * Math.pow(1 - t, 0.8) + 0.035) * (0.85 + 0.3 * r());
+    const a0 = r() * 6.28;
+    for (let j = 0; j < perW; j++) {
+      const a = a0 + j / perW * 6.283 + (r() - 0.5) * 0.5;
+      const d = new THREE17.Vector3(Math.cos(a), -0.12 + 0.45 * t + (r() - 0.5) * 0.2, Math.sin(a)).normalize();
+      const p0 = new THREE17.Vector3(0, y, 0), p1 = p0.clone().addScaledVector(d, Lb);
+      p1.y -= 0.03 * Lb / 0.2 * (1 - t);
+      branches.push(barkStripUV(strip(tube(p0, p1, 45e-4 * (1 - 0.6 * t) + 15e-4, 1e-3, 4, 1))));
+      const dir = p1.clone().sub(p0).normalize(), side = tmp.crossVectors(dir, up).normalize().clone(), side2 = new THREE17.Vector3().crossVectors(side, dir).normalize();
+      const nrm = new THREE17.Vector3(dir.x, 0.8, dir.z).normalize();
+      for (let k = 0; k < clumps; k++) {
+        const f = 0.25 + 0.75 * (k / Math.max(1, clumps - 1)), b = p0.clone().lerp(p1, f * 0.85);
+        const lc = Lb * (0.38 + 0.15 * r()), wc = lc * (0.6 + 0.2 * r());
+        const tip = b.clone().addScaledVector(dir, lc).add(new THREE17.Vector3((r() - 0.5) * 0.02, 0.02 * r(), (r() - 0.5) * 0.02));
+        for (const sv of [side, side2]) {
+          const h2 = sv.clone().multiplyScalar(wc * 0.5);
+          quad(b.clone().sub(h2), b.clone().add(h2), tip.clone().sub(h2), tip.clone().add(h2), nrm);
+        }
+      }
+    }
   }
-  return { trunk: strip(trunk), crown: mergeGeometries(crowns, false) };
+  for (let k = 0; k < 3; k++) {
+    const a = k / 3 * 3.14, sv = new THREE17.Vector3(Math.cos(a), 0, Math.sin(a)).multiplyScalar(0.035);
+    const b = new THREE17.Vector3(0, 0.9, 0), tp = new THREE17.Vector3(0, 1.01, 0);
+    quad(b.clone().sub(sv), b.clone().add(sv), tp.clone().sub(sv), tp.clone().add(sv), up);
+  }
+  const cg = new THREE17.BufferGeometry();
+  cg.setAttribute("position", new THREE17.Float32BufferAttribute(pos, 3));
+  cg.setAttribute("normal", new THREE17.Float32BufferAttribute(nor, 3));
+  cg.setAttribute("uv", new THREE17.Float32BufferAttribute(uvs, 2));
+  cg.setIndex(idx);
+  const crown = mergeGeometries([...branches, strip(cg)], false);
+  for (let i = 0; i < 4; i++) {
+    const a = r() * 6.28, y = 0.15 + r() * 0.22, L = 0.05 + 0.05 * r();
+    crowns.push(strip(tube(new THREE17.Vector3(0, y, 0), new THREE17.Vector3(Math.cos(a) * L, y + 0.01 - 0.02 * r(), Math.sin(a) * L), 22e-4, 6e-4, 5, 1)));
+  }
+  return { trunk: mergeGeometries([strip(trunk), ...crowns], false), crown, cards: true };
 }
 function bushGeometry(lod, seed = 2) {
   const n = noise3(seed), r = mulberry32(seed);
   const det = segs(lod, 0, 1, 3, 5, 7);
   const blobs = [];
   for (let i = 0; i < 4; i++) {
-    const g2 = new THREE16.IcosahedronGeometry(0.32 + r() * 0.12, det);
+    const g2 = new THREE17.IcosahedronGeometry(0.32 + r() * 0.12, det);
     const p = g2.attributes.position;
     for (let q = 0; q < p.count; q++) {
       const x = p.getX(q), y = p.getY(q), z = p.getZ(q);
@@ -5055,19 +5689,19 @@ function bushGeometry(lod, seed = 2) {
   const stems = [];
   for (let i = 0; i < (lod >= 2 ? 7 : 2); i++) {
     const a = r() * 6.28;
-    stems.push(strip(tube(new THREE16.Vector3(0, 0, 0), new THREE16.Vector3(Math.cos(a) * 0.3, 0.45 + r() * 0.2, Math.sin(a) * 0.3), 0.012, 4e-3, 4, 1)));
+    stems.push(strip(tube(new THREE17.Vector3(0, 0, 0), new THREE17.Vector3(Math.cos(a) * 0.3, 0.45 + r() * 0.2, Math.sin(a) * 0.3), 0.012, 4e-3, 4, 1)));
   }
   return { trunk: mergeGeometries(stems, false), crown: mergeGeometries(blobs, false) };
 }
 function pine({ lod = 2, seed = 1, height = 14 }) {
-  const { trunk, crown } = pineGeometry(lod, seed);
+  const { trunk, crown, cards } = pineGeometry(lod, seed);
   const bark = makeMaterial("bark");
   bark.name = "bark";
-  const nee = makeMaterial("needles", { side: THREE16.DoubleSide });
+  const nee = cards ? needleCardMaterial() : makeMaterial("needles", { side: THREE17.DoubleSide });
   nee.name = "needles";
   const u1 = applyChar(bark, { scale: 10 }), u2 = applyChar(nee, { scale: 10 });
-  const grp = new THREE16.Group();
-  const a = new THREE16.Mesh(trunk, bark), b = new THREE16.Mesh(crown, nee);
+  const grp = new THREE17.Group();
+  const a = new THREE17.Mesh(trunk, bark), b = new THREE17.Mesh(crown, nee);
   a.castShadow = b.castShadow = true;
   grp.add(a, b);
   grp.scale.setScalar(height);
@@ -5078,49 +5712,75 @@ function bush({ lod = 2, seed = 2, size = 1.4 }) {
   const { trunk, crown } = bushGeometry(lod, seed);
   const tw = makeMaterial("bark");
   tw.name = "twigs";
-  const lv = makeMaterial("leaves", { side: THREE16.DoubleSide });
+  const lv = makeMaterial("leaves", { side: THREE17.DoubleSide });
   lv.name = "leaves";
   const u1 = applyChar(tw, { scale: 10 }), u2 = applyChar(lv, { scale: 10 });
-  const grp = new THREE16.Group();
-  grp.add(new THREE16.Mesh(trunk, tw), new THREE16.Mesh(crown, lv));
+  const grp = new THREE17.Group();
+  grp.add(new THREE17.Mesh(trunk, tw), new THREE17.Mesh(crown, lv));
   grp.scale.setScalar(size);
   grp.userData = { char: [u1, u2] };
   return grp;
 }
 var InstancedFlora = class {
-  constructor(scene, kind, items, { lodNear = 2, lodFar = 0, nearDist = 40, seed = 1 } = {}) {
+  constructor(scene, kind, items, { lodNear = 2, lodMid = null, lodFar = 0, nearDist = 40, nearFrac = 1, seed = 1 } = {}) {
     this.scene = scene;
     this.items = items;
     this.nearDist = nearDist;
+    this.rNear = nearDist * Math.min(1, nearFrac);
     const gen = kind === "pine" ? pineGeometry : bushGeometry;
     const mk = (lod) => gen(lod, seed);
-    const near = mk(lodNear), far = mk(lodFar);
     const barkM = makeMaterial("bark");
     barkM.name = kind + "-bark";
-    const leafM = makeMaterial(kind === "pine" ? "needles" : "leaves", { side: THREE16.DoubleSide });
+    const leafM = makeMaterial(kind === "pine" ? "needles" : "leaves", { side: THREE17.DoubleSide });
     leafM.name = kind + "-leaf";
     applyChar(barkM, { instanced: true, scale: 10 });
     applyChar(leafM, { instanced: true, scale: 10 });
+    let cardM = null;
+    const leafFor = (geo) => {
+      if (!geo.cards) return leafM;
+      if (!cardM) {
+        cardM = needleCardMaterial();
+        applyChar(cardM, { instanced: true, scale: 10 });
+      }
+      return cardM;
+    };
     const N = items.length;
-    this.aChar = new THREE16.InstancedBufferAttribute(new Float32Array(N * 2), 2);
-    this.aChar.setUsage(THREE16.DynamicDrawUsage);
+    this.aChar = new THREE17.InstancedBufferAttribute(new Float32Array(N * 2), 2);
+    this.aChar.setUsage(THREE17.DynamicDrawUsage);
     this.meshes = [];
-    for (const [lvl, geo] of [["near", near], ["far", far]]) for (const [part, mat] of [["trunk", barkM], ["crown", leafM]]) {
-      const g2 = geo[part].clone();
-      g2.setAttribute("aChar", this.aChar);
-      const m = new THREE16.InstancedMesh(g2, mat, N);
-      m.castShadow = lvl === "near";
-      m.receiveShadow = true;
+    this.levels = nearFrac < 1 ? ["near", "mid", "far"] : ["near", "far"];
+    const lodOf = { near: lodNear, mid: lodMid ?? Math.max(lodFar, lodNear - 2), far: lodFar };
+    for (const lvl of this.levels) {
+      const geo = mk(lodOf[lvl]);
+      for (const [part, mat] of [["trunk", barkM], ["crown", leafFor(geo)]]) {
+        const g2 = geo[part].clone();
+        g2.setAttribute("aChar", this.aChar);
+        const m = new THREE17.InstancedMesh(g2, mat, N);
+        m.castShadow = false;
+        m.receiveShadow = true;
+        m.frustumCulled = false;
+        m.userData = { lvl, part };
+        m.instanceMatrix.setUsage(THREE17.DynamicDrawUsage);
+        scene.add(m);
+        this.meshes.push(m);
+      }
+    }
+    const sh = mk(Math.min(1, Math.max(0, lodNear - 2))), shM = new THREE17.MeshBasicMaterial();
+    for (const part of ["trunk", "crown"]) {
+      const m = new THREE17.InstancedMesh(sh[part].clone(), shM, N);
+      m.castShadow = true;
       m.frustumCulled = false;
-      m.userData = { lvl, part };
-      m.instanceMatrix.setUsage(THREE16.DynamicDrawUsage);
+      m.layers.set(LAYER_SHADOW);
+      m.userData = { lvl: "near", part, shadow: true };
+      m.instanceMatrix.setUsage(THREE17.DynamicDrawUsage);
       scene.add(m);
       this.meshes.push(m);
     }
     this.mats = [];
-    const mm = new THREE16.Matrix4(), q = new THREE16.Quaternion(), up = new THREE16.Vector3(0, 1, 0);
-    for (const it of items) this.mats.push(mm.compose(new THREE16.Vector3(it.x, 0, it.z), q.setFromAxisAngle(up, it.rot || 0), new THREE16.Vector3(it.s, it.s * (it.sy || 1), it.s)).clone());
-    this.order = { near: new Uint32Array(N), far: new Uint32Array(N) };
+    const mm = new THREE17.Matrix4(), q = new THREE17.Quaternion(), up = new THREE17.Vector3(0, 1, 0);
+    for (const it of items) this.mats.push(mm.compose(new THREE17.Vector3(it.x, 0, it.z), q.setFromAxisAngle(up, it.rot || 0), new THREE17.Vector3(it.s, it.s * (it.sy || 1), it.s)).clone());
+    this.order = { near: new Uint32Array(N), mid: new Uint32Array(N), far: new Uint32Array(N) };
+    this.cnt = { near: 0, mid: 0, far: 0 };
     this.charState = new Float32Array(N * 2);
     this.lastUpd = -1;
   }
@@ -5131,28 +5791,29 @@ var InstancedFlora = class {
   update(camera, time) {
     if (time - this.lastUpd > 0.25 || this.lastUpd < 0) {
       this.lastUpd = time;
-      let nn = 0, nf = 0;
-      const cp = camera.position;
+      const cp = camera.position, rN2 = this.rNear ** 2, rM2 = this.nearDist ** 2, mid = this.levels.length === 3, c2 = { near: 0, mid: 0, far: 0 };
       for (let i = 0; i < this.items.length; i++) {
         const it = this.items[i], d2 = (it.x - cp.x) ** 2 + (it.z - cp.z) ** 2;
-        if (d2 < this.nearDist * this.nearDist) this.order.near[nn++] = i;
-        else this.order.far[nf++] = i;
+        const l = d2 < rN2 ? "near" : mid && d2 < rM2 ? "mid" : "far";
+        this.order[l][c2[l]++] = i;
       }
-      this.nn = nn;
-      this.nf = nf;
+      this.cnt = c2;
+      this.nn = c2.near;
+      this.nf = c2.far;
       for (const m of this.meshes) {
-        const ord = m.userData.lvl === "near" ? this.order.near : this.order.far, cnt = m.userData.lvl === "near" ? nn : nf;
+        const ord = this.order[m.userData.lvl], cnt = c2[m.userData.lvl];
         for (let k = 0; k < cnt; k++) m.setMatrixAt(k, this.mats[ord[k]]);
         m.count = cnt;
         m.instanceMatrix.needsUpdate = true;
       }
     }
     for (const m of this.meshes) {
-      const ord = m.userData.lvl === "near" ? this.order.near : this.order.far, cnt = m.count;
+      if (m.userData.shadow) continue;
+      const ord = this.order[m.userData.lvl], cnt = m.count;
       let a = m.geometry.attributes.aChar;
       if (a === this.aChar) {
-        a = new THREE16.InstancedBufferAttribute(new Float32Array(this.items.length * 2), 2);
-        a.setUsage(THREE16.DynamicDrawUsage);
+        a = new THREE17.InstancedBufferAttribute(new Float32Array(this.items.length * 2), 2);
+        a.setUsage(THREE17.DynamicDrawUsage);
         m.geometry.setAttribute("aChar", a);
       }
       for (let k = 0; k < cnt; k++) {
@@ -5165,7 +5826,7 @@ var InstancedFlora = class {
   }
   tris() {
     let t = 0;
-    for (const m of this.meshes) t += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3 * m.count;
+    for (const m of this.meshes) if (!m.userData.shadow) t += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3 * m.count;
     return Math.round(t);
   }
   dispose() {
@@ -5200,7 +5861,7 @@ var ASSETS = [
 var assetById = (id) => ASSETS.find((a) => a.id === id);
 
 // src/scenarios/index.js
-import * as THREE18 from "three";
+import * as THREE19 from "three";
 
 // src/physics/spread.js
 function headROS(fuel, U) {
@@ -5243,7 +5904,7 @@ function arrivalTimes({ nx, ny, cell, fuel, fuelMap, ignitions, windDir, U, slop
       k = p;
     }
   };
-  const pop = () => {
+  const pop2 = () => {
     const top = heap[0], last = heap.pop();
     if (heap.length) {
       heap[0] = last;
@@ -5266,7 +5927,7 @@ function arrivalTimes({ nx, ny, cell, fuel, fuelMap, ignitions, windDir, U, slop
     hp(i, T[i]);
   }
   while (heap.length) {
-    const [t, i] = pop();
+    const [t, i] = pop2();
     if (t > T[i]) continue;
     const x = i % nx, y = i / nx | 0;
     for (const n of N) {
@@ -5287,26 +5948,26 @@ function arrivalTimes({ nx, ny, cell, fuel, fuelMap, ignitions, windDir, U, slop
 }
 
 // src/scenarios/forestDetail.js
-import * as THREE17 from "three";
-var V = (x, y, z) => new THREE17.Vector3(x, y, z);
+import * as THREE18 from "three";
+var V = (x, y, z) => new THREE18.Vector3(x, y, z);
 function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
   const tid = Math.min(ctx.tier.id, 5);
   const nTrunk = [2, 3, 5, 6, 8, 10][tid], nBranch = [0, 2, 3, 5, 6, 8][tid];
   const r = mulberry32(seed);
   const trunks = [];
   for (let i = 0; i < nTrunk; i++) {
-    const s = ctx.fx.addSource({ pos: V(0, 0, 0), fuel: "woodResin", Q: 0, D: 0.45, footprint: { type: "disk" }, volume: true, seed: 400 + i, taper: 1, mult: { smoke: 0.5, embers: 0.8, haze: 0.1, light: 0.7 } });
+    const s = ctx.fx.addSource({ pos: V(0, 0, 0), fuel: "woodResin", Q: 0, D: 0.38, footprint: { type: "disk" }, volume: true, seed: 400 + i, taper: 1.15, attach: 1, mult: { smoke: 0.5, embers: 0.8, haze: 0.1, light: 0.7 } });
     s.enabled = false;
     trunks.push({ s, item: -1 });
   }
   const bark = makeMaterial("bark");
   applyChar(bark, { scale: 6, alligator: [6, 10] });
   const charU = bark.userData.char;
-  const geo = new THREE17.CylinderGeometry(0.035, 0.055, 1, 6, 1);
+  const geo = new THREE18.CylinderGeometry(0.02, 0.035, 1, 6, 1);
   geo.rotateZ(Math.PI / 2);
   const branches = [];
   for (let i = 0; i < nBranch; i++) {
-    const mesh2 = new THREE17.Mesh(geo, bark);
+    const mesh2 = new THREE18.Mesh(geo, bark);
     mesh2.visible = false;
     mesh2.castShadow = true;
     ctx.add(mesh2);
@@ -5344,8 +6005,9 @@ function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
         }
         const it = flora.items[c2.i], age = (t - c2.ta) / trB, env = Math.sin(Math.PI * Math.min(1, age)) ** 0.5;
         const sc = Math.min(1.4, it.s / 14);
+        const rt = 0.016 * it.s, wd = ctx.fx.air.dir;
         T.s.enabled = true;
-        T.s.pos.set(it.x + 0.15, 0.05, it.z);
+        T.s.pos.set(it.x + Math.cos(wd) * rt * 0.9, 0.05, it.z + Math.sin(wd) * rt * 0.9);
         T.s.o.Q = 16e4 * env * sc;
         T.s.o.L = () => (1.6 + 3.6 * env) * sc;
       }
@@ -5394,8 +6056,8 @@ function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
           continue;
         }
         b.s.pos.set(b.p.x, b.p.y - 0.05, b.p.z);
-        b.s.o.Q = 3e4 * b.len * (b.ground ? Math.max(0.15, left) : 1);
-        b.s.o.L = () => (b.ground ? 0.5 : 0.8) * b.len * (0.4 + 0.6 * left);
+        b.s.o.Q = 45e3 * b.len * (b.ground ? Math.max(0.15, left) : 1);
+        b.s.o.L = () => (b.ground ? 0.6 : 1) * b.len * (0.4 + 0.6 * left);
       }
     },
     dispose() {
@@ -5405,7 +6067,7 @@ function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
 }
 
 // src/scenarios/index.js
-var V2 = (x, y, z) => new THREE18.Vector3(x, y, z);
+var V2 = (x, y, z) => new THREE19.Vector3(x, y, z);
 var fmtW = (q) => q >= 1e6 ? (q / 1e6).toFixed(2) + " MW" : q >= 1e3 ? (q / 1e3).toFixed(1) + " kW" : q.toFixed(0) + " W";
 var deg = (r) => (r * 180 / Math.PI).toFixed(0) + "\xB0";
 function fireRows(src, label = "") {
@@ -5431,14 +6093,14 @@ function blastRows(W, label = "TNT ekv.") {
 }
 function table(ctx, w = 1.2, d = 0.7) {
   const m = makeMaterial("woodPlank");
-  const g2 = new THREE18.BoxGeometry(w, 0.04, d);
+  const g2 = new THREE19.BoxGeometry(w, 0.04, d);
   g2.translate(0, -0.02, 0);
-  const t = new THREE18.Mesh(g2, m);
+  const t = new THREE19.Mesh(g2, m);
   t.receiveShadow = true;
   ctx.add(t);
-  const leg = new THREE18.BoxGeometry(0.05, 0.72, 0.05);
+  const leg = new THREE19.BoxGeometry(0.05, 0.72, 0.05);
   for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
-    const l = new THREE18.Mesh(leg, m);
+    const l = new THREE19.Mesh(leg, m);
     l.position.set(x * (w / 2 - 0.05), -0.4, z * (d / 2 - 0.05));
     ctx.add(l);
   }
@@ -5766,13 +6428,13 @@ var SCENARIOS = [
       const pre = ctx.fx.addSource({ pos: V2(0.3, 0.01, 0.2), fuel: "gasoline", Q: 4e5, D: 0.7, end: 6, volume: true, seed: 40 });
       const M = 25, fb = bleveFireball(M), film = () => ctx.controls.film;
       const Wburst = 0.05;
-      let boom = false;
+      let boom2 = false;
       const vel = V2(0, 0, 0);
       let spin = 0;
       return {
         update(dt, t) {
-          if (!boom && t > 6) {
-            boom = true;
+          if (!boom2 && t > 6) {
+            boom2 = true;
             const W = film() ? 4 : Wburst;
             ctx.fx.addExplosion({
               pos: V2(0, 0.4, 0),
@@ -5794,7 +6456,7 @@ var SCENARIOS = [
             vel.set(1.5, film() ? 28 : 17, -1);
             spin = 6;
           }
-          if (boom) {
+          if (boom2) {
             vel.y -= 9.81 * dt;
             b.position.addScaledVector(vel, dt);
             b.rotation.x += spin * dt;
@@ -5829,11 +6491,11 @@ var SCENARIOS = [
       const b = acetyleneBag({ lod: ctx.lod });
       ctx.add(b);
       const mC2H2 = 0.015, W = gasTNT(mC2H2, "acetyleneO2"), fb = heFireball(W);
-      let boom = false;
+      let boom2 = false;
       return {
         update(dt, t) {
-          if (!boom && t > 1.5) {
-            boom = true;
+          if (!boom2 && t > 1.5) {
+            boom2 = true;
             b.children[0].visible = false;
             b.children[2].visible = false;
             ctx.fx.addExplosion({ pos: V2(0, 0.4, 0), W, seed: 7, flash: 3e6, scorch: 0.9, dust: true, dustAlbedo: [0.3, 0.3, 0.25], fireball: { D: fb.D, t: fb.t, T: 3e3, soot: 0 }, smoke: { n: 60, life: 4, albedo: [0.75, 0.75, 0.77], tau: 0.25, buoy: 1.5 }, debris: { n: 24, speed: 30, size: 0.03, hot: 0.2, up: 0.5 }, sparks: { n: 80, speed: 25 } });
@@ -5860,11 +6522,11 @@ var SCENARIOS = [
       g2.rotation.z = 1.3;
       ctx.add(g2);
       const W = 0.18 * 1.33, fb = heFireball(W), v = gurneySphere(2700, 0.22, 0.18);
-      let boom = false;
+      let boom2 = false;
       return {
         update(dt, t) {
-          if (!boom && t > 1.5) {
-            boom = true;
+          if (!boom2 && t > 1.5) {
+            boom2 = true;
             g2.visible = false;
             ctx.fx.addExplosion({ pos: V2(0, 0.05, 0), W, seed: 9, flash: 2e6, scorch: 1.4, dust: true, fireball: { D: fb.D, t: fb.t, T: 2600, soot: 1 }, smoke: { n: 140, life: 7, albedo: [0.11, 0.1, 0.095], tau: 1.6, buoy: 0.7, buoyAcc: 0.25 }, debris: { n: 160, speed: 300, size: 6e-3, hot: 0.9, up: 0.25, T: 1100 }, sparks: { n: 220, speed: 70 } });
             ctx.fx.debris.burst(V2(0, 0.05, 0), { n: 40, speed: 12, size: 0.05, hot: 0, up: 0.7 });
@@ -5884,18 +6546,18 @@ var SCENARIOS = [
     duration: 60,
     loop: true,
     desc: "1 000 kg TNT v sudu na zemi. Ohniv\xE1 koule ~25 m (0,5 s), r\xE1zov\xE1 vlna (kondenzace a prach), stoupaj\xEDc\xED \u010Dern\xFD mrak (TNT m\xE1 nedostatek kysl\xEDku \u2192 saze), kr\xE1ter.",
-    cams: [{ name: "160 m", pos: [130, 8, 95], target: [0, 30, 0] }, { name: "400 m", pos: [330, 25, 230], target: [0, 60, 0] }, { name: "bl\xEDzko (60 m)", pos: [50, 4, 35], target: [0, 12, 0] }],
+    cams: [{ name: "160 m", pos: [130, 8, 95], target: [0, 50, 0] }, { name: "400 m", pos: [330, 25, 230], target: [0, 60, 0] }, { name: "bl\xEDzko (60 m)", pos: [50, 4, 35], target: [0, 12, 0] }],
     build(ctx) {
       const d = tntDrum({ lod: ctx.lod });
       ctx.add(d);
       const W = 1e3, fb = heFireball(W);
-      let boom = false;
+      let boom2 = false;
       return {
         update(dt, t) {
-          if (!boom && t > 2) {
-            boom = true;
+          if (!boom2 && t > 2) {
+            boom2 = true;
             d.visible = false;
-            ctx.fx.addExplosion({ pos: V2(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, wilson: 2.5 });
+            ctx.fx.addExplosion({ pos: V2(0, 0.6, 0), W, seed: 11, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, ring: true, wilson: 2.5 });
           }
         },
         info: () => [...blastRows(W), ["Ohniv\xE1 koule", fb.D.toFixed(0) + " m / " + fb.t.toFixed(2) + " s", "\u26052"], ["Rychlost \u010Dela v 10 m", "\u2248 " + (343 * Math.sqrt(1 + 6 * blastSummary(W, [10])[0].Ps / (7 * 101325))).toFixed(0) + " m/s", "Rankine\u2013Hugoniot \u26055"]]
@@ -5991,7 +6653,7 @@ function landscapeFire(ctx, o) {
     if (r() > fuelMap[cj * nx + ci] * o.density * 0.6) continue;
     items.push({ x, z, s: o.kind === "pine" ? 10 + r() * 8 : 0.9 + r() * 0.9, sy: 1, rot: r() * 6.28, cell: cj * nx + ci });
   }
-  const flora = new InstancedFlora(ctx.scene, o.kind, items, { lodNear: Math.min(ctx.lod, o.kind === "pine" ? 2 : 3), lodFar: 0, nearDist: o.kind === "pine" ? 45 : 25, seed: o.seed });
+  const flora = new InstancedFlora(ctx.scene, o.kind, items, o.kind === "pine" ? { lodNear: Math.min(ctx.lod, 3), lodFar: ctx.lod >= 3 ? 1 : 0, nearDist: 45, seed: o.seed } : { lodNear: Math.min(ctx.lod, 3), lodMid: Math.min(ctx.lod, 1), lodFar: 0, nearDist: 40, nearFrac: 0.35, seed: o.seed });
   ctx.addDisposable(flora);
   ctx.flora.push(flora);
   const fuel = FUELS[o.fuel];
@@ -6029,9 +6691,9 @@ function landscapeFire(ctx, o) {
   cv.height = ny;
   const cg = cv.getContext("2d");
   const img = cg.createImageData(nx, ny);
-  const tex = new THREE18.CanvasTexture(cv);
-  tex.magFilter = THREE18.LinearFilter;
-  const bpMat = new THREE18.MeshStandardMaterial({ map: tex, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
+  const tex = new THREE19.CanvasTexture(cv);
+  tex.magFilter = THREE19.LinearFilter;
+  const bpMat = new THREE19.MeshStandardMaterial({ map: tex, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
   bpMat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, sharedUniforms());
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nout vec3 vBpW;").replace("#include <worldpos_vertex>", "#include <worldpos_vertex>\nvBpW = (modelMatrix * vec4(transformed, 1.0)).xyz;");
@@ -6046,7 +6708,7 @@ function landscapeFire(ctx, o) {
   }`);
   };
   bpMat.customProgramCacheKey = () => "burnPlane";
-  const burnPlane = new THREE18.Mesh(new THREE18.PlaneGeometry(size, size), bpMat);
+  const burnPlane = new THREE19.Mesh(new THREE19.PlaneGeometry(size, size), bpMat);
   burnPlane.rotation.x = -Math.PI / 2;
   burnPlane.position.y = 0.02;
   ctx.add(burnPlane);
@@ -6347,6 +7009,7 @@ export {
   FLAMEK,
   FLAME_LUM,
   FXWorld,
+  FireAudio,
   FireLights,
   FireSource,
   FlameVolume,
@@ -6354,11 +7017,13 @@ export {
   HazeSystem,
   LAYER_FX,
   LAYER_HAZE,
+  LAYER_SHADOW,
   PRE,
   PTYPE,
   Pipeline,
   SCENARIOS,
   Scorch,
+  SmokeVolume,
   SparkSystem,
   TIERS,
   TIMES,
@@ -6369,9 +7034,14 @@ export {
   atlasToCanvas,
   bakeAtlas,
   bbTexture,
+  boom,
+  crackleBuffer,
+  fireVoice,
   guessTier,
+  noiseBuffer,
   noiseTexture,
   physics_exports as physics,
+  pop,
   scenarioById,
   sharedUniforms
 };

@@ -16,13 +16,14 @@ export function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
   const r = mulberry32(seed);
   const trunks = [];
   for (let i = 0; i < nTrunk; i++) {
-    const s = ctx.fx.addSource({ pos: V(0, 0, 0), fuel: 'woodResin', Q: 0, D: 0.45, footprint: { type: 'disk' }, volume: true, seed: 400 + i, taper: 1.0, mult: { smoke: 0.5, embers: 0.8, haze: 0.1, light: 0.7 } });
+    // attach: plamen přilne ke kmeni (náklon větrem jen 30 %), sedí na závětrné straně kůry
+    const s = ctx.fx.addSource({ pos: V(0, 0, 0), fuel: 'woodResin', Q: 0, D: 0.38, footprint: { type: 'disk' }, volume: true, seed: 400 + i, taper: 1.15, attach: 1, mult: { smoke: 0.5, embers: 0.8, haze: 0.1, light: 0.7 } });
     s.enabled = false; trunks.push({ s, item: -1 });
   }
   // větve: válec s kůrou + zuhelnatění; plamen = malý zdroj (jen sprity) nesený s větví
   const bark = makeMaterial('bark');
   applyChar(bark, { scale: 6, alligator: [6, 10] }); const charU = bark.userData.char;
-  const geo = new THREE.CylinderGeometry(0.035, 0.055, 1, 6, 1); geo.rotateZ(Math.PI / 2);
+  const geo = new THREE.CylinderGeometry(0.02, 0.035, 1, 6, 1); geo.rotateZ(Math.PI / 2);
   const branches = [];
   for (let i = 0; i < nBranch; i++) {
     const mesh = new THREE.Mesh(geo, bark); mesh.visible = false; mesh.castShadow = true; ctx.add(mesh);
@@ -54,7 +55,9 @@ export function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
         if (!c) { T.s.enabled = false; continue; }
         const it = flora.items[c.i], age = (t - c.ta) / trB, env = Math.sin(Math.PI * Math.min(1, age)) ** 0.5;
         const sc = Math.min(1.4, it.s / 14);
-        T.s.enabled = true; T.s.pos.set(it.x + 0.15, 0.05, it.z);
+        // závětrná strana kmene: osa ohně posunutá po větru o poloměr kmene (DBH ≈ 3 % výšky)
+        const rt = 0.016 * it.s, wd = ctx.fx.air.dir;
+        T.s.enabled = true; T.s.pos.set(it.x + Math.cos(wd) * rt * 0.9, 0.05, it.z + Math.sin(wd) * rt * 0.9);
         T.s.o.Q = 160e3 * env * sc; T.s.o.L = () => (1.6 + 3.6 * env) * sc;
       }
       // padající větve: z hořících stromů do 35 m; v korunovém režimu z korun (~0,35 s⁻¹), jinak suché spodní větve (~0,12 s⁻¹) ★1 umělecké
@@ -88,7 +91,7 @@ export function forestDetail(ctx, { flora, arr, fuel, seed = 1 }) {
         const left = 1 - b.tg / b.life;
         if (left <= 0) { b.on = false; b.mesh.visible = false; b.s.enabled = false; continue; }
         b.s.pos.set(b.p.x, b.p.y - 0.05, b.p.z);
-        b.s.o.Q = 30e3 * b.len * (b.ground ? Math.max(0.15, left) : 1); b.s.o.L = () => (b.ground ? 0.5 : 0.8) * b.len * (0.4 + 0.6 * left);
+        b.s.o.Q = 45e3 * b.len * (b.ground ? Math.max(0.15, left) : 1); b.s.o.L = () => (b.ground ? 0.6 : 1.0) * b.len * (0.4 + 0.6 * left);
       }
     },
     dispose() { geo.dispose(); },

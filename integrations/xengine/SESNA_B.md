@@ -6,6 +6,11 @@ Do xEngine jsem nic nezapisovala. Pravidla xEngine (skill `xengine`, `CLAUDE.md`
 
 Mapa souborů: [`MAPA.md`](MAPA.md). Návrhy: [`NAVRHY.md`](NAVRHY.md) (pro tebe hlavně F-2 a F-7).
 
+**Ondřej 27. 11.: komponenta ohně do dat hned po zkoušce na jednom kusu.** Udělej F-7 (jeden `campfire_01` a jeden
+`barrel_explosive_01` v ukázkovém levelu) a pošli svodné návrh F-2. Pole, stálé kódy nálezů a čísla předvoleb ber
+z FireLab `integrations/xengine/xspace.js` (`FIRE_COMPONENTS`, `CODES`, `checkFire`, `checkExplosive`, `fireNumbers`) –
+nic z toho nekopíruj. Sud v datech nes jako `explosive: { preset: "barrelFilm" }` (ve hře filmový, Ondřej 27. 11.).
+
 ## 1. Co od tebe oheň potřebuje
 1. **Prefaby s ohněm** (xForge, `packs/kit_base` nebo nový `packs/kit_fire`):
    | prefab | díly | oheň | poznámka |
@@ -67,9 +72,8 @@ nevhodné, jen venkovní scéna).
 - Sud: červená barva s okrajem odřené oceli; po výbuchu se prefab skryje (FireLab kreslí trosky jen na mid/high).
 
 ## 5. Testy pro tebe
-- `test/b_NN_fire_data.mjs`: všechny prefaby s `fire`/`explosive` mají známou předvolbu, plamen pod stropem, odstup od
-  průchodů (čísla z tabulky 2 – **počítej je z FireLab `presets.js` + `combustion.js`, ne natvrdo**; když FireLab
-  změní předvolbu, test se přizpůsobí).
+- `test/b_NN_fire_data.mjs`: všechny prefaby s `fire`/`explosive` projdou `checkFire`/`checkExplosive` z `xspace.js`
+  bez chyb (varování vypsat); čísla nikdy natvrdo – když FireLab změní předvolbu, test se přizpůsobí.
 - T5 (A × B): robot projde level s ohněm; po zapojení A ověří, že hráč u táboráku dostává tok 2–5 kW/m² na 1,0–1,4 m.
 
 ## 6. Pasti

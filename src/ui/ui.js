@@ -70,6 +70,7 @@ export class UI {
       h('button', { class: 'btn', onclick: () => { a.paused = true; a.step(1 / 30); }, title: 'Krok 1/30 s' }, '⏭'),
       this.speedSel = h('select', { onchange: (e) => { a.timeScale = +e.target.value; }, title: 'Rychlost scénáře (efekty běží v reálném čase)' }, ...[0.1, 0.25, 0.5, 1, 2, 4, 10, 20, 50].map((v) => h('option', { value: v }, '×' + v))),
       h('button', { class: 'btn', onclick: () => this.restart(), title: 'R' }, '⟲'),
+      this.sndBtn = h('button', { class: 'btn', onclick: () => { if (a.audio.on) a.audio.disable(); else a.audio.enable(); this.sndBtn.textContent = a.audio.on ? '🔊' : '🔇'; }, title: 'Zvuk ohně a výbuchů (procedurální, rána se zpožděním 343 m/s)' }, '🔇'),
       h('button', { class: 'btn', onclick: () => this.shot(), title: 'Snímek PNG' }, '📷'),
       h('button', { class: 'btn', onclick: () => this.showAtlas(), title: 'Flipbook atlas' }, 'Atlas'),
       h('button', { class: 'btn', onclick: () => document.body.classList.toggle('noui'), title: 'H – skrýt rozhraní' }, '⛶'),

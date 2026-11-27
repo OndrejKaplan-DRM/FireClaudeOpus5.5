@@ -1,6 +1,13 @@
 # TODO — co se právě dělá
 
-Stav k 2026-11-27 večer: **iterace 4 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
+Stav k 2026-11-27 večer: **iterace 5 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
+
+## Hotovo (iterace 5 – Ondřej: a + b + c + d, hřib a, sud b, komponenta a)
+- [x] (d) Výkon porostu: stín z levných náhrad ve vrstvě stínu, tři prstence LOD. Křoví T3 26 → 3,8 M △, les 6,4 → 2,9 M △. D-034.
+- [x] (a) Koruny borovic z karet větví s jehličím, plameny přilnuté ke kmeni. D-035.
+- [x] (b) Objemový kouř T4/T5 (rozptyl slunce, vlastní stín, podsvícení ohněm). D-036.
+- [x] (c) Zvuk: hukot, praskání, lupnutí, rány se zpožděním 343 m/s; test bez reproduktoru, ukázky WAV. D-037.
+- [x] Hřib TNT s kondenzačním prstencem; sud ve hře filmový (`barrelFilm`); `xspace.js` pro komponentu ohně. D-038.
 
 ## Hotovo (iterace 4 – fotky, oharky, TNT, les zblízka, TAA T2, xEngine pro všechny sešny)
 - [x] 39 referenčních fotografií (Commons), srovnání a statistiky barvy, `REFERENCE.md`. Obrázky mimo repo. D-028.
@@ -50,12 +57,11 @@ Stav k 2026-11-27 večer: **iterace 4 hotová** (vše zaškrtnuté je v `main` a
 4. **Výbuchy**: hřib TNT je z kouřových částic – klobouk zblízka „hrudkovitý“, chybí sukně kondenzace pod kloboukem;
    granát zblízka bez rozstřiku hlíny na kameru (čočka).
 5. **Dům**: kouř je hodně podsvícený do červena, chybí čouzení fasády nad okny; díra ve střeše nestíní (stínová mapa ji nevidí).
-6. **Les zblízka**: koruny v blízkém LOD jsou ploché kužele (papírové), korunový požár jen velkými jazyky; plameny na kmenech
-   ve větru jako dlouhé šikmé pásy – chce to ohyb kolem kmene.
+6. **Les zblízka**: karty jehličí mají jednu texturu (všechny větve stejné), korunový požár jen velkými jazyky; hořící
+   koruna zblízka bez plamínků na větvích (jen žhnutí karet).
 7. **Svíčka** je oproti fotkám méně sytá (bělavé jádro) – záměrný kompromis mezi okem a fotoaparátem.
-8. **Křoví a les na T3+:** 26 M △ na snímek u křoví (6,4 M les) – stejné jako v iteraci 3 (ověřeno `tools/tri.mjs` na
-   předchozím commitu); nejspíš stíny bodových světel (6 stěn krychle × světla × instance porostu). Omezit vrhání stínů
-   porostu na blízký LOD a 1–2 světla.
+8. **Zvuk**: jeden typ praskání pro všechna dřeva, bez ozvěny lesa a budov; louže hučí stejně jako dřevo (jen bez praskání).
+   Hladiny jsou řádové (★1–2), neměřené. Do xEngine zatím ne (otázka v `NAVRHY.md`).
 9. **Výkon** na skutečném T460 a RTX 4060 nezměřen (sandbox = swiftshader). Záložka Technika v prohlížeči ukáže časy.
 10. xEngine: integrace ověřená jen na zkušební stránce se záznamníkem světla a v Node – ve skutečné hře ji zapojí sešna A (`SESNA_A.md`).
 

@@ -7,6 +7,7 @@ import { atlasToCanvas, atlasPreviewCanvas } from './fx/bake.js';
 import { FUELS, EXPLOSIVES } from './physics/fuels.js';
 import { WIND_CLASSES } from './physics/wind.js';
 import { TIERS } from './engine/tiers.js';
+import * as AUDIO from './audio/fireAudio.js';
 import { UI } from './ui/ui.js';
 import { SCENARIOS } from './scenarios/index.js';
 import { ASSETS } from './assets/index.js';
@@ -28,7 +29,7 @@ document.getElementById('loader').classList.add('gone');
 
 // testovací a integrační API
 window.__fire = {
-  app, ui, SCENARIOS, ASSETS,
+  app, ui, SCENARIOS, ASSETS, AUDIO,
   ff(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) app.step(dt); },
   renderOnce() { app.updateExposure(); app.renderFrame(1 / 30); },
   settle(n = 30) { for (let i = 0; i < n; i++) { app.updateExposure(); app.pipeline.exposure = app.pipeline.targetExposure; } app.updateExposure(); app.step(1 / 240); },

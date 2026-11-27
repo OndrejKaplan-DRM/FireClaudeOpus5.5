@@ -1,6 +1,7 @@
 // FXWorld: správa efektů a rozpočtů; FireSource (hořící zdroj řízený fyzikou); Explosion (výbuch s časovou osou).
 import * as THREE from 'three';
 import { BillboardSystem, SparkSystem, HazeSystem, AirField } from './particles.js';
+import { SmokeVolume } from './smokeVolume.js';
 import { FlameVolume } from './volume.js';
 import { FireLights } from './lights.js';
 import { bakeAtlas } from './bake.js';
@@ -25,6 +26,7 @@ export class FXWorld {
     this.renderer = renderer; this.scene = scene; this.pipeline = pipeline;
     this.air = new AirField();
     this.time = 0; this.scnTime = 0; this.sources = []; this.explosions = []; this.decals = [];
+    this.audioEvents = []; // lupnutí pro zvuk (FireAudio je vybírá každý snímek; bez zvuku se drží max. 64)
     this.gustNoise = fbm1(77); this.o2 = 1; this.vent = C.ventilation(1);
     this.shake = 0; this.flameLum = FLAME_LUM; this.lumRef = 12000; // lumRef: původní klíč 16/expozice (výbuchy, jiskry, žhnutí) – vzhled sudu beze změny
     this.layers = { flame: true, smoke: true, sparks: true, haze: true, light: true, volume: true };
@@ -50,6 +52,10 @@ export class FXWorld {
     const mrt = !!(tier.volumeTAA && depth); // časová akumulace objemů (pipeline.vol), jen s hloubkou scény
     for (let i = 0; i < tier.volumes; i++) { const v = new FlameVolume({ depth, steps: tier.volumeSteps, mrt }); v.mesh.visible = false; this.scene.add(v.mesh); this.vols.push(v); }
     for (let i = 0; i < Math.min(3, tier.volumes); i++) { const v = new FlameVolume({ ball: true, depth, steps: Math.round(tier.volumeSteps * 0.75), mrt }); v.mesh.visible = false; this.scene.add(v.mesh); this.balls.push(v); }
+    // objemový kouř (T4/T5): sloupce nad nejdůležitějšími zdroji (iterace 5, D-035)
+    if (this.svols) this.svols.forEach((v) => { this.scene.remove(v.mesh); v.mat.dispose(); });
+    this.svols = [];
+    for (let i = 0; i < (tier.smokeVolumes ?? 0); i++) { const v = new SmokeVolume({ depth, steps: tier.smokeSteps ?? 48, mrt }); this.scene.add(v.mesh); this.svols.push(v); }
     if (this.lights) this.lights.setTier(tier); else this.lights = new FireLights(this.scene, tier);
     if (this.debris) this.debris.dispose();
     this.debris = new Debris(this.scene, tier.debris);
@@ -68,7 +74,7 @@ export class FXWorld {
     this.sources = []; this.explosions = [];
     this.bb.clear(); this.sp.clear(); this.hz?.clear(); this.debris.clear();
     for (const d of this.decals) d.dispose(); this.decals = [];
-    this.vols.forEach((v) => (v.mesh.visible = false)); this.balls.forEach((v) => (v.mesh.visible = false));
+    this.vols.forEach((v) => (v.mesh.visible = false)); this.balls.forEach((v) => (v.mesh.visible = false)); this.svols?.forEach((v) => (v.mesh.visible = false));
   }
 
   addSource(opts) { const s = new FireSource(this, opts); this.sources.push(s); return s; }
@@ -95,6 +101,13 @@ export class FXWorld {
     this.sources.forEach((s) => (s.vol = null));
     want.slice(0, this.vols.length).forEach((s, i) => (s.vol = this.vols[i]));
     this.vols.forEach((v) => (v.mesh.visible = false));
+    // objemový kouř: zdroje s viditelným kouřem (τ > 0,05, Q > 30 kW), důležitost = τ·L / vzdálenost
+    this.sources.forEach((s) => (s.svol = null)); this.svols.forEach((v) => (v.mesh.visible = false));
+    if (this.svols.length && this.layers.smoke) {
+      const sw = this.sources.filter((s) => s.enabled && s.active && s.ph && s.ph.Q > 3e4 && s.ph.tau > 0.05);
+      sw.forEach((s) => { s._simp = (s.ph.tau * s.ph.L) / (s.pos.distanceTo(cp) + 1); });
+      sw.sort((x, y) => y._simp - x._simp).slice(0, this.svols.length).forEach((s, i) => (s.svol = this.svols[i]));
+    }
     for (const s of this.sources) s.update(dt, this.time);
     this.sources = this.sources.filter((s) => !s.dead);
     let bi = 0;
@@ -110,7 +123,7 @@ export class FXWorld {
     this.bb.mesh.visible = this.layers.flame || this.layers.smoke;
     const dtex = this.pipeline.depthTexture;
     if (this.bb.mat.uniforms.tDepth.value !== dtex && dtex) this.bb.mat.uniforms.tDepth.value = dtex;
-    for (const v of [...this.vols, ...this.balls]) if (dtex) v.u.tDepth.value = dtex;
+    for (const v of [...this.vols, ...this.balls, ...this.svols]) if (dtex) v.u.tDepth.value = dtex;
     this.bb.pre = PRE.value;
     if (this.env) { const T = this.env.T, k = 1 / Math.PI; this.bb.mat.uniforms.uAmb.value.setRGB(0.75, 0.8, 0.95).multiplyScalar(T.hemi * k * 0.9); this.bb.mat.uniforms.uSunCol.value.setRGB(1, 0.95, 0.88).multiplyScalar((T.sun + T.moon) * k * 0.6); }
     this.bb.update(dt, a, camera, lights);
@@ -163,7 +176,10 @@ export class FireSource {
     const Lb = this.o.L ? this.o.L(Q) : C.flameHeight(Q, D);
     const L = Lb * (1 + 0.35 * vent.lift);
     const U = this.w.air.windAt(Math.max(L * 0.5, 0.05) + this.pos.y);
-    const tilt = flameTilt(U, Math.max(Q, 1), D);
+    let tilt = flameTilt(U, Math.max(Q, 1), D);
+    // plamen přilnutý ke stěně / kmeni (o.attach 0..1): stoupá po povrchu na závětrné straně, náklon jen zčásti
+    // (stěnový plamen, Coandův efekt; fotky hořících kmenů) ★2
+    if (this.o.attach) tilt = { ...tilt, theta: tilt.theta * (1 - 0.7 * this.o.attach) };
     const T = this.o.T ?? C.flameColorTemp(this.o.fuel, vent);
     const fp = C.puffingFrequency(D);
     const Qc = ((1 - f.chiR) * Q) / 1000;
@@ -315,10 +331,30 @@ export class FireSource {
         });
       }
     }
+    // --- objemový kouř (T4/T5): sloup nad plamenem, částice pak jen doplňují vzdálenou část vlečky
+    const sv = this.svol;
+    if (sv) {
+      const H = Math.min(60, Math.max(6 * L, 8 * D)), b0 = Math.max(ph.b * 0.8, D * 0.35, 0.05);
+      const wr = 1.9 * Math.pow(ph.Q / 1000, 0.2) * 0.6;                        // stoupání ve vlečce (McCaffrey) ★3
+      const lean = H * Math.min(2.5, (ph.U || 0) / Math.max(wr, 0.5)) * 0.5;
+      sv.mesh.visible = true;
+      sv.place(new THREE.Vector3(this.pos.x, this.pos.y + L * 0.7, this.pos.z), H, b0, lean, w.air.dir);
+      const u = sv.u, bu = w.bb.mat.uniforms;
+      u.uAlb.value.setRGB(ph.smoke.rgb[0], ph.smoke.rgb[1], ph.smoke.rgb[2]);
+      u.uAmb.value.copy(bu.uAmb.value); u.uSun.value.copy(bu.uSunCol.value);
+      u.uSig0.value = ph.tau / (1.7725 * Math.max(ph.b, 0.02)) * m.smoke; u.uBref.value = Math.max(ph.b, 0.02);
+      u.uEddy.value = b0 + 0.06 * H; u.uRise.value = wr; u.uTime.value = gt; u.uSeed.value = (this.o.seed ?? 1) * 0.29;
+      u.uGlowPos.value.set(this.pos.x, this.pos.y + L * 0.35, this.pos.z);
+      const gc = bbRGB(ph.T);
+      // podsvícení jako u částic (E/4π × 0,05), ale zjemněné poloměrem plamene a víc stíněné sloupcem (objem sčítá
+      // rozptyl po celé dráze – bez toho svítí sloup jako plamen; srovnání snímků T4) – umělecké ★2
+      u.uGlowCol.value.setRGB(gc[0], gc[1], gc[2]).multiplyScalar(ph.I * 0.02 * (0.85 + 0.15 * flick));
+      u.uGlowK.value = 1.2; u.uGlowR2.value = (0.6 * L) ** 2 + 0.25; u.uFade.value = Math.min(1, ph.tau * 8);
+    }
     // --- kouř
     const smokeLife = (this.o.smokeLife ?? 1) * Math.min(28, Math.max(2.5, 4 + Math.sqrt(ph.Q / 1e5) * 3));
     const sMul = w.tier.smokeMul ?? 1;
-    const nS = Math.min(700 * sMul, (8 + 22 * Math.sqrt(ph.Q / 1e5)) * sMul) * m.smoke;
+    const nS = Math.min(700 * sMul, (8 + 22 * Math.sqrt(ph.Q / 1e5)) * sMul) * m.smoke * (sv ? 0.4 : 1);
     this.demand.smoke = ph.tau > 0.003 ? nS : 0;
     if (w.layers.smoke && ph.tau > 0.003) {
       this.acc.smoke += (nS * w.budgetScale.smoke * dt) / smokeLife;
@@ -363,7 +399,9 @@ export class FireSource {
         this.acc.pop = (this.acc.pop || 0) + 0.25 * qk * m.sparks * Math.min(1.5, eMul) * dt;
         if (this.acc.pop >= 1 && r() < 0.5) {
           this.acc.pop = 0;
-          const [px, py, pz] = this.footprintPoint(), cnt = Math.round((6 + 18 * r()) * Math.min(1.5, eMul) * w.budgetScale.spark);
+          const [px, py, pz] = this.footprintPoint();
+          if (w.audioEvents && w.audioEvents.length < 64) w.audioEvents.push({ type: 'pop', pos: new THREE.Vector3(px, py, pz) });
+          const cnt = Math.round((6 + 18 * r()) * Math.min(1.5, eMul) * w.budgetScale.spark);
           const ay = 0.6 + 0.4 * r(), az = r() * 6.283;
           for (let k = 0; k < cnt; k++) {
             const a = az + (r() - 0.5) * 2.2, el = ay + (r() - 0.5) * 0.7, sp = 3 + 6 * r();
@@ -576,6 +614,18 @@ export class Explosion {
       const zr = 1.8 * Math.pow(B * tt * tt, 0.25), y0 = this.pos.y;
       const zc = Math.max(this.fbY ?? y0, y0 + zr), wv = (0.5 * zr) / tt;
       this.mf = { x: this.pos.x, z: this.pos.z, y0, zc, a: Math.max(fb.D * 0.45, 0.34 * (zc - y0)), w: Math.min(wv, 25), k: Math.exp(-t / 50) };
+      // kondenzační prstenec („sukně“) pod kloboukem: stoupající sloupec zvedá vlhký vzduch nad kondenzační hladinu
+      // → bílý límec kolem nohy pod kloboukem (známý z jaderných zkoušek; u 1 t TNT spíš filmové – Ondřej 27. 11.: ano) ★1
+      if (o.ring && t > 5 && t < 26) {
+        const m = this.mf, fade = Math.min(1, (t - 5) / 3) * Math.min(1, (26 - t) / 6);
+        this.ringAcc = (this.ringAcc || 0) + dt * 70 * fade * Math.min(1.5, w.tier.smokeMul ?? 1) * w.budgetScale.smoke;
+        while (this.ringAcc >= 1) {
+          this.ringAcc -= 1;
+          const a = r() * 6.283, rr = m.a * (0.6 + 0.3 * r()), yy = m.zc - m.a * (0.95 + 0.12 * r());
+          w.bb.spawnSmoke({ x: m.x + Math.cos(a) * rr, y: yy, z: m.z + Math.sin(a) * rr, vx: Math.cos(a) * 0.4, vy: m.w * 0.55, vz: Math.sin(a) * 0.4,
+            life: 2.2 + 1.5 * r(), s0: 0.12 * m.a, s1: 0.24 * m.a, tau: 0.3 + 0.25 * r(), albedo: [0.92, 0.92, 0.94], drag: 6, seed: r() });
+        }
+      }
       // prachový sloupec: zemina a prach zvířené přítokem u paty, stoupají osou do klobouku
       if (o.dust && t > fb.t * 1.5 && t < 30) {
         const m = this.mf;

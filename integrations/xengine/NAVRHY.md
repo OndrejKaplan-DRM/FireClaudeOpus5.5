@@ -12,6 +12,9 @@ Napsala Kristína ve FireLab (27. 11. 2026, iterace 4). Texty jsou připravené 
 | 27. 11. | FireLab v xEngine jako **git submodul** (ne zkopírovaný balík). |
 | 27. 11. | Návrhy a návody píše Kristína **sem** (FireLab), pro svodnou sešnu, sešnu A i sešnu B. |
 | 27. 11. | Kondenzační (Wilsonův) dóm u 1 t TNT **výraznější, filmový** (umělecké ★1, ve FireLab volba `wilson`). |
+| 27. 11. | Komponenta `fire` (a `explosive`) do dat **hned po zkoušce na jednom kusu** (F-7 → F-2). Pole, kódy nálezů a čísla předvoleb dává FireLab jako jednu pravdu: `integrations/xengine/xspace.js`. |
+| 27. 11. | Výbuch sudu ve hře **filmový**: `combat:exploded` se sudem → předvolba `barrelFilm` (fyzikální `barrel` zůstává). |
+| 27. 11. | Svíčka: bělavé jádro (kompromis oka a fotoaparátu) zůstává; hřib TNT: přidat bílý prstenec kondenzace (umělecké ★1). |
 
 Otevřené otázky jsou na konci.
 
@@ -44,8 +47,11 @@ Otevřené otázky jsou na konci.
   | `explosive.preset` | řetězec z FireLab `EXPLOSION_PRESETS` | ano | `barrel`, `grenade`, `acetylene`, `tnt` |
   | `explosive.trigger` | `destroyed` \| `use` \| `io` | ne (`destroyed`) | co výbuch spustí |
   | `explosive.hp` | číslo | ne | výdrž, když ji prefab nemá jinde |
-- **Validátor:** neznámá předvolba = nález se stálým kódem (seznam jmen z FireLab `presets.js`); `fire` v buňce, kde výška
-  plamene `L` (tabulka v `SESNA_B.md`) přesahuje strop o víc než 20 % = varování; `explosive` bez `combat` = nález.
+- **Validátor:** hotové funkce ve FireLab `integrations/xengine/xspace.js` (bez Three.js, import v Node):
+  `checkFire(c, { cellHeight, portalDist })`, `checkExplosive(c, { nearestExplosive })`, stálé kódy `CODES`
+  (`FIRE_UNKNOWN_PRESET`, `FIRE_BAD_SCALE`, `FIRE_ABOVE_CEILING`, `FIRE_NEAR_PORTAL`, `EXPLOSIVE_UNKNOWN_PRESET`,
+  `EXPLOSIVE_BAD_TRIGGER`, `EXPLOSIVE_CHAIN`) a popis polí `FIRE_COMPONENTS`. Čísla předvoleb `fireNumbers(preset, scale)`.
+- **Stav:** Ondřej 27. 11. – zapsat **hned po zkoušce F-7** (jeden táborák a jeden sud v ukázkovém levelu).
 - **Běh (A):** entita s `fire` při načtení `fire.ignite(preset, pos)`; `io` přepíná `extinguish`/`ignite`;
   `explosive` při `combat:destroyed` → `combat.explode(...)` (poškození je A) a vzhled `fire.explode(preset, pos)`.
 
@@ -84,8 +90,13 @@ Otevřené otázky jsou na konci.
   všem částicím FireLab jen po dobu výbuchu.
 - Les zblízka: hořící kmeny a padající hořící větve (jen scénář FireLab; pro xEngine zatím ne – žádný les v levelech).
 
+## F-9 (FireLab, pro informaci): iterace 5
+- Zvuk (WebAudio, procedurální): hukot, praskání, lupnutí, rána se zpožděním 343 m/s. V xEngine by ho systém `fx.fire`
+  mohl vést sám (posluchač = kamera hráče) – rozhoduje Ondřej (otázka 2).
+- Objemový kouř jen T4/T5 FireLab → v xEngine se neprojeví (high = T2).
+- Sud: `barrelFilm` je výchozí převod `combat:exploded` se sudem.
+
 ## Otevřené otázky na Ondřeje
-1. Komponentu `fire` do xSpace **hned po zkoušce F-7** / **až po první hře s ohněm**?
-2. Výbuch sudu ve hře: **fyzikální** (CCPS, slabá tlaková vlna) / **filmový** (větší koule, víc trosek)?
-3. Mlha levelu na kouř a plamen: **přidat do shaderů FireLab** (oheň v mlze slábne) / **nechat** (oheň „svítí přes mlhu“)?
-4. Zvuk ohně a výbuchu (praskání, hukot, rána s doběhem 343 m/s): **FireLab ho má dodat** / **zvuk dělá xEngine**?
+1. Mlha levelu na kouř a plamen: **přidat do shaderů FireLab** (oheň v mlze slábne) / **nechat** (oheň „svítí přes mlhu“)?
+2. Zvuk: FireLab od iterace 5 zvuk má (procedurální, WebAudio). **Dodat ho do xEngine přes `fx.fire`** / **zvuk dělá xEngine
+   sám** (FireLab jen popíše parametry)?

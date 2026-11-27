@@ -28,6 +28,12 @@ export const EXPLOSION_PRESETS = {
       dy: 0.4,
     };
   },
+  // filmový sud (Ondřej 27. 11.: ve hře filmový): větší koule, prach, víc trosek, sud letí výš. Umělecké ★1–2,
+  // fyzikální varianta zůstává jako `barrel`.
+  barrelFilm: () => {
+    const b = EXPLOSION_PRESETS.barrel(), fb = b.ex.fireball;
+    return { ...b, ex: { ...b.ex, W: 4, dust: true, fireball: { ...fb, D: fb.D * 1.2 }, debris: { ...b.ex.debris, n: 120, speed: 40 } } };
+  },
   grenade: () => {
     const W = 0.18 * 1.33, fb = heFireball(W);
     return { ex: { W, flash: 2e6, scorch: 1.4, dust: true, fireball: { D: fb.D, t: fb.t, T: 2600, soot: 1 }, smoke: { n: 140, life: 7, albedo: [0.11, 0.1, 0.095], tau: 1.6, buoy: 0.7, buoyAcc: 0.25 }, debris: { n: 160, speed: 300, size: 0.006, hot: 0.9, up: 0.25, T: 1100 }, sparks: { n: 220, speed: 70 } }, fires: [], dy: 0.05 };
@@ -38,6 +44,6 @@ export const EXPLOSION_PRESETS = {
   },
   tnt: () => {
     const W = 1000, fb = heFireball(W);
-    return { ex: { W, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, wilson: 2.5 }, fires: [], dy: 0.6 };
+    return { ex: { W, flash: 6e8, scorch: 26, crater: 1, dust: true, dustAlbedo: [0.36, 0.3, 0.22], fireball: { D: fb.D, t: fb.t, T: 2400, soot: 1, rise: 30 }, smoke: { n: 1400, life: 50, albedo: [0.09, 0.085, 0.08], tau: 3, buoy: 14, buoyAcc: 5, dur: 4 }, debris: { n: 700, speed: 140, size: 0.35, hot: 0.25, up: 0.55, T: 1300 }, sparks: { n: 900, speed: 120 }, life: 70, mushroom: true, ring: true, wilson: 2.5 }, fires: [], dy: 0.6 };
   },
 };
