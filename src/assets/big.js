@@ -136,9 +136,9 @@ export function house({ lod = 2, seed = 41 }) {
   const plaster = makeMaterial('plaster'); plaster.name = 'plaster';
   const pu = applyChar(plaster, { scale: 3 }); pu.uCharBase.value = 0.8; pu.uCharH.value = 3;
   const roofM = makeMaterial('roof'); roofM.name = 'roof';
-  const ru = applyChar(roofM, { scale: 3 }); ru.uCharBase.value = Hw; ru.uCharH.value = 3;
+  const ru = applyChar(roofM, { scale: 3, hole: true }); ru.uCharBase.value = Hw; ru.uCharH.value = 3;
   const wood = makeMaterial('woodPlank'); wood.name = 'frames';
-  const wu = applyChar(wood, { scale: 6 });
+  const wu = applyChar(wood, { scale: 6, hole: true });
   const brick = makeMaterial('brick'); brick.name = 'brick';
   const glassM = new THREE.MeshStandardMaterial({ color: 0x0b1014, roughness: 0.05, metalness: 0.5, transparent: true, opacity: 0.55, name: 'glass' });
   // okna (fasáda: x podél W, z podél D)

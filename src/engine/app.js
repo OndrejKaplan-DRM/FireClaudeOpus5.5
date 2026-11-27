@@ -89,7 +89,7 @@ export class App {
   loadScenario(id, { keepCamera = false } = {}) {
     const s = scenarioById(id) || SCENARIOS[0];
     this.mode = 'scenario'; this.scnId = s.id; this.scn = s;
-    this.clearScene();
+    this.clearScene(); this.pipeline.resetHistory();
     this.env.setGround(s.ground || 'dirt', s.groundSize || 800);
     this.env.setTime(this.timeOverride || s.time || 'soumrak');
     this.env.ground.visible = true;

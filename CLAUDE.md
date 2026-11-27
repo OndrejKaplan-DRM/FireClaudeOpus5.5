@@ -53,6 +53,9 @@ Parametry URL: `?scn=<id>&tier=0..5&wind=0..3&o2=0..1&t=<s>&ui=0`.
   scény kreslí se zastaralým jasem (iterace 1 to měla, D-020).
 - Jas plamene (`flameLum`) a výbuchů/jisker (`lumRef`) jsou dvě různé věci: sud se Ondřejovi líbí, nesahat na `lumRef` bez srovnání.
 - GLSL: `patch` je vyhrazené slovo (WebGL2) – proměnná se tak jmenovat nesmí.
+- Průchody přes celou obrazovku se kreslí kamerou s maskou vrstev: po kreslení jiné vrstvy (LAYER_VOL) vrátit `camera.layers.set(0)`,
+  jinak se průchod tiše nevykreslí (D-025).
+- T3+ má časovou akumulaci objemů: `__fire.shot()` kreslí 10× (dočištění); nový scénář volá `pipeline.resetHistory()`.
 - xEngine: vrstva kamery 1 patří zbrani → efekty `setFxLayer(0)`; ve scéně xEngine nesmí být světlo three.js (D-022 hostitele).
 - Před-expozice: světla se nastavují až těsně před kreslením (`lights.applyPre`), jinak testy bez smyčky vidí intenzitu × 1.
 - `pipeline.depthTexture` se při změně velikosti vyrábí znovu – materiály ji berou každý snímek z `FXWorld.update`, ne při stavbě.

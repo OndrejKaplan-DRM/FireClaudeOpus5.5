@@ -228,6 +228,7 @@ float hash12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yz
 import * as THREE2 from "three";
 var LAYER_FX = 1;
 var LAYER_HAZE = 2;
+var LAYER_VOL = 3;
 var FS_TRI = new THREE2.BufferGeometry();
 FS_TRI.setAttribute("position", new THREE2.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
 FS_TRI.setAttribute("uv", new THREE2.Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2));
@@ -313,6 +314,38 @@ void main(){
   o = vec4(c, 1.0);
 }`
 );
+var TAA = (
+  /* glsl */
+  `
+precision highp float; in vec2 vUv; out vec4 o;
+uniform sampler2D tCur, tDist, tHist; uniform mat4 invVP, prevVP; uniform vec3 camPos; uniform vec2 texel; uniform float blend;
+void main(){
+  vec4 cur = texture(tCur, vUv);
+  vec4 mn = cur, mx = cur;
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+    if (x == 0 && y == 0) continue;
+    vec4 c = texture(tCur, vUv + vec2(float(x), float(y)) * texel);
+    mn = min(mn, c); mx = max(mx, c);
+  }
+  // vzd\xE1lenost pod\xE9l paprsku: p\u0159edvyn\xE1soben\xE1 kryt\xEDm; bez objemu v pixelu \u2192 okol\xED (jinak by se historie t\xE1hla)
+  float a = cur.a, d = a > 0.002 ? texture(tDist, vUv).r / a : 0.0;
+  vec2 puv = vUv;
+  if (d > 0.0) {
+    vec4 w = invVP * vec4(vUv * 2.0 - 1.0, 1.0, 1.0); w /= w.w;
+    vec3 P = camPos + normalize(w.xyz - camPos) * d;
+    vec4 pc = prevVP * vec4(P, 1.0);
+    puv = pc.xy / pc.w * 0.5 + 0.5;
+  }
+  vec4 h = texture(tHist, puv);
+  h = clamp(h, mn, mx);
+  float k = (puv.x < 0.0 || puv.y < 0.0 || puv.x > 1.0 || puv.y > 1.0) ? 1.0 : blend;
+  o = mix(h, cur, k);
+}`
+);
+var COPY_PM = (
+  /* glsl */
+  `precision highp float; in vec2 vUv; out vec4 o; uniform sampler2D tSrc; void main(){ o = texture(tSrc, vUv); }`
+);
 var Pipeline = class {
   constructor(renderer, tier) {
     this.r = renderer;
@@ -339,7 +372,19 @@ var Pipeline = class {
       vignette: { value: 0.35 },
       res: { value: new THREE2.Vector2() }
     });
+    this.taa = fsPass(TAA, { tCur: { value: null }, tDist: { value: null }, tHist: { value: null }, invVP: { value: new THREE2.Matrix4() }, prevVP: { value: new THREE2.Matrix4() }, camPos: { value: new THREE2.Vector3() }, texel: { value: new THREE2.Vector2() }, blend: { value: 0.12 } });
+    this.comp = fsPass(COPY_PM, { tSrc: { value: null } });
+    Object.assign(this.comp.m, { transparent: true, blending: THREE2.CustomBlending, blendSrc: THREE2.OneFactor, blendDst: THREE2.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE2.OneFactor, blendDstAlpha: THREE2.OneMinusSrcAlphaFactor });
+    this.prevVP = new THREE2.Matrix4();
+    this.prevPos = new THREE2.Vector3(1e9, 0, 0);
+    this.prevDir = new THREE2.Vector3();
+    this.taaReset = true;
+    this.histI = 0;
     this.setTier(tier);
+  }
+  /** Zahodit historii objemů (nový scénář, střih kamery). */
+  resetHistory() {
+    this.taaReset = true;
   }
   setTier(tier) {
     this.tier = tier;
@@ -348,7 +393,12 @@ var Pipeline = class {
     this.resize(this.w || 1280, this.h || 720);
   }
   dispose() {
-    for (const k of ["main", "depth", "haze"]) if (this[k]) this[k].dispose();
+    for (const k of ["main", "depth", "haze", "vol"]) if (this[k]) {
+      this[k].dispose();
+      this[k] = null;
+    }
+    (this.hist || []).forEach((t) => t.dispose());
+    this.hist = null;
     (this.bloomRTs || []).forEach((t) => t.dispose());
     this.bloomRTs = [];
   }
@@ -365,6 +415,14 @@ var Pipeline = class {
     this.main.texture.minFilter = THREE2.LinearFilter;
     if (this.tier.softParticles) this.depth = new THREE2.WebGLRenderTarget(W, H, { type: THREE2.FloatType, depthBuffer: false });
     if (this.tier.haze) this.haze = new THREE2.WebGLRenderTarget(W >> 1, H >> 1, { type: THREE2.HalfFloatType, depthBuffer: false });
+    if (this.tier.volumeTAA && this.depth) {
+      this.vol = new THREE2.WebGLRenderTarget(W, H, { type: THREE2.HalfFloatType, depthBuffer: false, count: 2 });
+      this.hist = [0, 1].map(() => new THREE2.WebGLRenderTarget(W, H, { type: THREE2.HalfFloatType, depthBuffer: false }));
+      for (const t of [...this.vol.textures, ...this.hist.map((h3) => h3.texture)]) {
+        t.minFilter = t.magFilter = THREE2.LinearFilter;
+      }
+      this.taaReset = true;
+    }
     let bw = W, bh = H;
     for (let i = 0; i < this.tier.bloom; i++) {
       bw = Math.max(2, bw >> 1);
@@ -375,6 +433,38 @@ var Pipeline = class {
     }
     this.final.u.res.value.set(W, H);
     this.size = { W, H };
+  }
+  /** Objemy do vlastního cíle (barva + vzdálenost), akumulace s historií → hist[histI]. Vrací počet průchodů. */
+  renderVolumes(scene, camera) {
+    const r = this.r;
+    r.setRenderTarget(this.vol);
+    r.setClearColor(0, 0);
+    r.clear(true, false, false);
+    camera.layers.set(LAYER_VOL);
+    r.render(scene, camera);
+    camera.layers.set(0);
+    r.setClearColor(0, 1);
+    camera.updateMatrixWorld();
+    const dir = new THREE2.Vector3();
+    camera.getWorldDirection(dir);
+    const cut = this.taaReset || camera.position.distanceTo(this.prevPos) > 1.5 || dir.dot(this.prevDir) < 0.9;
+    const u = this.taa.u, next = 1 - this.histI;
+    u.tCur.value = this.vol.textures[0];
+    u.tDist.value = this.vol.textures[1];
+    u.tHist.value = this.hist[this.histI].texture;
+    u.invVP.value.copy(camera.matrixWorld).multiply(camera.projectionMatrixInverse);
+    u.prevVP.value.copy(this.prevVP);
+    u.camPos.value.copy(camera.position);
+    u.texel.value.set(1 / this.size.W, 1 / this.size.H);
+    u.blend.value = cut ? 1 : this.taaBlend ?? 0.12;
+    r.setRenderTarget(this.hist[next]);
+    r.render(this.taa.scene, camera);
+    this.histI = next;
+    this.taaReset = false;
+    this.prevVP.copy(camera.projectionMatrix).multiply(camera.matrixWorldInverse);
+    this.prevPos.copy(camera.position);
+    this.prevDir.copy(dir);
+    return 2;
   }
   /** Vstup pro efekty: textura lineární hloubky (T2+), nebo null. */
   get depthTexture() {
@@ -397,9 +487,15 @@ var Pipeline = class {
       r.setRenderTarget(this.depth);
       r.render(this.depthCopy.scene, camera);
       passes++;
+      if (this.vol) passes += this.renderVolumes(scene, camera);
       r.setRenderTarget(this.main);
       const ac = r.autoClear;
       r.autoClear = false;
+      if (this.vol) {
+        this.comp.u.tSrc.value = this.hist[this.histI].texture;
+        r.render(this.comp.scene, camera);
+        passes++;
+      }
       camera.layers.set(LAYER_FX);
       r.render(scene, camera);
       passes++;
@@ -692,10 +788,13 @@ void main(){
   } else {
     // kou\u0159: R = hustota, G = propustnost ke sv\u011Btlu shora, B = okraj
     float tau = vC.a;
-    float al = (1.0 - exp(-a.r * tau * 2.2)) * a.a;
+    // okraj chuchvalce v\u017Edy m\u011Bkk\xFD (i p\u0159i velk\xE9 \u03C4) \u2013 jinak mrak vypad\xE1 jako hrozen koul\xED (iterace 3)
+    float al = (1.0 - exp(-a.r * tau * 2.2)) * a.a * smoothstep(0.0, 0.3, a.r);
     al *= (1.0 - smoothstep(0.8, 1.0, age)) * soft;
     vec3 alb = vC.rgb;
-    vec3 lit = (uAmb * (0.55 + 0.45 * a.g) + uSunCol * a.g * (0.6 + 0.4 * a.b)) * uPreExp;
+    // st\xEDnov\xE1n\xED jednoho chuchvalce tlumen\xE9: v hust\xE9m mraku st\xEDn\xED celek, ne ka\u017Ed\xE1 koule zvl\xE1\u0161\u0165
+    float sg = mix(0.62, a.g, 0.55);
+    vec3 lit = (uAmb * (0.62 + 0.38 * sg) + uSunCol * sg * (0.75 + 0.25 * a.b)) * uPreExp;
     // podsv\xEDcen\xED ohn\u011Bm zespodu (spo\u010D\xEDt\xE1no na CPU, rozptyl \u221D albedo)
     vec3 glow = vG.rgb * (0.35 + 0.65 * (1.0 - a.g)) * uPreExp;
     vec3 c = alb * (lit + glow);
@@ -824,7 +923,7 @@ var BillboardSystem = class extends BaseSystem {
     d[o + F.extra] = Math.floor(d[o + F.seed] * 104729 % 1 * 64);
     d[o + F.glowR] = R0;
   }
-  spawnSmoke({ x, y, z, vx = 0, vy = 0, vz = 0, life, s0, s1, tau, albedo, ox, oz, pq = 0, pz0 = 0, drag = 0.4, buoy = 0, glowing = false, seed, R0 = 0 }) {
+  spawnSmoke({ x, y, z, vx = 0, vy = 0, vz = 0, life, s0, s1, tau, albedo, ox, oz, pq = 0, pz0 = 0, drag = 0.4, buoy = 0, glowing = false, seed, R0 = 0, grav = 0 }) {
     const o = this.alloc();
     if (o < 0) return;
     const d = this.d;
@@ -853,6 +952,7 @@ var BillboardSystem = class extends BaseSystem {
     d[o + F.buoy] = buoy;
     d[o + F.extra] = Math.floor(d[o + F.seed] * 104729 % 1 * 64);
     d[o + F.glowR] = R0;
+    d[o + F.grav] = grav;
   }
   update(dt, air, camera, lights) {
     this.integrate(dt, air);
@@ -1302,7 +1402,7 @@ vec3 fieldFlame(vec3 p){
   // teplota: reak\u010Dn\xED z\xF3na na pl\xE1\u0161ti; hork\xE9 prou\u017Eky; u paty velk\xFDch po\u017E\xE1r\u016F chladn\xE9 tmav\xE9 j\xE1dro par paliva
   float zone = smoothstep(0.0, 0.16, dd) * (1.0 - 0.5 * core * exp(-y * 4.0) * (0.4 + uFlame2.y));
   float hotStreak = smoothstep(0.38, 0.78, n2);
-  float T = uTamb + (uTpeak - uTamb) * pow(zone, 0.8) * mix(0.62 - 0.17 * big, 1.04, hotStreak) * (1.0 - 0.42 * pow(y, 1.5));
+  float T = uTamb + (uTpeak - uTamb) * pow(zone, 0.8) * mix(0.66 - 0.06 * big, 1.04, hotStreak) * (1.0 - 0.42 * pow(y, 1.5));
   // velk\xE9 sazov\xE9 po\u017E\xE1ry (Steinhaus, Takahashi): vn\u011Bj\u0161\xED vrstva saz\xED, sv\u011Btlo pror\xE1\u017Eej\xED jen \u201Eluminous zones\u201C
   float shell = uFlame2.y * (1.0 - core) * smoothstep(0.15, 0.55, y + 0.25 * n1);
   float lumPatch = smoothstep(0.52, 0.64, n4);
@@ -1344,7 +1444,13 @@ precision highp sampler3D;
 ${GLSL_COMMON}
 ${VOLUME_FIELDS}
 in vec3 vWorld;
+#ifdef VOL_MRT
+// \u010Dasov\xE1 akumulace (T3+): druh\xFD v\xFDstup = vzd\xE1lenost pod\xE9l paprsku v\xE1\u017Een\xE1 kryt\xEDm (p\u0159edvyn\xE1soben\xE1 jako barva)
+layout(location = 0) out vec4 fragColor;
+layout(location = 1) out vec4 fragDist;
+#else
 out vec4 fragColor;
+#endif
 uniform mat4 uInvModel;
 #ifdef USE_DEPTH
 uniform sampler2D tDepth; uniform vec2 uDepthRes;
@@ -1376,7 +1482,7 @@ void main(){
   float dt = (t1 - t0) / steps;
   float j = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))) + uFrame * 0.61803398);
   float t = t0 + dt * j;
-  vec3 col = vec3(0.0); float trans = 1.0;
+  vec3 col = vec3(0.0); float trans = 1.0; float dW = 0.0;
 #ifdef MODE_BALL
   float sigmaW = uSigma;
 #endif
@@ -1390,6 +1496,7 @@ void main(){
       float ext = (sigmaW * f.x + f.z * 2.5);
       float a = exp(-ext * dt);
       col += trans * em * uIntensity * dt * (ext > 1e-4 ? (1.0 - a) / (ext * dt) : 1.0);
+      dW += trans * (1.0 - a) * t;
       trans *= a;
     }
 #else
@@ -1405,17 +1512,22 @@ void main(){
       // modr\xE1 z\xF3na (CH*, C2*): jen u paty a jen tam, kde nesv\xEDt\xED saze (jinak modr\xE1 + oran\u017Eov\xE1 = r\u016F\u017Eov\xE1)
       float edgeB = smoothstep(0.0, 0.25, f.x) * (1.0 - smoothstep(0.3, 0.9, f.x)) * (1.0 - smoothstep(0.08, 0.3, ke * dt));
       col += trans * vec3(0.04, 0.12, 1.0) * uBlue * exp(-p.y * 30.0) * edgeB * uIntensity * uPreExp * 0.22 * (dt / max(uFlowL * 0.25, 1e-3));
+      dW += trans * (1.0 - a) * t;
       trans *= a;
     }
 #endif
     t += dt;
   }
   fragColor = fxOut(vec4(col, 1.0 - trans));
+#ifdef VOL_MRT
+  fragDist = vec4(dW, 0.0, 0.0, 1.0 - trans);
+#endif
 }`
 );
 var _vp = new THREE4.Vector4();
-function createVolumeMaterial({ ball = false, depth = null, steps = 48 } = {}) {
+function createVolumeMaterial({ ball = false, depth = null, steps = 48, mrt = false } = {}) {
   const defines = {};
+  if (mrt) defines.VOL_MRT = 1;
   if (ball) defines.MODE_BALL = 1;
   if (depth) defines.USE_DEPTH = 1;
   const u = {
@@ -1471,10 +1583,10 @@ function createVolumeMaterial({ ball = false, depth = null, steps = 48 } = {}) {
 }
 var BOX = new THREE4.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
 var FlameVolume = class {
-  constructor({ ball = false, depth = null, steps = 48 } = {}) {
-    this.mat = createVolumeMaterial({ ball, depth, steps });
+  constructor({ ball = false, depth = null, steps = 48, mrt = false } = {}) {
+    this.mat = createVolumeMaterial({ ball, depth, steps, mrt });
     this.mesh = new THREE4.Mesh(BOX, this.mat);
-    this.mesh.layers.set(LAYER_FX);
+    this.mesh.layers.set(mrt ? LAYER_VOL : LAYER_FX);
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 2;
     this.ball = ball;
@@ -1483,6 +1595,7 @@ var FlameVolume = class {
       this.mesh.updateMatrixWorld();
       u.uInvModel.value.copy(this.mesh.matrixWorld).invert();
       u.uCamPos.value.setFromMatrixPosition(cam.matrixWorld);
+      u.uFrame.value = (u.uFrame.value + 1) % 1024;
       if (cam.isPerspectiveCamera) {
         const vp = r.getCurrentViewport(_vp);
         u.uPixAng.value = 2 * Math.tan(cam.fov * Math.PI / 360) / Math.max(vp.w, 1);
@@ -2421,14 +2534,15 @@ var FXWorld = class {
     if (this.hz) this.scene.add(this.hz.mesh);
     this.vols = [];
     this.balls = [];
+    const mrt = !!(tier.volumeTAA && depth);
     for (let i = 0; i < tier.volumes; i++) {
-      const v = new FlameVolume({ depth, steps: tier.volumeSteps });
+      const v = new FlameVolume({ depth, steps: tier.volumeSteps, mrt });
       v.mesh.visible = false;
       this.scene.add(v.mesh);
       this.vols.push(v);
     }
     for (let i = 0; i < Math.min(3, tier.volumes); i++) {
-      const v = new FlameVolume({ ball: true, depth, steps: Math.round(tier.volumeSteps * 0.75) });
+      const v = new FlameVolume({ ball: true, depth, steps: Math.round(tier.volumeSteps * 0.75), mrt });
       v.mesh.visible = false;
       this.scene.add(v.mesh);
       this.balls.push(v);
@@ -2453,6 +2567,7 @@ var FXWorld = class {
   }
   clear() {
     for (const s of this.sources) s.dispose?.();
+    for (const e of this.explosions) e.dispose?.();
     this.sources = [];
     this.explosions = [];
     this.bb.clear();
@@ -2510,6 +2625,7 @@ var FXWorld = class {
     let bi = 0;
     this.balls.forEach((v) => v.mesh.visible = false);
     for (const e of this.explosions) e.update(dt, this.time, e.wantsBall() && bi < this.balls.length ? this.balls[bi++] : null, camera);
+    for (const e of this.explosions) if (e.dead) e.dispose();
     this.explosions = this.explosions.filter((e) => !e.dead);
     for (const d of this.decals) d.update(dt);
     const lights = this.lights.end(camera);
@@ -2660,7 +2776,7 @@ var FireSource = class {
         kE,
         Math.min(1, Math.max(0, (D - 1.5) / 4)) * Math.min(1, f.ys * ph.vent.sootMul * 20),
         tier.flameEdge ?? 0.14,
-        0.65 + 0.2 * w.air.turb
+        (0.65 + 0.2 * w.air.turb) * (1 - 0.45 * Math.min(1, Math.max(0, (3 - ph.L / Math.max(D, 0.01)) * 0.5)))
       );
       this._volR = Math.max(Rx, 4e-3);
       u.uSigma.value = 0.6 / Math.max(D, 0.02);
@@ -2676,7 +2792,6 @@ var FireSource = class {
       const sc = v.mesh.scale, boxMax = Math.max(sc.x, sc.y, sc.z);
       u.uStepLen.value = Math.max(Math.min(eddy * 0.1, 0.6 / Math.max(kE, 0.1)), boxMax / tier.volumeSteps * 0.85);
       u.uFlame2.value.z = Math.max(tier.flameEdge ?? 0.14, 1.3 * u.uStepLen.value / this._volR * 0.5);
-      u.uFrame.value = (u.uFrame.value + 1) % 1024;
       u.uPuff.value.set(ph.fp, this.o.puffAmp ?? 0.5);
       u.uShape.value.y = this.o.taper ?? 0.85;
       u.uShape.value.z = this.o.baseWide ?? 0.25;
@@ -2883,6 +2998,38 @@ var FireSource = class {
     w.lights.add(this.pos.x + lean * L * lh * cw, this.pos.y + L * lh, this.pos.z + lean * L * lh * sw, ph.I * flick, (f.Tlum ?? ph.T + 80) - ph.vent.tempDrop - 40, Math.max(D * 0.6, L * 0.5), ph.tau / Math.max(2 * ph.b, 0.05));
   }
 };
+function makeWilsonDome() {
+  const u = { ...sharedUniforms(), uA: { value: 0 }, uTime: { value: 0 }, uAmb: { value: new THREE9.Color() }, uSun: { value: new THREE9.Color() } };
+  const mat = new THREE9.ShaderMaterial({
+    glslVersion: THREE9.GLSL3,
+    transparent: true,
+    depthWrite: false,
+    side: THREE9.DoubleSide,
+    uniforms: u,
+    blending: THREE9.CustomBlending,
+    blendSrc: THREE9.OneFactor,
+    blendDst: THREE9.OneMinusSrcAlphaFactor,
+    blendSrcAlpha: THREE9.OneFactor,
+    blendDstAlpha: THREE9.OneMinusSrcAlphaFactor,
+    vertexShader: `out vec3 vW; out vec3 vN; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `precision highp float; precision highp sampler3D;
+${GLSL_COMMON}
+in vec3 vW; in vec3 vN; out vec4 o; uniform float uA, uTime; uniform vec3 uAmb, uSun;
+void main(){
+  vec3 v = normalize(cameraPosition - vW);
+  float rim = pow(1.0 - abs(dot(normalize(vN), v)), 2.0);
+  float n = fbm3(vW * 0.035 + vec3(0.0, uTime * 0.05, 0.0));
+  float a = uA * (0.08 + 0.92 * rim) * smoothstep(0.35, 0.75, n) * smoothstep(0.0, 0.15, normalize(vN).y + 0.05);
+  vec3 c = (uAmb * 0.9 + uSun * 0.8) * 0.93 * uPreExp;
+  o = fxOut(vec4(c * a, a));
+}`
+  });
+  const mesh2 = new THREE9.Mesh(new THREE9.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+  mesh2.layers.set(LAYER_FX);
+  mesh2.renderOrder = 4;
+  mesh2.frustumCulled = false;
+  return { mesh: mesh2, u };
+}
 var Explosion = class {
   constructor(world, o) {
     this.w = world;
@@ -2897,6 +3044,14 @@ var Explosion = class {
     this.dead = false;
     this.fbAcc = 0;
     this.camHit = false;
+  }
+  dispose() {
+    if (this.wc) {
+      this.w.scene.remove(this.wc.mesh);
+      this.wc.mesh.geometry.dispose();
+      this.wc.mesh.material.dispose();
+      this.wc = null;
+    }
   }
   wantsBall() {
     const fb = this.o.fireball;
@@ -2914,6 +3069,33 @@ var Explosion = class {
         w.sp.spawn({ x: this.pos.x, y: this.pos.y + 0.1, z: this.pos.z, vx: Math.cos(a) * s * v, vy: Math.abs(u) * v * 0.8 + 1, vz: Math.sin(a) * s * v, life: 0.4 + r() * 1.4, T: 1600 + 600 * r(), tauC: 0.35 + r() * 0.4, size: 3e-3 + r() * 0.01, drag: 1.5 + r() * 3, grav: 1, seed: r() });
       }
       if (o.scorch) w.addScorch({ pos: this.pos, radius: o.scorch, seed: o.seed, crater: o.crater || 0 });
+      if (o.dust && o.W > 0 && this.pos.y / Math.cbrt(o.W) < 0.5) {
+        const k = Math.cbrt(o.W), nJ = Math.round(8 + 6 * Math.min(1, k / 4)), v0 = 12 * Math.pow(o.W, 1 / 6);
+        const soil = (o.dustAlbedo || [0.32, 0.27, 0.2]).map((c2) => c2 * 0.7);
+        const per = Math.max(4, Math.round(12 * Math.min(1.5, w.tier.smokeMul ?? 1) * w.budgetScale.smoke));
+        for (let j = 0; j < nJ; j++) {
+          const az = j / nJ * 6.283 + (r() - 0.5) * 0.5, el = 0.6 + 0.6 * r(), vj = v0 * (0.75 + 0.5 * r());
+          for (let i = 0; i < per; i++) {
+            const f = 0.3 + 0.7 * Math.pow(r(), 0.7), v = vj * f, e = el + (r() - 0.5) * 0.12, a = az + (r() - 0.5) * 0.12;
+            w.bb.spawnSmoke({
+              x: this.pos.x,
+              y: Math.max(0.05, this.pos.y),
+              z: this.pos.z,
+              vx: Math.cos(a) * Math.cos(e) * v,
+              vy: Math.sin(e) * v,
+              vz: Math.sin(a) * Math.cos(e) * v,
+              life: 2.5 + 3 * r(),
+              s0: 0.12 * k + 0.12,
+              s1: (0.7 + 0.8 * r()) * k + 0.5,
+              tau: 1.8 + r(),
+              albedo: soil,
+              drag: 0.9 + 0.9 * f,
+              grav: 0.85,
+              seed: r()
+            });
+          }
+        }
+      }
       if (o.dust && o.W > 0) {
         const k = Math.cbrt(o.W), n = Math.min(260, 40 + 50 * k) * w.budgetScale.smoke;
         for (let i = 0; i < n; i++) {
@@ -2966,11 +3148,64 @@ var Explosion = class {
         }
       }
     }
+    if (fb && (fb.soot ?? 0.5) >= 0.8 && t > fb.t && t < fb.t * 3.2 && w.layers.flame && this.fbR) {
+      const R = this.fbR, rate = 70 / fb.t * (1 - (t - fb.t) / (fb.t * 2.2)) * w.budgetScale.flame;
+      this.abAcc = (this.abAcc || 0) + dt * Math.max(0, rate);
+      while (this.abAcc >= 1) {
+        this.abAcc -= 1;
+        const u = r() * 2 - 1, a = r() * 6.283, sn = Math.sqrt(1 - u * u), rr = R * Math.cbrt(r()) * 0.7;
+        w.bb.spawnFirePuff({
+          x: this.pos.x + Math.cos(a) * sn * rr,
+          y: this.fbY + u * rr * 0.8,
+          z: this.pos.z + Math.sin(a) * sn * rr,
+          vx: 0,
+          vy: R / fb.t * 0.15,
+          vz: 0,
+          life: fb.t * (0.5 + 0.7 * r()),
+          s0: R * 0.25,
+          s1: R * 0.45,
+          T: 1250 + 250 * r(),
+          lum: 0.7,
+          soot: 0.8,
+          drag: 0.6,
+          seed: r()
+        });
+      }
+    }
     if (this.table) {
       const s = shockRadiusAt(this.table, t);
       this.shockR = s.R;
       this.shockPs = s.Ps;
-      if (s.Ps > 2500 && w.hz && w.layers.haze && t < 3) w.hz.spawn({ x: this.pos.x, y: this.pos.y + s.R * 0.3, z: this.pos.z, vy: 0, life: 0.06, size: s.R * 2.2, ring: 1 });
+      if (o.W >= 50 && fb) {
+        const hum = o.humidity ?? 0.6, on = s.Ps < 7e4 && s.Ps > 25e3 && s.R > fb.D * 0.6;
+        if (on && !this.wc && !this.wcDone) {
+          this.wc = makeWilsonDome();
+          w.scene.add(this.wc.mesh);
+          this.wcT = 0;
+        }
+        if (this.wc) {
+          this.wcT += dt;
+          const fade = on ? Math.min(1, this.wcT / 0.05) : Math.max(0, (this.wcA ?? 1) - dt / 0.3);
+          this.wcA = fade;
+          const m = this.wc.mesh;
+          m.position.copy(this.pos);
+          m.position.y = 0;
+          m.scale.setScalar(s.R * 0.95);
+          const outside = Math.min(1, Math.max(0, (camera.position.distanceTo(this.pos) - s.R) / (0.15 * s.R)));
+          const u = this.wc.u;
+          u.uA.value = fade * hum * 0.3 * outside;
+          u.uTime.value = t;
+          u.uAmb.value.copy(w.bb.mat.uniforms.uAmb.value);
+          u.uSun.value.copy(w.bb.mat.uniforms.uSunCol.value);
+          if (fade <= 0 && !on) {
+            w.scene.remove(m);
+            m.geometry.dispose();
+            m.material.dispose();
+            this.wc = null;
+            this.wcDone = true;
+          }
+        }
+      }
       if (o.dust && s.Ps > 2500 && t < 4) {
         this.dustAcc += dt * 600 * w.budgetScale.smoke * Math.min(1, s.Ps / 3e4);
         while (this.dustAcc >= 1) {
@@ -2996,9 +3231,9 @@ var Explosion = class {
 
 // src/fx/char.js
 import * as THREE10 from "three";
-function applyChar(mat, { instanced = false, scale = 2, bias = "y", alligator = null, coal = false } = {}) {
+function applyChar(mat, { instanced = false, scale = 2, bias = "y", alligator = null, coal = false, hole = false } = {}) {
   const sh = sharedUniforms();
-  mat.userData.char = { uChar: { value: 0 }, uGlow: { value: 0 }, uCharScale: { value: scale }, uCharBase: { value: 0 }, uCharH: { value: 1 } };
+  mat.userData.char = { uChar: { value: 0 }, uGlow: { value: 0 }, uCharScale: { value: scale }, uCharBase: { value: 0 }, uCharH: { value: 1 }, uHole: { value: new THREE10.Vector4(0, 0, 0, 0) } };
   const U = mat.userData.char;
   mat.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, sh, U);
@@ -3017,9 +3252,11 @@ ${instanced ? "in vec2 aChar;" : ""}`).replace("#include <worldpos_vertex>", `#i
     s.fragmentShader = s.fragmentShader.replace("#include <common>", `#include <common>
 in vec3 vCharP; in vec2 vCharA; in vec2 vCharUv;
 uniform float uChar, uGlow, uCharScale, uCharBase, uCharH;
+uniform vec4 uHole;
 ${GLSL_COMMON}
 ${alligator ? `#define ALLIG vec2(${alligator[0].toFixed(2)}, ${alligator[1].toFixed(2)})` : ""}
-${coal ? "#define COAL 1" : ""}`).replace("#include <map_fragment>", `#include <map_fragment>
+${coal ? "#define COAL 1" : ""}
+${hole ? "#define HOLE 1" : ""}`).replace("#include <map_fragment>", `#include <map_fragment>
   float chv = vCharA.x >= 0.0 ? vCharA.x : uChar;
   float glv = vCharA.x >= 0.0 ? vCharA.y : uGlow;
   float hgt = clamp((vCharP.y - uCharBase) / max(abs(uCharH), 0.01), 0.0, 1.0);
@@ -3049,7 +3286,16 @@ ${coal ? "#define COAL 1" : ""}`).replace("#include <map_fragment>", `#include <
 #endif
   vec3 charCol = mix(vec3(0.025, 0.022, 0.02), vec3(0.11, 0.1, 0.095), smoothstep(0.75, 1.0, chv) * cn); // popel \u0161edne
   diffuseColor.rgb = mix(diffuseColor.rgb, charCol, charM);
-  float charRough = charM;`).replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
+  float charRough = charM;
+  float holeRim = 0.0;
+#ifdef HOLE
+  if (uHole.z > 0.0 && vCharP.y > uHole.w) { // jen nad v\xFD\u0161kou w (strop a st\u0159echa, ne okna a podlaha)
+    float hd = length(vCharP.xz - uHole.xy) + (fbm3(vCharP * 0.9) - 0.5) * 1.6;
+    if (hd < uHole.z) discard;
+    holeRim = smoothstep(uHole.z + 0.9, uHole.z, hd);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.02), holeRim);
+  }
+#endif`).replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
   roughnessFactor = mix(roughnessFactor, 0.97, charRough);`).replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
   {
     // d\xFDch\xE1n\xED: pomal\xE9 vlny proud\u011Bn\xED p\u0159es \u017Ehav\xE9 plochy (0,1\u20130,5 Hz), amplituda \xB135 % \u26052 vzhled
@@ -3065,9 +3311,12 @@ ${coal ? "#define COAL 1" : ""}`).replace("#include <map_fragment>", `#include <
 #else
     totalEmissiveRadiance += bbColor(Tk) * (crack * 1.4 + hotZone * 0.25 * charM) * glv * breath * uFlameK * 0.35;
 #endif
+#ifdef HOLE
+    totalEmissiveRadiance += bbColor(950.0 + 250.0 * crackN * breath) * holeRim * holeRim * uFlameK * 0.3;
+#endif
   }`);
   };
-  mat.customProgramCacheKey = () => "char" + (instanced ? "I" : "") + (alligator ? "A" + alligator.join("x") : "") + (coal ? "C" : "");
+  mat.customProgramCacheKey = () => "char" + (instanced ? "I" : "") + (alligator ? "A" + alligator.join("x") : "") + (coal ? "C" : "") + (hole ? "H" : "");
   return U;
 }
 
@@ -3175,6 +3424,7 @@ var TIERS = [
     volumeScale: 1,
     volumeDetail: 2,
     flameEdge: 0.1,
+    volumeTAA: true,
     bloom: 6,
     haze: true,
     shadows: true,
@@ -3204,6 +3454,7 @@ var TIERS = [
     volumeScale: 1,
     volumeDetail: 2,
     flameEdge: 0.08,
+    volumeTAA: true,
     bloom: 6,
     haze: true,
     shadows: true,
@@ -3233,6 +3484,7 @@ var TIERS = [
     volumeScale: 1,
     volumeDetail: 2,
     flameEdge: 0.07,
+    volumeTAA: true,
     bloom: 6,
     haze: true,
     shadows: true,
@@ -4318,12 +4570,12 @@ function house({ lod = 2, seed = 41 }) {
   pu.uCharH.value = 3;
   const roofM = makeMaterial("roof");
   roofM.name = "roof";
-  const ru = applyChar(roofM, { scale: 3 });
+  const ru = applyChar(roofM, { scale: 3, hole: true });
   ru.uCharBase.value = Hw;
   ru.uCharH.value = 3;
   const wood = makeMaterial("woodPlank");
   wood.name = "frames";
-  const wu = applyChar(wood, { scale: 6 });
+  const wu = applyChar(wood, { scale: 6, hole: true });
   const brick = makeMaterial("brick");
   brick.name = "brick";
   const glassM = new THREE15.MeshStandardMaterial({ color: 725012, roughness: 0.05, metalness: 0.5, transparent: true, opacity: 0.55, name: "glass" });
@@ -5562,10 +5814,63 @@ function houseFire(ctx) {
   tStart[1] = rooms[0].tfo + 180;
   mkRoom(1, tStart[1]);
   const roofT = rooms[0].tfo + 600;
-  const roof = ctx.fx.addSource({ pos: V(-1.5, Hw + 1.8, 0), fuel: "houseContents", start: roofT, Q: (t) => 6e6 * Math.min(1, t / 240), footprint: { type: "rect", w: 5, d: 4 }, scale: (t) => Math.min(1, 0.2 + t / 300), volume: true, seed: 230, mult: { embers: 2 } });
+  const tc = 300;
+  const roof = ctx.fx.addSource({ pos: V(-1.5, Hw + 1.8, 0), fuel: "houseContents", start: roofT, Q: (t) => 6e6 * Math.min(1, t / 240) * (1 + (t > tc ? 1.3 * Math.exp(-(t - tc) / 45) : 0)), footprint: { type: "rect", w: 5, d: 4 }, scale: (t) => Math.min(1, 0.2 + t / 300), volume: true, seed: 230, mult: { embers: 2 } });
+  let collapsed = false;
+  const hole = (t) => t < roofT ? 0 : t < roofT + tc ? Math.min(1.8, (t - roofT) / 200 * 1.8) : 3.1 + Math.min(0.9, (t - roofT - tc) / 400);
   return {
     update(dt, t) {
-      const c2 = ud.char;
+      const c2 = ud.char, hr = hole(t);
+      for (const u of [c2.roof, c2.wood]) u.uHole.value.set(-1.6, 0, hr, Hw - 0.3);
+      if (!collapsed && t > roofT + tc && t < roofT + tc + 30) {
+        collapsed = true;
+        const P = V(-1.6, Hw, 0), r = mulberry32(77), sp = ctx.fx.sp, em = ctx.tier.emberMul ?? 1;
+        for (let i = 0; i < 500 * em * ctx.fx.budgetScale.spark; i++) {
+          const a = r() * 6.283, rr = 2.5 * Math.sqrt(r()), dm = 1e-3 + 6e-3 * r() ** 2, vt = Math.sqrt(4 * 250 * 9.81 * dm / 3.6);
+          sp.spawn({
+            x: P.x + Math.cos(a) * rr,
+            y: P.y + r() * 1.5,
+            z: P.z + Math.sin(a) * rr,
+            vx: (r() - 0.5) * 4,
+            vy: 4 + 14 * r(),
+            vz: (r() - 0.5) * 4,
+            life: 3 + 8 * r(),
+            T: 1150 + 250 * r(),
+            size: dm * 1.2,
+            drag: vt / 9.81,
+            grav: 1,
+            seed: r(),
+            ember: true,
+            vt,
+            ox: P.x,
+            oz: P.z,
+            pq: 4e3,
+            pz0: Hw
+          });
+        }
+        for (let i = 0; i < 60; i++) {
+          const a = r() * 6.283;
+          ctx.fx.bb.spawnSmoke({
+            x: P.x + Math.cos(a) * 2.5 * r(),
+            y: Hw + 0.5 + r() * 2,
+            z: P.z + Math.sin(a) * 2 * r(),
+            vx: Math.cos(a) * 2,
+            vy: 2 + 3 * r(),
+            vz: Math.sin(a) * 2,
+            life: 6 + 6 * r(),
+            s0: 1.2,
+            s1: 4 + 3 * r(),
+            tau: 1.2,
+            albedo: [0.12, 0.11, 0.1],
+            drag: 0.8,
+            seed: r()
+          });
+        }
+        ctx.fx.debris.burst(V(-1.6, Hw + 1.2, 0), { n: 50, speed: 5, size: 0.25, hot: 0.7, up: 0.2, T: 1050 }, r);
+        ctx.fx.shake = Math.max(ctx.fx.shake, 0.15);
+        ctx.message?.("Z\u0159\xEDcen\xED st\u0159echy nad ob\xFDv\xE1kem: krov pad\xE1 do \u017E\xE1ru, v\xFDtrysk jisker.");
+      }
+      if (t < roofT + tc) collapsed = false;
       c2.plaster.uChar.value = Math.min(0.55, Math.max(0, (t - rooms[0].tfo) / 1500));
       c2.plaster.uGlow.value = 0;
       c2.roof.uChar.value = Math.min(1, Math.max(0, (t - roofT + 200) / 600));
@@ -5583,6 +5888,7 @@ function houseFire(ctx) {
         ["Qmax ob\xFDv\xE1k (ventilace)", fmtW(r0.Qmax) + `  Ao\u221AHo = ${(r0.Ao * Math.sqrt(r0.Ho)).toFixed(2)} m^2,5`, "Kawagoe \u26054"],
         ["Flashover kuchy\u0148", fmtW(r1.Qfo) + ` v ${(r1.tfo / 60).toFixed(1)} min`, "Thomas \u26054"],
         ["Proho\u0159en\xED st\u0159echy", (roofT / 60).toFixed(1) + " min", "p\u0159edpoklad \u26052"],
+        ["Z\u0159\xEDcen\xED st\u0159echy", ((roofT + tc) / 60).toFixed(1) + " min", "p\u0159edpoklad \u26052"],
         ...fireRows(srcs[1], "okno").slice(1, 4)
       ];
     }

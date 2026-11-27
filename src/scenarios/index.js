@@ -548,10 +548,34 @@ function houseFire(ctx) {
   tStart[1] = rooms[0].tfo + 180;
   mkRoom(1, tStart[1]);
   const roofT = rooms[0].tfo + 600;
-  const roof = ctx.fx.addSource({ pos: V(-1.5, Hw + 1.8, 0), fuel: 'houseContents', start: roofT, Q: (t) => 6e6 * Math.min(1, t / 240), footprint: { type: 'rect', w: 5, d: 4 }, scale: (t) => Math.min(1, 0.2 + t / 300), volume: true, seed: 230, mult: { embers: 2 } });
+  // zřícení střechy nad obývákem ~5 min po prohoření (★2): díra se skokem zvětší, krov a strop spadnou do žáru,
+  // výtrysk jisker a uhlíků, prach a kouř, krátké vzplanutí (čerstvý vzduch + nové palivo) – typický okamžik požárů domů
+  const tc = 300;
+  const roof = ctx.fx.addSource({ pos: V(-1.5, Hw + 1.8, 0), fuel: 'houseContents', start: roofT, Q: (t) => 6e6 * Math.min(1, t / 240) * (1 + (t > tc ? 1.3 * Math.exp(-(t - tc) / 45) : 0)), footprint: { type: 'rect', w: 5, d: 4 }, scale: (t) => Math.min(1, 0.2 + t / 300), volume: true, seed: 230, mult: { embers: 2 } });
+  let collapsed = false;
+  const hole = (t) => (t < roofT ? 0 : t < roofT + tc ? Math.min(1.8, ((t - roofT) / 200) * 1.8) : 3.1 + Math.min(0.9, (t - roofT - tc) / 400));
   return {
     update(dt, t) {
-      const c = ud.char;
+      const c = ud.char, hr = hole(t);
+      for (const u of [c.roof, c.wood]) u.uHole.value.set(-1.6, 0, hr, Hw - 0.3);
+      if (!collapsed && t > roofT + tc && t < roofT + tc + 30) {
+        collapsed = true;
+        const P = V(-1.6, Hw, 0), r = mulberry32(77), sp = ctx.fx.sp, em = ctx.tier.emberMul ?? 1;
+        for (let i = 0; i < 500 * em * ctx.fx.budgetScale.spark; i++) {
+          const a = r() * 6.283, rr = 2.5 * Math.sqrt(r()), dm = 0.001 + 0.006 * r() ** 2, vt = Math.sqrt((4 * 250 * 9.81 * dm) / 3.6);
+          sp.spawn({ x: P.x + Math.cos(a) * rr, y: P.y + r() * 1.5, z: P.z + Math.sin(a) * rr, vx: (r() - 0.5) * 4, vy: 4 + 14 * r(), vz: (r() - 0.5) * 4,
+            life: 3 + 8 * r(), T: 1150 + 250 * r(), size: dm * 1.2, drag: vt / 9.81, grav: 1, seed: r(), ember: true, vt, ox: P.x, oz: P.z, pq: 4e3, pz0: Hw });
+        }
+        for (let i = 0; i < 60; i++) {
+          const a = r() * 6.283;
+          ctx.fx.bb.spawnSmoke({ x: P.x + Math.cos(a) * 2.5 * r(), y: Hw + 0.5 + r() * 2, z: P.z + Math.sin(a) * 2 * r(), vx: Math.cos(a) * 2, vy: 2 + 3 * r(), vz: Math.sin(a) * 2,
+            life: 6 + 6 * r(), s0: 1.2, s1: 4 + 3 * r(), tau: 1.2, albedo: [0.12, 0.11, 0.1], drag: 0.8, seed: r() });
+        }
+        ctx.fx.debris.burst(V(-1.6, Hw + 1.2, 0), { n: 50, speed: 5, size: 0.25, hot: 0.7, up: 0.2, T: 1050 }, r);
+        ctx.fx.shake = Math.max(ctx.fx.shake, 0.15);
+        ctx.message?.('Zřícení střechy nad obývákem: krov padá do žáru, výtrysk jisker.');
+      }
+      if (t < roofT + tc) collapsed = false;
       c.plaster.uChar.value = Math.min(0.55, Math.max(0, (t - rooms[0].tfo) / 1500)); c.plaster.uGlow.value = 0;
       c.roof.uChar.value = Math.min(1, Math.max(0, (t - roofT + 200) / 600)); c.roof.uGlow.value = t > roofT ? 0.8 : 0;
       c.wood.uChar.value = Math.min(1, Math.max(0, (t - rooms[0].tfo + 60) / 400)); c.wood.uGlow.value = t > rooms[0].tfo ? 0.7 : 0;
@@ -566,6 +590,7 @@ function houseFire(ctx) {
         ['Qmax obývák (ventilace)', fmtW(r0.Qmax) + `  Ao√Ho = ${(r0.Ao * Math.sqrt(r0.Ho)).toFixed(2)} m^2,5`, 'Kawagoe ★4'],
         ['Flashover kuchyň', fmtW(r1.Qfo) + ` v ${(r1.tfo / 60).toFixed(1)} min`, 'Thomas ★4'],
         ['Prohoření střechy', (roofT / 60).toFixed(1) + ' min', 'předpoklad ★2'],
+        ['Zřícení střechy', ((roofT + tc) / 60).toFixed(1) + ' min', 'předpoklad ★2'],
         ...fireRows(srcs[1], 'okno').slice(1, 4),
       ];
     },

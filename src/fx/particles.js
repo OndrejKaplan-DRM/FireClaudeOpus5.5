@@ -179,10 +179,13 @@ void main(){
   } else {
     // kouř: R = hustota, G = propustnost ke světlu shora, B = okraj
     float tau = vC.a;
-    float al = (1.0 - exp(-a.r * tau * 2.2)) * a.a;
+    // okraj chuchvalce vždy měkký (i při velké τ) – jinak mrak vypadá jako hrozen koulí (iterace 3)
+    float al = (1.0 - exp(-a.r * tau * 2.2)) * a.a * smoothstep(0.0, 0.3, a.r);
     al *= (1.0 - smoothstep(0.8, 1.0, age)) * soft;
     vec3 alb = vC.rgb;
-    vec3 lit = (uAmb * (0.55 + 0.45 * a.g) + uSunCol * a.g * (0.6 + 0.4 * a.b)) * uPreExp;
+    // stínování jednoho chuchvalce tlumené: v hustém mraku stíní celek, ne každá koule zvlášť
+    float sg = mix(0.62, a.g, 0.55);
+    vec3 lit = (uAmb * (0.62 + 0.38 * sg) + uSunCol * sg * (0.75 + 0.25 * a.b)) * uPreExp;
     // podsvícení ohněm zespodu (spočítáno na CPU, rozptyl ∝ albedo)
     vec3 glow = vG.rgb * (0.35 + 0.65 * (1.0 - a.g)) * uPreExp;
     vec3 c = alb * (lit + glow);
@@ -241,7 +244,7 @@ export class BillboardSystem extends BaseSystem {
     d[o + F.extra] = Math.floor(((d[o + F.seed] * 104729) % 1) * 64); d[o + F.glowR] = R0;
   }
 
-  spawnSmoke({ x, y, z, vx = 0, vy = 0, vz = 0, life, s0, s1, tau, albedo, ox, oz, pq = 0, pz0 = 0, drag = 0.4, buoy = 0, glowing = false, seed, R0 = 0 }) {
+  spawnSmoke({ x, y, z, vx = 0, vy = 0, vz = 0, life, s0, s1, tau, albedo, ox, oz, pq = 0, pz0 = 0, drag = 0.4, buoy = 0, glowing = false, seed, R0 = 0, grav = 0 }) {
     const o = this.alloc(); if (o < 0) return;
     const d = this.d;
     d[o + F.px] = x; d[o + F.py] = y; d[o + F.pz] = z; d[o + F.vx] = vx; d[o + F.vy] = vy; d[o + F.vz] = vz;
@@ -249,7 +252,7 @@ export class BillboardSystem extends BaseSystem {
     d[o + F.tau0] = tau; d[o + F.cr] = albedo[0]; d[o + F.cg] = albedo[1]; d[o + F.cb] = albedo[2];
     d[o + F.seed] = seed ?? Math.random(); d[o + F.rot] = d[o + F.seed] * 43.98; d[o + F.rotV] = (((d[o + F.seed] * 7919) % 1) - 0.5) * 0.6;
     d[o + F.ox] = ox ?? x; d[o + F.oz] = oz ?? z; d[o + F.pq] = pq; d[o + F.pz0] = pz0; d[o + F.drag] = drag; d[o + F.buoy] = buoy;
-    d[o + F.extra] = Math.floor(((d[o + F.seed] * 104729) % 1) * 64); d[o + F.glowR] = R0;
+    d[o + F.extra] = Math.floor(((d[o + F.seed] * 104729) % 1) * 64); d[o + F.glowR] = R0; d[o + F.grav] = grav; // grav: vyvržená zemina letí po balistické dráze
   }
 
   update(dt, air, camera, lights) {

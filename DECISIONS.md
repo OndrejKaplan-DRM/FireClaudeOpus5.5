@@ -147,3 +147,30 @@ Formát: **D-xxx · datum · rozhodnutí** — proč, alternativy, důsledky, ji
 - Stupně: xEngine 1 low → FireLab T0, 2 mid → T1, 3 high → T2 (bez hloubky, oparu a bloomu, protože hostitel kreslí přímo).
 - Gameplay dostává `heatFlux(x,y,z)` (bodový zdroj χr·Q/4πR², Modak ★3) a události `fire:ignited`, `fire:out`, `fire:exploded`;
   na `combat:explode` (Aréna A-3) reaguje, jen když ji někdo deklaroval (jádro je přísné na události).
+
+## Iterace 3 (2026-11-27, Ondřejova volba: výbuchy + zrno plamene, dům fyzikálně se zřícením střechy)
+
+### D-025 · 2026-11-27 · Časová akumulace objemů (T3–T5)
+- Objemy se kreslí do vlastního cíle se dvěma výstupy: barva (předvynásobená) a vzdálenost podél paprsku vážená krytím
+  (`VOL_MRT`, blendování jako barva → po dělení krytím průměrná vzdálenost). Rozlišení = hlavní cíl, HalfFloat.
+- Reprojekce do minulého snímku podle té vzdálenosti, historie se ořízne na min/max okolí 3×3 aktuálního snímku, váha nového
+  snímku 0,12; střih kamery (> 1,5 m, > 25°) nebo nový scénář historii zahodí. Chvění paprsku (IGN + zlatý řez) se mění
+  každým kreslením (`uFrame` v `onBeforeRender`), takže i zastavený čas se dočistí; `__fire.shot()` na T3+ kreslí 10×.
+- Proč ne poloviční rozlišení + rozostření: rozmazává hrany jazyků proti polenům a nezbavuje zrna v pohybu. Proč ne TAA celé
+  scény: FireLab je knihovna efektů, hostitel (xEngine) má vlastní řetězec – akumulace patří jen vrstvě objemů.
+- Past: průchody přes celou obrazovku se kreslí kamerou a ta má nastavenou masku vrstev → po kreslení vrstvy objemů vrátit
+  `camera.layers.set(0)`, jinak se TAA a skládání vůbec nevykreslí (zjištěno: objemy zmizely).
+
+### D-026 · 2026-11-27 · Výbuchy v2: výtrysky zeminy, Wilsonův mrak, dohořívání, měkčí okraje kouře
+- Výtrysky: jen výbuch na zemi (h/W^⅓ < 0,5), 8–14 paprsků pod 35–70°, v0 ≈ 12·W^⅙ m/s, zemina po balistické dráze
+  (`spawnSmoke({grav})`), prach se odtrhává (★2).
+- Wilsonův mrak: jedna polokoule (ne částice – ty dělaly „vločky“ po celé obloze), jen W ≥ 50 kg, při 70–25 kPa, náběh 0,05 s,
+  zánik 0,3 s, jasnější okraj, kreslí se jen když je kamera venku (zevnitř je to jen opar) (★2).
+- Dohořívání produktů s nedostatkem kyslíku (saze ≥ 0,8: TNT, Comp B): oranžové kapsy v tmavém mraku 1–3 tf. Sud (saze 0,6)
+  beze změny – ověřeno porovnáním snímků.
+- Kouř: okraj chuchvalce vždy měkký (`smoothstep` hustoty) a stínování jednoho chuchvalce tlumené → mrak nevypadá jako hrozen koulí.
+
+### D-027 · 2026-11-27 · Dům: díra ve střeše a zřícení (Ondřej: fyzikální verze + zřícení)
+- `applyChar({hole})`: díra propálená nad obývákem (nad výškou stropu, ne okna), nepravidelný okraj ze šumu, žhnoucí lem.
+  Roste od prohoření (~14 min) do 1,8 m, po 5 min (★2) zřícení: skok na 3,1 m, výtrysk ~500 uhlíků, kouř, trosky, otřes,
+  vzplanutí střešního zdroje ×2,3 doznívající s τ = 45 s (čerstvý vzduch a nové palivo).

@@ -12,7 +12,8 @@ import { flameTilt, WIND_CLASSES } from '../physics/wind.js';
 import { shockTable, shockRadiusAt } from '../physics/blast.js';
 import { mulberry32, fbm1 } from '../engine/rng.js';
 import { bbRGB } from './lights.js';
-import { FLAMEK, PRE, GTIME } from './shared.js';
+import { FLAMEK, PRE, GTIME, sharedUniforms, GLSL_COMMON } from './shared.js';
+import { LAYER_FX } from '../engine/pipeline.js';
 
 /** Normální rozdělení N(0,1) z generátoru r (Box–Muller). */
 const gauss = (r) => Math.sqrt(-2 * Math.log(Math.max(r(), 1e-9))) * Math.cos(6.2831853 * r());
@@ -44,8 +45,9 @@ export class FXWorld {
     this.hz = tier.particles.haze ? new HazeSystem(tier.particles.haze) : null;
     if (this.hz) this.scene.add(this.hz.mesh);
     this.vols = []; this.balls = [];
-    for (let i = 0; i < tier.volumes; i++) { const v = new FlameVolume({ depth, steps: tier.volumeSteps }); v.mesh.visible = false; this.scene.add(v.mesh); this.vols.push(v); }
-    for (let i = 0; i < Math.min(3, tier.volumes); i++) { const v = new FlameVolume({ ball: true, depth, steps: Math.round(tier.volumeSteps * 0.75) }); v.mesh.visible = false; this.scene.add(v.mesh); this.balls.push(v); }
+    const mrt = !!(tier.volumeTAA && depth); // časová akumulace objemů (pipeline.vol), jen s hloubkou scény
+    for (let i = 0; i < tier.volumes; i++) { const v = new FlameVolume({ depth, steps: tier.volumeSteps, mrt }); v.mesh.visible = false; this.scene.add(v.mesh); this.vols.push(v); }
+    for (let i = 0; i < Math.min(3, tier.volumes); i++) { const v = new FlameVolume({ ball: true, depth, steps: Math.round(tier.volumeSteps * 0.75), mrt }); v.mesh.visible = false; this.scene.add(v.mesh); this.balls.push(v); }
     if (this.lights) this.lights.setTier(tier); else this.lights = new FireLights(this.scene, tier);
     if (this.debris) this.debris.dispose();
     this.debris = new Debris(this.scene, tier.debris);
@@ -60,6 +62,7 @@ export class FXWorld {
 
   clear() {
     for (const s of this.sources) s.dispose?.();
+    for (const e of this.explosions) e.dispose?.();
     this.sources = []; this.explosions = [];
     this.bb.clear(); this.sp.clear(); this.hz?.clear(); this.debris.clear();
     for (const d of this.decals) d.dispose(); this.decals = [];
@@ -95,6 +98,7 @@ export class FXWorld {
     let bi = 0;
     this.balls.forEach((v) => (v.mesh.visible = false));
     for (const e of this.explosions) e.update(dt, this.time, e.wantsBall() && bi < this.balls.length ? this.balls[bi++] : null, camera);
+    for (const e of this.explosions) if (e.dead) e.dispose();
     this.explosions = this.explosions.filter((e) => !e.dead);
     for (const d of this.decals) d.update(dt);
     const lights = this.lights.end(camera);
@@ -210,7 +214,7 @@ export class FireSource {
       // zdrojová funkce = Planck × jas po adaptaci; svítivost řídí κ ze sazí (emise–absorpce), ne ruční normalizace
       u.uIntensity.value = w.flameLum * flick * this.gainVol;
       u.uFlame2.value.set(kE,
-        Math.min(1, Math.max(0, (D - 1.5) / 4)) * Math.min(1, f.ys * ph.vent.sootMul * 20), tier.flameEdge ?? 0.14, 0.65 + 0.2 * w.air.turb);
+        Math.min(1, Math.max(0, (D - 1.5) / 4)) * Math.min(1, f.ys * ph.vent.sootMul * 20), tier.flameEdge ?? 0.14, (0.65 + 0.2 * w.air.turb) * (1 - 0.45 * Math.min(1, Math.max(0, (3 - ph.L / Math.max(D, 0.01)) * 0.5))));
       this._volR = Math.max(Rx, 0.004);
       u.uSigma.value = 0.6 / Math.max(D, 0.02);
       u.uSigmaSoot.value = 3.0 / Math.max(Math.sqrt(D), 0.1);
@@ -227,7 +231,6 @@ export class FireSource {
       u.uStepLen.value = Math.max(Math.min(eddy * 0.1, 0.6 / Math.max(kE, 0.1)), boxMax / tier.volumeSteps * 0.85);
       // okraj nesmí být ostřejší než krok paprsku (jinak „zrnité“ okraje bez TAA)
       u.uFlame2.value.z = Math.max(tier.flameEdge ?? 0.14, (1.3 * u.uStepLen.value) / this._volR * 0.5);
-      u.uFrame.value = (u.uFrame.value + 1) % 1024;
       u.uPuff.value.set(ph.fp, this.o.puffAmp ?? 0.5);
       u.uShape.value.y = this.o.taper ?? 0.85; u.uShape.value.z = this.o.baseWide ?? 0.25; u.uShape.value.w = this.o.neck ?? 0.2;
       u.uSoot.value = Math.min(1.0, f.ys * ph.vent.sootMul * 18);
@@ -364,6 +367,30 @@ export class FireSource {
  * Výbuch. o = { pos, W (kg TNT pro tlak), fireball: {D, t, T, rise, soot, kind}, flash [cd], debris: {n, speed, size, hot, mat},
  *  sparks: {n, speed}, smoke: {n, life, size, albedo, buoy}, dust: bool, scorch: radius, after: fn(world) }
  */
+/** Kondenzační dóm (Wilsonův mrak): polokoule s šumem, okraj jasnější (delší dráha tenkou vrstvou). */
+function makeWilsonDome() {
+  const u = { ...sharedUniforms(), uA: { value: 0 }, uTime: { value: 0 }, uAmb: { value: new THREE.Color() }, uSun: { value: new THREE.Color() } };
+  const mat = new THREE.ShaderMaterial({
+    glslVersion: THREE.GLSL3, transparent: true, depthWrite: false, side: THREE.DoubleSide, uniforms: u,
+    blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
+    vertexShader: `out vec3 vW; out vec3 vN; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `precision highp float; precision highp sampler3D;
+${GLSL_COMMON}
+in vec3 vW; in vec3 vN; out vec4 o; uniform float uA, uTime; uniform vec3 uAmb, uSun;
+void main(){
+  vec3 v = normalize(cameraPosition - vW);
+  float rim = pow(1.0 - abs(dot(normalize(vN), v)), 2.0);
+  float n = fbm3(vW * 0.035 + vec3(0.0, uTime * 0.05, 0.0));
+  float a = uA * (0.08 + 0.92 * rim) * smoothstep(0.35, 0.75, n) * smoothstep(0.0, 0.15, normalize(vN).y + 0.05);
+  vec3 c = (uAmb * 0.9 + uSun * 0.8) * 0.93 * uPreExp;
+  o = fxOut(vec4(c * a, a));
+}`,
+  });
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+  mesh.layers.set(LAYER_FX); mesh.renderOrder = 4; mesh.frustumCulled = false;
+  return { mesh, u };
+}
+
 export class Explosion {
   constructor(world, o) {
     this.w = world; this.o = o; this.t = 0; this.pos = o.pos.clone ? o.pos.clone() : new THREE.Vector3(...o.pos);
@@ -372,6 +399,7 @@ export class Explosion {
     this.started = false; this.dustAcc = 0; this.smokeAcc = 0; this.dead = false; this.fbAcc = 0;
     this.camHit = false;
   }
+  dispose() { if (this.wc) { this.w.scene.remove(this.wc.mesh); this.wc.mesh.geometry.dispose(); this.wc.mesh.material.dispose(); this.wc = null; } }
   wantsBall() { const fb = this.o.fireball; return fb && this.t < fb.t * 2.2 && this.w.tier.volumes > 0 && this.w.layers.volume; }
   update(dt, gt, ball, camera) {
     const w = this.w, o = this.o, r = this.rnd, fb = o.fireball;
@@ -384,6 +412,21 @@ export class Explosion {
         w.sp.spawn({ x: this.pos.x, y: this.pos.y + 0.1, z: this.pos.z, vx: Math.cos(a) * s * v, vy: Math.abs(u) * v * 0.8 + 1, vz: Math.sin(a) * s * v, life: 0.4 + r() * 1.4, T: 1600 + 600 * r(), tauC: 0.35 + r() * 0.4, size: 0.003 + r() * 0.01, drag: 1.5 + r() * 3, grav: 1, seed: r() });
       }
       if (o.scorch) w.addScorch({ pos: this.pos, radius: o.scorch, seed: o.seed, crater: o.crater || 0 });
+      // výtrysky zeminy u výbuchu na zemi (škálovaná výška h/W^⅓ < 0,5 m/kg^⅓): 8–14 paprsků pod 35–70°,
+      // rychlost v0 ≈ 12·W^⅙ m/s (★2, řád podle Cooper: ejecta 10–100 m/s), zemina po balistické dráze, prach se odtrhává
+      if (o.dust && o.W > 0 && this.pos.y / Math.cbrt(o.W) < 0.5) {
+        const k = Math.cbrt(o.W), nJ = Math.round(8 + 6 * Math.min(1, k / 4)), v0 = 12 * Math.pow(o.W, 1 / 6);
+        const soil = (o.dustAlbedo || [0.32, 0.27, 0.2]).map((c) => c * 0.7);
+        const per = Math.max(4, Math.round(12 * Math.min(1.5, w.tier.smokeMul ?? 1) * w.budgetScale.smoke));
+        for (let j = 0; j < nJ; j++) {
+          const az = (j / nJ) * 6.283 + (r() - 0.5) * 0.5, el = 0.6 + 0.6 * r(), vj = v0 * (0.75 + 0.5 * r());
+          for (let i = 0; i < per; i++) {
+            const f = 0.3 + 0.7 * Math.pow(r(), 0.7), v = vj * f, e = el + (r() - 0.5) * 0.12, a = az + (r() - 0.5) * 0.12;
+            w.bb.spawnSmoke({ x: this.pos.x, y: Math.max(0.05, this.pos.y), z: this.pos.z, vx: Math.cos(a) * Math.cos(e) * v, vy: Math.sin(e) * v, vz: Math.sin(a) * Math.cos(e) * v,
+              life: 2.5 + 3 * r(), s0: 0.12 * k + 0.12, s1: (0.7 + 0.8 * r()) * k + 0.5, tau: 1.8 + r(), albedo: soil, drag: 0.9 + 0.9 * f, grav: 0.85, seed: r() });
+          }
+        }
+      }
       // vyvržená zemina a prach z kráteru (hustý prstenec u středu, rozlet ven)
       if (o.dust && o.W > 0) {
         const k = Math.cbrt(o.W), n = Math.min(260, 40 + 50 * k) * w.budgetScale.smoke;
@@ -435,11 +478,39 @@ export class Explosion {
         }
       }
     }
+    // dohořívání produktů s nedostatkem kyslíku (TNT, Comp B): oranžové kapsy v tmavém mraku 1–3 tf (★2)
+    if (fb && (fb.soot ?? 0.5) >= 0.8 && t > fb.t && t < fb.t * 3.2 && w.layers.flame && this.fbR) {
+      const R = this.fbR, rate = (70 / fb.t) * (1 - (t - fb.t) / (fb.t * 2.2)) * w.budgetScale.flame;
+      this.abAcc = (this.abAcc || 0) + dt * Math.max(0, rate);
+      while (this.abAcc >= 1) {
+        this.abAcc -= 1;
+        const u = r() * 2 - 1, a = r() * 6.283, sn = Math.sqrt(1 - u * u), rr = R * Math.cbrt(r()) * 0.7;
+        w.bb.spawnFirePuff({ x: this.pos.x + Math.cos(a) * sn * rr, y: this.fbY + u * rr * 0.8, z: this.pos.z + Math.sin(a) * sn * rr, vx: 0, vy: R / fb.t * 0.15, vz: 0,
+          life: fb.t * (0.5 + 0.7 * r()), s0: R * 0.25, s1: R * 0.45, T: 1250 + 250 * r(), lum: 0.7, soot: 0.8, drag: 0.6, seed: r() });
+      }
+    }
     // rázová vlna
     if (this.table) {
       const s = shockRadiusAt(this.table, t);
       this.shockR = s.R; this.shockPs = s.Ps;
-      if (s.Ps > 2500 && w.hz && w.layers.haze && t < 3) w.hz.spawn({ x: this.pos.x, y: this.pos.y + s.R * 0.3, z: this.pos.z, vy: 0, life: 0.06, size: s.R * 2.2, ring: 1 });
+      // Wilsonův kondenzační mrak: ve vlhkém vzduchu za čelem (podtlaková fáze) kondenzuje pára → tenká bílá
+      // polokoule, jen velké nálože (≥ 50 kg TNT), mezi ~70 a ~25 kPa, rozplyne se za ~0,3 s (★2, vzhled podle záznamů zkoušek).
+      // Jedna polokoule (ne částice): z vnitřku je to slabý závoj, zvenku dóm s jasnějším okrajem.
+      if (o.W >= 50 && fb) {
+        const hum = o.humidity ?? 0.6, on = s.Ps < 7e4 && s.Ps > 2.5e4 && s.R > fb.D * 0.6;
+        if (on && !this.wc && !this.wcDone) { this.wc = makeWilsonDome(); w.scene.add(this.wc.mesh); this.wcT = 0; }
+        if (this.wc) {
+          this.wcT += dt;
+          const fade = on ? Math.min(1, this.wcT / 0.05) : Math.max(0, (this.wcA ?? 1) - dt / 0.3);
+          this.wcA = fade;
+          const m = this.wc.mesh; m.position.copy(this.pos); m.position.y = 0; m.scale.setScalar(s.R * 0.95);
+          // zevnitř je kondenzace jen opar kolem pozorovatele – dóm se kreslí, jen když je kamera venku
+          const outside = Math.min(1, Math.max(0, (camera.position.distanceTo(this.pos) - s.R) / (0.15 * s.R)));
+          const u = this.wc.u; u.uA.value = fade * hum * 0.3 * outside; u.uTime.value = t;
+          u.uAmb.value.copy(w.bb.mat.uniforms.uAmb.value); u.uSun.value.copy(w.bb.mat.uniforms.uSunCol.value);
+          if (fade <= 0 && !on) { w.scene.remove(m); m.geometry.dispose(); m.material.dispose(); this.wc = null; this.wcDone = true; }
+        }
+      }
       if (o.dust && s.Ps > 2500 && t < 4) {
         this.dustAcc += dt * 600 * w.budgetScale.smoke * Math.min(1, s.Ps / 3e4);
         while (this.dustAcc >= 1) {

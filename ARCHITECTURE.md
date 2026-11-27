@@ -33,7 +33,8 @@
 4. `App.updateExposure()` – oko: měření osvětlení u pozorovatele → cílová expozice (adaptace 0,25 s dolů / 0,9 s nahoru),
    lokální adaptace plamene `flameLum = klíč/ex · (ex/0,25)^0,4` (částečná, D-020) a `lumRef = 16/ex` pro výbuchy, jiskry, žhnutí.
 5. `App.renderFrame` – **před-expozice** (`shared.PRE`): všechna světla a emise se násobí expozicí, aby HalfFloat HDR nepřetekl.
-6. `Pipeline.render` – neprůhledná scéna → (T2+) kopie lineární hloubky → průhledné efekty (měkké částice, ořez objemů)
+6. `Pipeline.render` – neprůhledná scéna → (T2+) kopie lineární hloubky → (T3+) objemy do vlastního cíle + časová akumulace
+   (reprojekce, ořez okolím, D-025) a složení → průhledné efekty (měkké částice, ořez objemů)
    → (T2+) heat haze do polovičního bufferu → bloom (dual filter) → ACES + sRGB + viněta (+ zrno).
 
 ## Fyzika → efekt (klíčové vazby)

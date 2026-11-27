@@ -3,7 +3,7 @@
 // Emise = Planck(T), absorpce = saze. Stejný shader se používá pro bake flipbooků (D-004).
 import * as THREE from 'three';
 import { GLSL_COMMON, sharedUniforms } from './shared.js';
-import { LAYER_FX } from '../engine/pipeline.js';
+import { LAYER_FX, LAYER_VOL } from '../engine/pipeline.js';
 
 const VS = /* glsl */`
 out vec3 vWorld;
@@ -112,7 +112,7 @@ vec3 fieldFlame(vec3 p){
   // teplota: reakční zóna na plášti; horké proužky; u paty velkých požárů chladné tmavé jádro par paliva
   float zone = smoothstep(0.0, 0.16, dd) * (1.0 - 0.5 * core * exp(-y * 4.0) * (0.4 + uFlame2.y));
   float hotStreak = smoothstep(0.38, 0.78, n2);
-  float T = uTamb + (uTpeak - uTamb) * pow(zone, 0.8) * mix(0.62 - 0.17 * big, 1.04, hotStreak) * (1.0 - 0.42 * pow(y, 1.5));
+  float T = uTamb + (uTpeak - uTamb) * pow(zone, 0.8) * mix(0.66 - 0.06 * big, 1.04, hotStreak) * (1.0 - 0.42 * pow(y, 1.5));
   // velké sazové požáry (Steinhaus, Takahashi): vnější vrstva sazí, světlo prorážejí jen „luminous zones“
   float shell = uFlame2.y * (1.0 - core) * smoothstep(0.15, 0.55, y + 0.25 * n1);
   float lumPatch = smoothstep(0.52, 0.64, n4);
@@ -152,7 +152,13 @@ precision highp sampler3D;
 ${GLSL_COMMON}
 ${VOLUME_FIELDS}
 in vec3 vWorld;
+#ifdef VOL_MRT
+// časová akumulace (T3+): druhý výstup = vzdálenost podél paprsku vážená krytím (předvynásobená jako barva)
+layout(location = 0) out vec4 fragColor;
+layout(location = 1) out vec4 fragDist;
+#else
 out vec4 fragColor;
+#endif
 uniform mat4 uInvModel;
 #ifdef USE_DEPTH
 uniform sampler2D tDepth; uniform vec2 uDepthRes;
@@ -184,7 +190,7 @@ void main(){
   float dt = (t1 - t0) / steps;
   float j = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))) + uFrame * 0.61803398);
   float t = t0 + dt * j;
-  vec3 col = vec3(0.0); float trans = 1.0;
+  vec3 col = vec3(0.0); float trans = 1.0; float dW = 0.0;
 #ifdef MODE_BALL
   float sigmaW = uSigma;
 #endif
@@ -198,6 +204,7 @@ void main(){
       float ext = (sigmaW * f.x + f.z * 2.5);
       float a = exp(-ext * dt);
       col += trans * em * uIntensity * dt * (ext > 1e-4 ? (1.0 - a) / (ext * dt) : 1.0);
+      dW += trans * (1.0 - a) * t;
       trans *= a;
     }
 #else
@@ -213,17 +220,22 @@ void main(){
       // modrá zóna (CH*, C2*): jen u paty a jen tam, kde nesvítí saze (jinak modrá + oranžová = růžová)
       float edgeB = smoothstep(0.0, 0.25, f.x) * (1.0 - smoothstep(0.3, 0.9, f.x)) * (1.0 - smoothstep(0.08, 0.3, ke * dt));
       col += trans * vec3(0.04, 0.12, 1.0) * uBlue * exp(-p.y * 30.0) * edgeB * uIntensity * uPreExp * 0.22 * (dt / max(uFlowL * 0.25, 1e-3));
+      dW += trans * (1.0 - a) * t;
       trans *= a;
     }
 #endif
     t += dt;
   }
   fragColor = fxOut(vec4(col, 1.0 - trans));
+#ifdef VOL_MRT
+  fragDist = vec4(dW, 0.0, 0.0, 1.0 - trans);
+#endif
 }`;
 
 const _vp = new THREE.Vector4();
-export function createVolumeMaterial({ ball = false, depth = null, steps = 48 } = {}) {
+export function createVolumeMaterial({ ball = false, depth = null, steps = 48, mrt = false } = {}) {
   const defines = {};
+  if (mrt) defines.VOL_MRT = 1;
   if (ball) defines.MODE_BALL = 1;
   if (depth) defines.USE_DEPTH = 1;
   const u = {
@@ -251,10 +263,10 @@ const BOX = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
 
 /** Jeden objemový plamen ve scéně. Parametry nastavuje FireSource. */
 export class FlameVolume {
-  constructor({ ball = false, depth = null, steps = 48 } = {}) {
-    this.mat = createVolumeMaterial({ ball, depth, steps });
+  constructor({ ball = false, depth = null, steps = 48, mrt = false } = {}) {
+    this.mat = createVolumeMaterial({ ball, depth, steps, mrt });
     this.mesh = new THREE.Mesh(BOX, this.mat);
-    this.mesh.layers.set(LAYER_FX);
+    this.mesh.layers.set(mrt ? LAYER_VOL : LAYER_FX); // s časovou akumulací se objemy kreslí zvlášť (pipeline)
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 2;
     this.ball = ball;
@@ -263,6 +275,7 @@ export class FlameVolume {
       this.mesh.updateMatrixWorld();
       u.uInvModel.value.copy(this.mesh.matrixWorld).invert();
       u.uCamPos.value.setFromMatrixPosition(cam.matrixWorld);
+      u.uFrame.value = (u.uFrame.value + 1) % 1024; // chvění paprsku se mění každé kreslení (i při stojícím čase)
       if (cam.isPerspectiveCamera) { const vp = r.getCurrentViewport(_vp); u.uPixAng.value = (2 * Math.tan((cam.fov * Math.PI) / 360)) / Math.max(vp.w, 1); }
       if (u.tDepth.value) { const img = u.tDepth.value.image; u.uDepthRes.value.set(img.width, img.height); }
     };

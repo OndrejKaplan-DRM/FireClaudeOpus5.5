@@ -8,9 +8,10 @@ import { sharedUniforms, GLSL_COMMON } from './shared.js';
 //   příčné trhliny po ~2–4 cm a podélné po ~1,5 cm, bloky posunuté jako cihly (Babrauskas: char „checking“, ★3 vzhled).
 // coal: celý povrch je žhavé uhlí s ostrůvky šedého popela (uhlíkové lože).
 // Žhnutí „dýchá“: pomalý šum v prostoru a čase (proudění vzduchu přes lože) – uGTime.
-export function applyChar(mat, { instanced = false, scale = 2.0, bias = 'y', alligator = null, coal = false } = {}) {
+// hole: díra propálená střechou – uniforma uHole (x, z, poloměr, –); okraj nepravidelný podle šumu a žhne.
+export function applyChar(mat, { instanced = false, scale = 2.0, bias = 'y', alligator = null, coal = false, hole = false } = {}) {
   const sh = sharedUniforms();
-  mat.userData.char = { uChar: { value: 0 }, uGlow: { value: 0 }, uCharScale: { value: scale }, uCharBase: { value: 0 }, uCharH: { value: 1 } };
+  mat.userData.char = { uChar: { value: 0 }, uGlow: { value: 0 }, uCharScale: { value: scale }, uCharBase: { value: 0 }, uCharH: { value: 1 }, uHole: { value: new THREE.Vector4(0, 0, 0, 0) } };
   const U = mat.userData.char;
   mat.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, sh, U);
@@ -27,7 +28,7 @@ export function applyChar(mat, { instanced = false, scale = 2.0, bias = 'y', all
     vCharUv = uv;
   }`);
     s.fragmentShader = s.fragmentShader
-      .replace('#include <common>', `#include <common>\nin vec3 vCharP; in vec2 vCharA; in vec2 vCharUv;\nuniform float uChar, uGlow, uCharScale, uCharBase, uCharH;\n${GLSL_COMMON}\n${alligator ? `#define ALLIG vec2(${alligator[0].toFixed(2)}, ${alligator[1].toFixed(2)})` : ''}\n${coal ? '#define COAL 1' : ''}`)
+      .replace('#include <common>', `#include <common>\nin vec3 vCharP; in vec2 vCharA; in vec2 vCharUv;\nuniform float uChar, uGlow, uCharScale, uCharBase, uCharH;\nuniform vec4 uHole;\n${GLSL_COMMON}\n${alligator ? `#define ALLIG vec2(${alligator[0].toFixed(2)}, ${alligator[1].toFixed(2)})` : ''}\n${coal ? '#define COAL 1' : ''}\n${hole ? '#define HOLE 1' : ''}`)
       .replace('#include <map_fragment>', `#include <map_fragment>
   float chv = vCharA.x >= 0.0 ? vCharA.x : uChar;
   float glv = vCharA.x >= 0.0 ? vCharA.y : uGlow;
@@ -58,7 +59,16 @@ export function applyChar(mat, { instanced = false, scale = 2.0, bias = 'y', all
 #endif
   vec3 charCol = mix(vec3(0.025, 0.022, 0.02), vec3(0.11, 0.1, 0.095), smoothstep(0.75, 1.0, chv) * cn); // popel šedne
   diffuseColor.rgb = mix(diffuseColor.rgb, charCol, charM);
-  float charRough = charM;`)
+  float charRough = charM;
+  float holeRim = 0.0;
+#ifdef HOLE
+  if (uHole.z > 0.0 && vCharP.y > uHole.w) { // jen nad výškou w (strop a střecha, ne okna a podlaha)
+    float hd = length(vCharP.xz - uHole.xy) + (fbm3(vCharP * 0.9) - 0.5) * 1.6;
+    if (hd < uHole.z) discard;
+    holeRim = smoothstep(uHole.z + 0.9, uHole.z, hd);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.02), holeRim);
+  }
+#endif`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.97, charRough);`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
   {
@@ -75,8 +85,11 @@ export function applyChar(mat, { instanced = false, scale = 2.0, bias = 'y', all
 #else
     totalEmissiveRadiance += bbColor(Tk) * (crack * 1.4 + hotZone * 0.25 * charM) * glv * breath * uFlameK * 0.35;
 #endif
+#ifdef HOLE
+    totalEmissiveRadiance += bbColor(950.0 + 250.0 * crackN * breath) * holeRim * holeRim * uFlameK * 0.3;
+#endif
   }`);
   };
-  mat.customProgramCacheKey = () => 'char' + (instanced ? 'I' : '') + (alligator ? 'A' + alligator.join('x') : '') + (coal ? 'C' : '');
+  mat.customProgramCacheKey = () => 'char' + (instanced ? 'I' : '') + (alligator ? 'A' + alligator.join('x') : '') + (coal ? 'C' : '') + (hole ? 'H' : '');
   return U;
 }

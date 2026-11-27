@@ -32,7 +32,8 @@ window.__fire = {
   ff(sec, dt = 1 / 30) { for (let t = 0; t < sec; t += dt) app.step(dt); },
   renderOnce() { app.updateExposure(); app.renderFrame(1 / 30); },
   settle(n = 30) { for (let i = 0; i < n; i++) { app.updateExposure(); app.pipeline.exposure = app.pipeline.targetExposure; } app.updateExposure(); app.step(1 / 240); },
-  shot() { app.updateExposure(); app.renderFrame(1 / 30); return app.renderer.domElement.toDataURL('image/png'); },
+  // s časovou akumulací objemů (T3+) víc kreslení stejného okamžiku (mění se jen chvění paprsku) → snímek bez zrna
+  shot(n = app.pipeline.vol ? 10 : 1) { app.updateExposure(); for (let i = 0; i < n; i++) app.renderFrame(i === n - 1 ? 1 / 30 : 0); return app.renderer.domElement.toDataURL('image/png'); },
   /** GLB modelu jako base64 (pro bake datasetu) */
   glb(id, lod) {
     const a = ASSETS.find((x) => x.id === id), obj = a.build({ lod, seed: 1 });

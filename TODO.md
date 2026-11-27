@@ -1,6 +1,14 @@
 # TODO — co se právě dělá
 
-Stav k 2026-11-27: **iterace 2 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
+Stav k 2026-11-27 odpoledne: **iterace 3 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
+
+## Hotovo (iterace 3 – Ondřejova volba: výbuchy + zrno, dům se zřícením)
+- [x] Časová akumulace objemů T3–T5 (reprojekce podle vzdálenosti, ořez okolím) – plamen bez zrna i na snímku. D-025.
+- [x] Výbuchy: výtrysky zeminy, Wilsonův kondenzační dóm (1 t TNT), dohořívání v mraku, měkké okraje kouře. Sud beze změny. D-026.
+- [x] Dům: díra ve střeše s žhnoucím lemem, zřícení střechy (uhlíky, kouř, trosky, vzplanutí). D-027.
+- [x] Velké louže: menší ohyb pole a kontrast proužků → plameny místo „mramoru“.
+- [x] xEngine: zadání pro sešnu A (`integrations/xengine/SESNA_A.md`), `combat:exploded`, uložení hry, režim bez plátna,
+      `tools/test-xengine-node.mjs`. Rozhodnutí: sešna A, submodul.
 
 ## Hotovo (iterace 2 – „víc skutečného života“ + xEngine)
 - [x] **Plamen v2** (objem): emise–absorpce sazí v rovnováze (κ = 2,7·f_v), teplota svítivých zón `Tlum` (Koseki), horké proužky,
@@ -24,17 +32,15 @@ Stav k 2026-11-27: **iterace 2 hotová** (vše zaškrtnuté je v `main` a v arte
 - [x] Nástroje: `tools/look.mjs` (snímek s úpravou stavu), `tools/shot.mjs`, `tools/sweep.mjs` (mřížka scénář × parametr).
 
 ## Známé slabiny (priorita shora)
-1. **Zrno objemu na statickém snímku**: jeden paprsek na pixel s chvěním; v pohybu se slije, na snímku je vidět. Chce časovou
-   akumulaci (TAA jen pro vrstvu efektů) – hlavně pro T4/T5.
+1. **Zrno na T1/T2** zůstává (akumulace je jen T3+); na T2 by šla zapnout za cenu ~2 průchodů přes obrazovku – změřit.
 2. **Velké louže (nafta)** jsou lepší, ale pořád trochu „kompaktní“; chybí velké odtržené jazyky v horní třetině a výraznější
    černý plášť. Kouř nad nimi je fyzikálně tmavý (v noci skoro neviditelný) – správně, ale méně efektní.
 3. **Pneumatiky ve dne**: plamen u paty malý, sloup kouře hezký. Chce víc plamene po obvodu hromady (víc zdrojů).
-4. **Výbuchy kromě sudu**: granát a acetylen jsou fyzikálně v pořádku, ale chybí prachové výtrysky ze země, kondenzační
-   prstenec u 1 t TNT a dohořívání.
-5. **Dům**: kouř je hodně podsvícený do červena, chybí zhroucení střechy, čouzení fasády nad okny.
+4. **Výbuchy**: mrak 1 t TNT stoupá jako kompaktní koule (chybí „hřib“ se stonkem); granát zblízka bez rozstřiku hlíny na kameru.
+5. **Dům**: kouř je hodně podsvícený do červena, chybí čouzení fasády nad okny; díra ve střeše nestíní (stínová mapa ji nevidí).
 6. **Les zblízka**: hořící kmeny, padající větve, korunový požár jen velkými jazyky.
 7. **Výkon** na skutečném T460 a RTX 4060 nezměřen (sandbox = swiftshader). Záložka Technika v prohlížeči ukáže časy.
-8. xEngine: integrace ověřená jen na zkušební stránce se záznamníkem světla – ve skutečné hře (level, buňky, `cellOf`) ještě ne.
+8. xEngine: integrace ověřená jen na zkušební stránce se záznamníkem světla a v Node – ve skutečné hře ji zapojí sešna A (`SESNA_A.md`).
 
 ## Nápady (neschváleno)
 - Objemový kouř pro T4/T5 (3D textura hustoty, 6směrové osvětlení), WebGPU compute částic

@@ -5,6 +5,7 @@ import * as THREE from 'three';
 // vyhrazenou pro zbraň a ruce, efekty pak patří do vrstvy světa 0.
 export let LAYER_FX = 1;
 export const LAYER_HAZE = 2;
+export const LAYER_VOL = 3; // objemy s časovou akumulací (T3+), kreslí se do vlastního cíle
 export function setFxLayer(n) { LAYER_FX = n; }
 
 const FS_TRI = new THREE.BufferGeometry();
@@ -82,6 +83,35 @@ void main(){
   o = vec4(c, 1.0);
 }`;
 
+// Časová akumulace objemů (T3–T5, D-025): reprojekce historie podle vzdálenosti podél paprsku (2. výstup objemu),
+// ořez historie na rozsah okolí 3×3 aktuálního snímku (méně duchů), váha nového snímku 0,12.
+const TAA = /* glsl */`
+precision highp float; in vec2 vUv; out vec4 o;
+uniform sampler2D tCur, tDist, tHist; uniform mat4 invVP, prevVP; uniform vec3 camPos; uniform vec2 texel; uniform float blend;
+void main(){
+  vec4 cur = texture(tCur, vUv);
+  vec4 mn = cur, mx = cur;
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+    if (x == 0 && y == 0) continue;
+    vec4 c = texture(tCur, vUv + vec2(float(x), float(y)) * texel);
+    mn = min(mn, c); mx = max(mx, c);
+  }
+  // vzdálenost podél paprsku: předvynásobená krytím; bez objemu v pixelu → okolí (jinak by se historie táhla)
+  float a = cur.a, d = a > 0.002 ? texture(tDist, vUv).r / a : 0.0;
+  vec2 puv = vUv;
+  if (d > 0.0) {
+    vec4 w = invVP * vec4(vUv * 2.0 - 1.0, 1.0, 1.0); w /= w.w;
+    vec3 P = camPos + normalize(w.xyz - camPos) * d;
+    vec4 pc = prevVP * vec4(P, 1.0);
+    puv = pc.xy / pc.w * 0.5 + 0.5;
+  }
+  vec4 h = texture(tHist, puv);
+  h = clamp(h, mn, mx);
+  float k = (puv.x < 0.0 || puv.y < 0.0 || puv.x > 1.0 || puv.y > 1.0) ? 1.0 : blend;
+  o = mix(h, cur, k);
+}`;
+const COPY_PM = /* glsl */`precision highp float; in vec2 vUv; out vec4 o; uniform sampler2D tSrc; void main(){ o = texture(tSrc, vUv); }`;
+
 export class Pipeline {
   constructor(renderer, tier) {
     this.r = renderer;
@@ -96,8 +126,14 @@ export class Pipeline {
       exposure: { value: 1 }, bloomStrength: { value: 0.6 }, useBloom: { value: 0 }, useHaze: { value: 0 },
       grain: { value: 0 }, time: { value: 0 }, vignette: { value: 0.35 }, res: { value: new THREE.Vector2() },
     });
+    this.taa = fsPass(TAA, { tCur: { value: null }, tDist: { value: null }, tHist: { value: null }, invVP: { value: new THREE.Matrix4() }, prevVP: { value: new THREE.Matrix4() }, camPos: { value: new THREE.Vector3() }, texel: { value: new THREE.Vector2() }, blend: { value: 0.12 } });
+    this.comp = fsPass(COPY_PM, { tSrc: { value: null } });
+    Object.assign(this.comp.m, { transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor });
+    this.prevVP = new THREE.Matrix4(); this.prevPos = new THREE.Vector3(1e9, 0, 0); this.prevDir = new THREE.Vector3(); this.taaReset = true; this.histI = 0;
     this.setTier(tier);
   }
+  /** Zahodit historii objemů (nový scénář, střih kamery). */
+  resetHistory() { this.taaReset = true; }
 
   setTier(tier) {
     this.tier = tier;
@@ -107,7 +143,8 @@ export class Pipeline {
   }
 
   dispose() {
-    for (const k of ['main', 'depth', 'haze']) if (this[k]) this[k].dispose();
+    for (const k of ['main', 'depth', 'haze', 'vol']) if (this[k]) { this[k].dispose(); this[k] = null; }
+    (this.hist || []).forEach((t) => t.dispose()); this.hist = null;
     (this.bloomRTs || []).forEach((t) => t.dispose());
     this.bloomRTs = [];
   }
@@ -123,6 +160,12 @@ export class Pipeline {
     this.main.texture.minFilter = THREE.LinearFilter;
     if (this.tier.softParticles) this.depth = new THREE.WebGLRenderTarget(W, H, { type: THREE.FloatType, depthBuffer: false });
     if (this.tier.haze) this.haze = new THREE.WebGLRenderTarget(W >> 1, H >> 1, { type: THREE.HalfFloatType, depthBuffer: false });
+    if (this.tier.volumeTAA && this.depth) {
+      this.vol = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, depthBuffer: false, count: 2 });
+      this.hist = [0, 1].map(() => new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, depthBuffer: false }));
+      for (const t of [...this.vol.textures, ...this.hist.map((h) => h.texture)]) { t.minFilter = t.magFilter = THREE.LinearFilter; }
+      this.taaReset = true;
+    }
     let bw = W, bh = H;
     for (let i = 0; i < this.tier.bloom; i++) {
       bw = Math.max(2, bw >> 1); bh = Math.max(2, bh >> 1);
@@ -131,6 +174,29 @@ export class Pipeline {
     }
     this.final.u.res.value.set(W, H);
     this.size = { W, H };
+  }
+
+  /** Objemy do vlastního cíle (barva + vzdálenost), akumulace s historií → hist[histI]. Vrací počet průchodů. */
+  renderVolumes(scene, camera) {
+    const r = this.r;
+    r.setRenderTarget(this.vol); r.setClearColor(0x000000, 0); r.clear(true, false, false);
+    camera.layers.set(LAYER_VOL); r.render(scene, camera);
+    camera.layers.set(0); // průchody přes celou obrazovku jsou ve vrstvě 0
+    r.setClearColor(0x000000, 1);
+    camera.updateMatrixWorld();
+    const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+    // střih kamery (skok > 1,5 m nebo otočení > 25°) = bez historie
+    const cut = this.taaReset || camera.position.distanceTo(this.prevPos) > 1.5 || dir.dot(this.prevDir) < 0.9;
+    const u = this.taa.u, next = 1 - this.histI;
+    u.tCur.value = this.vol.textures[0]; u.tDist.value = this.vol.textures[1]; u.tHist.value = this.hist[this.histI].texture;
+    u.invVP.value.copy(camera.matrixWorld).multiply(camera.projectionMatrixInverse);
+    u.prevVP.value.copy(this.prevVP); u.camPos.value.copy(camera.position);
+    u.texel.value.set(1 / this.size.W, 1 / this.size.H); u.blend.value = cut ? 1 : this.taaBlend ?? 0.12;
+    r.setRenderTarget(this.hist[next]); r.render(this.taa.scene, camera);
+    this.histI = next; this.taaReset = false;
+    this.prevVP.copy(camera.projectionMatrix).multiply(camera.matrixWorldInverse);
+    this.prevPos.copy(camera.position); this.prevDir.copy(dir);
+    return 2;
   }
 
   /** Vstup pro efekty: textura lineární hloubky (T2+), nebo null. */
@@ -147,8 +213,10 @@ export class Pipeline {
       this.depthCopy.u.tDepth.value = this.main.depthTexture;
       this.depthCopy.u.cNear.value = camera.near; this.depthCopy.u.cFar.value = camera.far;
       r.setRenderTarget(this.depth); r.render(this.depthCopy.scene, camera); passes++;
+      if (this.vol) passes += this.renderVolumes(scene, camera);
       r.setRenderTarget(this.main);
       const ac = r.autoClear; r.autoClear = false;
+      if (this.vol) { this.comp.u.tSrc.value = this.hist[this.histI].texture; r.render(this.comp.scene, camera); passes++; }
       camera.layers.set(LAYER_FX); r.render(scene, camera); passes++;
       r.autoClear = ac;
     } else {
