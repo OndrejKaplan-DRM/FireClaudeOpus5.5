@@ -327,3 +327,14 @@ hořlavé materiály. Oheň, který se šíří podle hořlavosti materiálu …
   `acetyleneCylinder`. `fire-system.js`: `heatFluxFull()` a `ignitionTimeAt()`; `heatFlux()` beze změny (kontrakt testů).
 - `xspace.js`: návrh komponenty `flammable` (F-10) a kontrola `checkFlammable`. Do xEngine nezapsáno; test integrace prošel
   proti klonu xEngine `main` 1f2e623.
+
+### D-047 · 2026-11-28 · Rozložení stránky: plátno nesmí řídit šířku (chyba „okno se donekonečna rozšiřuje“)
+- **Chyba** (hlášení Ondřeje, artefakt při zvětšení stránky ≠ 100 %): plátno časové osy bylo pružná položka s `min-width:auto`
+  a každý snímek dostalo `width = clientWidth × devicePixelRatio`. Při neceločíselném dpr zaokrouhlení změnilo poměr stran,
+  položka povyrostla (~0,5 % za snímek), sloupec mřížky `1fr` (= `minmax(auto,1fr)`) se roztáhl a s ním celá stránka.
+  Chyba byla od iterace 1; testy v sandboxu běžely vždy při dpr 1, proto ji nechytily.
+- **Oprava**: sloupce `minmax(0,1fr)`, `min-width:0` na všech pružných položkách, plátno osy `flex:1 1 0; width:0`,
+  velikost bitmapy zaokrouhlená, omezená (≤ 4096) a přiřazovaná jen při změně; `ResizeObserver` na pohledu; pravý panel
+  zalamuje dlouhé hodnoty (`table-layout:fixed`), výběrová pole se vejdou do panelu; pod 760 px se panely skládají pod sebe.
+- **Pravidlo**: žádné plátno nesmí určovat rozměr svého rodiče. Každá změna UI se zkouší při dpr 1,25 a 1,5
+  (`npm run test:layout`: 9 velikostí × zvětšení, 3 běhy skutečné smyčky, přetečení pravého panelu u všech scénářů a záložek).

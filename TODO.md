@@ -2,6 +2,9 @@
 
 Stav k 2026-11-27 pozdě večer: **iterace 6 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
 
+## Hotovo (oprava 2026-11-28)
+- [x] Okno se při zvětšení stránky donekonečna rozšiřovalo (plátno časové osy řídilo šířku). D-047, `npm run test:layout`.
+
 ## Hotovo (iterace 6 – rozšíření a zobecnění palety, Ondřej 2026-11-27 18:12)
 - [x] Paleta 42 fotek (Commons), měření denního jasu plamene, barev kouře, vyhořelých aut a zuhelnatělého dřeva. `REFERENCE.md`.
 - [x] Jeden popis ohně a výbuchu `physics/spec.js` (louže, rozlití, vytékání, hromada, předmět, tryska, knot; trhavina,

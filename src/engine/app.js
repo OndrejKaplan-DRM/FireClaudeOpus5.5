@@ -46,6 +46,8 @@ export class App {
     this.clock = { last: performance.now(), getDelta() { const n = performance.now(), d = (n - this.last) / 1000; this.last = n; return d; } };
     this.resize();
     addEventListener('resize', () => this.resize());
+    // velikost pohledu se mění i bez události okna (zlom rozložení, skrytí panelů, zvětšení stránky) → sledovat přímo prvek
+    if (typeof ResizeObserver !== 'undefined') { let lw = 0, lh = 0; new ResizeObserver(() => { const r = this.canvas.parentElement.getBoundingClientRect(); if ((r.width | 0) !== lw || (r.height | 0) !== lh) { lw = r.width | 0; lh = r.height | 0; this.resize(); } }).observe(this.canvas.parentElement); }
   }
 
   get lod() { return this.lodOverride ?? this.tier.lod; }

@@ -26,6 +26,7 @@ npm run perf           # CPU cena simulace všech scénářů na T0–T3 → dat
 npm run bake           # dataset/: flipbooky PNG, GLB modely, náhledy, presety JSON (~25 min)
 npm run test:xengine   # integrace s xEngine (jádro + vykreslení z klonu, systém fx.fire)
 npm run test:audio     # zvuk bez reproduktoru (OfflineAudioContext): hlasy ohně, zpoždění rány, útlum výšek
+npm run test:layout   # rozložení při zvětšení stránky (dpr 1–3) a úzkých oknech; nic nesmí přetéct ani růst
 node tools/audio-demo.mjs [outdir]                        # ukázky zvuku do WAV
 node tools/tri.mjs <scn> <tier> <seek s> <sim s>          # volání kreslení a △ jednoho snímku
 node tools/look.mjs <scn> <tier> <s> "x,y,z" "tx,ty,tz" out.png "<js>"   # snímek s úpravou stavu
@@ -82,6 +83,8 @@ Parametry URL: `?scn=<id>&tier=0..5&wind=0..3&o2=0..1&t=<s>&ui=0`.
   ve vrstvě `LAYER_SHADOW` (7); nový instancovaný porost musí udělat totéž (D-034).
 - Zvuk se zapíná jen gestem; `fx.audioEvents` se bez zvuku drží na 64 (hostitel bez FireAudio je nevybírá).
 - Objemový kouř: kvádr musí mít poloměr ≥ 2 b, jinak jsou vidět svislé hrany (D-036).
+- UI: plátno nesmí určovat rozměr rodiče (pružná položka s `min-width:auto` + `width = clientWidth × dpr` se při zvětšení
+  stránky sama roztahuje, D-047). Sloupce mřížky `minmax(0,1fr)`, položky `min-width:0`; zkoušet při dpr 1,25 a 1,5.
 
 - Volby zdroje se skládají `{ end: Infinity, ...o }`: klíč `end: undefined` zdroj tiše vypne. `sourceOptions` proto `end`
   vynechává, když doba hoření není konečná; při ručním skládání voleb totéž.

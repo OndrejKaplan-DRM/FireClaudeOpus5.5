@@ -1,8 +1,11 @@
 :root{--bg:#0d0c0b;--pn:#16140f;--pn2:#1d1a14;--ln:#2e2920;--tx:#e9e2d4;--mut:#9a907e;--ac:#ff7a1a;--ac2:#ffb347;--ok:#7dc97d;--warn:#e9b44c;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,"Cascadia Mono",Consolas,monospace}
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:13px/1.4 var(--font);overflow:hidden}
 button,select,input{font:inherit;color:inherit}
-#app{display:grid;grid-template-columns:250px 1fr 340px;grid-template-rows:44px 1fr 92px;height:100vh}
-#top{grid-column:1/4;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--pn);border-bottom:1px solid var(--ln)}
+/* Sloupec a řádek pohledu jsou minmax(0,1fr): obsah (plátna) nesmí určovat šířku stránky – jinak se při zvětšení stránky
+   (devicePixelRatio ≠ 1) okno samo roztahuje doprava (chyba z 2026-11-28, test tools/test-layout.mjs). */
+#app{display:grid;grid-template-columns:250px minmax(0,1fr) 340px;grid-template-rows:minmax(44px,auto) minmax(0,1fr) 92px;height:100vh;width:100%;max-width:100vw;overflow:hidden}
+#top{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--pn);border-bottom:1px solid var(--ln);min-width:0;flex-wrap:wrap;row-gap:4px;padding:5px 12px}
+#top>:not(.sp){flex-shrink:0}
 #top .logo{font-weight:700;letter-spacing:.04em;font-size:15px;display:flex;align-items:center;gap:8px;margin-right:10px}
 #top .logo i{width:14px;height:18px;background:radial-gradient(ellipse at 50% 85%,#fff3c4 0,#ffb347 30%,#ff5a00 60%,transparent 70%);border-radius:50% 50% 45% 45%/60% 60% 40% 40%;display:inline-block}
 .seg{display:flex;border:1px solid var(--ln);border-radius:6px;overflow:hidden}
@@ -17,35 +20,38 @@ button,select,input{font:inherit;color:inherit}
 #left .it{display:block;width:100%;text-align:left;background:none;border:0;padding:6px 14px;cursor:pointer;border-left:3px solid transparent}
 #left .it:hover{background:var(--pn2)}#left .it.on{border-left-color:var(--ac);background:var(--pn2);color:var(--ac2)}
 #left .it small{display:block;color:var(--mut);font-size:11px}
-#view{grid-column:2;grid-row:2;position:relative;overflow:hidden;background:#000}
+#view{grid-column:2;grid-row:2;position:relative;overflow:hidden;background:#000;min-width:0;min-height:0}
 #view canvas{width:100%;height:100%;display:block}
 #hud{position:absolute;left:10px;top:10px;font:12px var(--mono);color:#fff;text-shadow:0 1px 2px #000;pointer-events:none;white-space:pre;opacity:.85}
 #cams{position:absolute;right:10px;top:10px;display:flex;gap:6px}
 #cams .btn{background:rgba(20,18,14,.75);backdrop-filter:blur(4px)}
 #toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(20,18,14,.9);border:1px solid var(--ac);padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.show{opacity:1}
-#desc{position:absolute;left:10px;bottom:10px;max-width:560px;background:rgba(14,12,10,.78);backdrop-filter:blur(4px);border:1px solid var(--ln);padding:8px 12px;border-radius:8px;font-size:12.5px}
+#desc{position:absolute;left:10px;bottom:10px;max-width:min(560px,calc(100% - 20px));background:rgba(14,12,10,.78);backdrop-filter:blur(4px);border:1px solid var(--ln);padding:8px 12px;border-radius:8px;font-size:12.5px}
 #desc b{color:var(--ac2)}
-#right{grid-column:3;grid-row:2;background:var(--pn);border-left:1px solid var(--ln);display:flex;flex-direction:column;min-height:0}
+#right{grid-column:3;grid-row:2;background:var(--pn);border-left:1px solid var(--ln);display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
 #tabs{display:flex;border-bottom:1px solid var(--ln)}
 #tabs button{flex:1;background:none;border:0;padding:9px 4px;cursor:pointer;color:var(--mut);border-bottom:2px solid transparent}
 #tabs button.on{color:var(--ac2);border-bottom-color:var(--ac)}
-#pane{overflow:auto;padding:10px 12px;flex:1}
-table.kv{width:100%;border-collapse:collapse;font-size:12.5px}
+#pane{overflow-x:hidden;overflow-y:auto;padding:10px 12px;flex:1;min-width:0;min-height:0}
+table.kv{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed}
+table.kv td:first-child{width:46%;overflow-wrap:anywhere}
 table.kv td{padding:4px 2px;border-bottom:1px solid var(--ln);vertical-align:top}
-table.kv td:nth-child(2){font-family:var(--mono);color:var(--ac2);text-align:right;white-space:nowrap}
+table.kv td:nth-child(2){font-family:var(--mono);color:var(--ac2);text-align:right;white-space:normal;overflow-wrap:anywhere}
 table.kv td.src{color:var(--mut);font-size:11px;padding-top:0;border-bottom:1px solid var(--ln)}
 table.kv tr.sub td{border-bottom:0;padding-bottom:0}
 .row{margin:10px 0}.row>label{display:block;color:var(--mut);margin-bottom:4px;font-size:12px}
 .row input[type=range]{width:100%;accent-color:var(--ac)}
 .chk{display:flex;align-items:center;gap:6px;margin:4px 0;cursor:pointer}.chk input{accent-color:var(--ac)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
-select{background:var(--pn2);border:1px solid var(--ln);border-radius:6px;padding:5px}
-#bottom{grid-column:2/3;background:var(--pn);border-top:1px solid var(--ln);display:flex;gap:10px;align-items:center;padding:8px 12px}
-#bottom canvas{flex:1;height:72px;background:var(--pn2);border:1px solid var(--ln);border-radius:6px;cursor:pointer}
-#bottom .tc{font:12px var(--mono);min-width:120px}
-#corner{grid-column:1/2;grid-row:3;background:var(--pn);border-top:1px solid var(--ln);border-right:1px solid var(--ln);padding:8px 12px;font-size:11px;color:var(--mut)}
-#corner2{grid-column:3/4;grid-row:3;background:var(--pn);border-top:1px solid var(--ln);padding:8px 12px;font-size:11px;color:var(--mut);overflow:hidden}
+select{background:var(--pn2);border:1px solid var(--ln);border-radius:6px;padding:5px;max-width:100%;min-width:0;text-overflow:ellipsis}
+.row{min-width:0}.row select{width:100%}
+#bottom{grid-column:2/3;grid-row:3;background:var(--pn);border-top:1px solid var(--ln);display:flex;gap:10px;align-items:center;padding:8px 12px;min-width:0;overflow:hidden}
+/* šířka 0 + růst: plátno bere zbytek místa a jeho vlastní (bitmapová) šířka do rozložení nevstupuje */
+#bottom canvas{flex:1 1 0;width:0;min-width:0;height:72px;background:var(--pn2);border:1px solid var(--ln);border-radius:6px;cursor:pointer}
+#bottom .tc{font:12px var(--mono);min-width:120px;flex-shrink:0}
+#corner{grid-column:1/2;grid-row:3;background:var(--pn);border-top:1px solid var(--ln);border-right:1px solid var(--ln);padding:8px 12px;font-size:11px;color:var(--mut);min-width:0;overflow:hidden}
+#corner2{grid-column:3/4;grid-row:3;background:var(--pn);border-top:1px solid var(--ln);padding:8px 12px;font-size:11px;color:var(--mut);overflow:hidden;min-width:0}
 .note{color:var(--mut);font-size:11.5px;margin:6px 0}
 .pill{display:inline-block;padding:1px 6px;border:1px solid var(--ln);border-radius:10px;font-size:11px;color:var(--mut);margin-right:4px}
 #atlasWrap{position:absolute;inset:40px;background:rgba(10,9,8,.95);border:1px solid var(--ln);border-radius:10px;display:none;padding:14px;overflow:auto;z-index:5}
@@ -56,4 +62,14 @@ body.noui #left,body.noui #right,body.noui #top,body.noui #bottom,body.noui #cor
 body.noui #app{grid-template-columns:0 1fr 0;grid-template-rows:0 1fr 0}
 #loader{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:20;transition:opacity .4s}
 #loader.gone{opacity:0;pointer-events:none}
-@media (max-width:1100px){#app{grid-template-columns:200px 1fr 290px}}
+@media (max-width:1100px){#app{grid-template-columns:200px minmax(0,1fr) 290px}}
+@media (max-width:900px){#app{grid-template-columns:170px minmax(0,1fr) 250px}#top .logo .lbl{display:none}}
+/* úzké okno (panel vedle chatu, telefon): pravý panel pod pohled, časová osa přes celou šířku */
+@media (max-width:760px){
+  #app{grid-template-columns:132px minmax(0,1fr);grid-template-rows:44px minmax(0,1fr) 84px minmax(120px,32vh)}
+  #top{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;padding:0 8px}
+  #right{grid-column:1/-1;grid-row:4;border-left:0;border-top:1px solid var(--ln)}
+  #bottom{grid-column:1/-1}#corner,#corner2{display:none}
+  #left .it{padding:6px 8px;font-size:12px}#left h4{margin:10px 8px 4px}
+  #bottom .tc{min-width:92px}
+}

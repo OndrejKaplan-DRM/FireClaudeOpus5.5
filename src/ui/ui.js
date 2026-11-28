@@ -234,7 +234,12 @@ export class UI {
 
   drawTimeline() {
     const a = this.app, cv = this.tl, g = cv.getContext('2d');
-    const W = (cv.width = cv.clientWidth * devicePixelRatio), H = (cv.height = cv.clientHeight * devicePixelRatio);
+    // bitmapa plátna v celých pixelech a se stropem; měnit jen při změně velikosti (přiřazení šířky plátno maže a při
+    // zaokrouhlení clientWidth × dpr u zvětšené stránky dřív měnilo poměr stran → plátno samo sebe roztahovalo)
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const W = Math.max(1, Math.min(4096, Math.round(cv.clientWidth * dpr))), H = Math.max(1, Math.min(512, Math.round(cv.clientHeight * dpr)));
+    if (cv.width !== W) cv.width = W;
+    if (cv.height !== H) cv.height = H;
     g.clearRect(0, 0, W, H);
     const s = a.scn;
     if (!s) { this.tc.textContent = 'model'; return; }
@@ -243,12 +248,12 @@ export class UI {
     const dur = s.duration || 60;
     this.hist.push([a.t, Q]); if (this.hist.length > 2000) this.hist.shift();
     const qmax = Math.max(1, ...this.hist.map((x) => x[1]));
-    g.strokeStyle = '#ff7a1a'; g.lineWidth = 2 * devicePixelRatio; g.beginPath();
+    g.strokeStyle = '#ff7a1a'; g.lineWidth = 2 * dpr; g.beginPath();
     this.hist.forEach(([t, q], i) => { const x = ((s.duration ? t / dur : (t % 60) / 60)) * W, y = H - 6 - (q / qmax) * (H - 18); i ? g.lineTo(x, y) : g.moveTo(x, y); });
     g.stroke();
     const x = (s.duration ? a.t / dur : (a.t % 60) / 60) * W;
-    g.fillStyle = '#ffb347'; g.fillRect(x - 1, 0, 2 * devicePixelRatio, H);
-    g.fillStyle = '#9a907e'; g.font = `${11 * devicePixelRatio}px monospace`; g.fillText('HRR ' + fmtW(Q) + '  (max ' + fmtW(qmax) + ')', 8, 14 * devicePixelRatio);
+    g.fillStyle = '#ffb347'; g.fillRect(x - 1, 0, 2 * dpr, H);
+    g.fillStyle = '#9a907e'; g.font = `${11 * dpr}px monospace`; g.fillText('HRR ' + fmtW(Q) + '  (max ' + fmtW(qmax) + ')', 8, 14 * dpr);
     this.tc.innerHTML = `t = ${a.t.toFixed(1)} s<br>${s.duration ? '/ ' + s.duration + ' s' : 'bez konce'}<br>×${a.timeScale}`;
     if (this.turn && a.assetObj) a.assetObj.rotation.y += 0.02;
   }
