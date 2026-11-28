@@ -11,8 +11,10 @@ Cizí data se nepoužívají (povolené by byly jen CC0 šablony – zatím žá
 ## Navázání a plán
 - Postup a zásady: `STRATEGIE.md`. Plán další iterace (projít každý objekt, texturu, fyziku i průběh): `AUDIT.md`.
   Jak začít novou sešnu (repo, GitHub, artefakt, startovní prompt): `NAVAZANI.md`. Reference: `REFERENCE.md`.
-- Stav k 2026-11-27 pozdě večer: iterace 1–6 hotové. Iterace 6 = obecný model ohně (`MODEL.md`), 24 scénářů, 23 assetů.
+- Stav k 2026-11-28 v noci: iterace 1–7 hotové. Iterace 7 = jádro bez grafiky, zbraně, hašení, následky; 39 scénářů, 36 assetů.
+  Artefakt je **veřejný**: novou verzi publikovat jen po výslovném souhlasu Ondřeje v dané sešně (D-055).
 - Obecný model (jeden popis ohně a výbuchu, přestup tepla, vznícení, následky): **`MODEL.md`**. Analýza tématu: `ANALYZA_2026-11-27.md`.
+  Kritika iterace 6, zobecnění a plán: `ANALYZA_2026-11-28.md`. Co řešily hry a enginy: `RESERSE_HRY.md`.
 
 ## Jak spustit
 ```bash
@@ -42,7 +44,8 @@ Parametry URL: `?scn=<id>&tier=0..5&wind=0..3&o2=0..1&t=<s>&ui=0`.
 ## Mapa kódu (detail v ARCHITECTURE.md)
 - `src/physics/` – čisté funkce bez Three.js (palivo, plamen, kouř, vítr, výbuch, šíření; od iterace 6 materiály, přestup
   tepla a vznícení, jeden popis ohně a výbuchu `spec.js`). Testovatelné v Node.
-- `src/fx/` – vizuální efekty (shadery, částice, post-proces).
+  Iterace 7: `sim.js` (`FireSim`, `ThermalBody` – simulace bez grafiky), `gun.js` (výstřel), `suppress.js` (hašení).
+- `src/fx/` – vizuální efekty (shadery, částice, post-proces). Iterace 7: `gun.js`, `spray.js`, `heatmap.js`, `WallSoot` v `decal.js`.
 - `src/assets/` – procedurální modely s LOD a materiál ohořelosti.
 - `src/scenarios/` – use casy = složení assetů + efektů z fyzikálního výpočtu.
 - `src/engine/` – renderer, stupně kvality, prostředí (vítr, kyslík, čas).
@@ -96,6 +99,16 @@ Parametry URL: `?scn=<id>&tier=0..5&wind=0..3&o2=0..1&t=<s>&ui=0`.
 - Denní jas plamene řídí strop v `App.updateExposure` (D-039); v noci se neuplatní. `lumRef` (výbuchy) se netýká.
 - `applyChar({ metal: true })`: bez nastavení `uTmax` se stav plechu odvodí z `uChar/uGlow` (starší scénáře).
 - Scénář se zrychleným časem a výbuchem musí před výbuchem přepnout `ctx.setTimeScale(1)`, jinak trosky letí × timeScale.
+- `Burnable` je jen obal nad `ThermalBody`: stav měň ve fyzice (`physics/sim.js`), ne ve vizuální vrstvě. Zdroj plamene
+  hořlavého předmětu má `Q: () => body.Qnow()` – nepřepisovat ho funkcí času.
+- Volby zdroje měněné za běhu: `Object.assign(src.o, extra)` přepíše `mult` neúplným objektem → počet částic NaN a plamen
+  zmizí. `mult` slučovat zvlášť (`Object.assign(src.o.mult, extra.mult)`), viz scénář `jetFire`.
+- `Debris.burst` přičítá k výšce 0,2 m (nábojnice a střepy posunout dolů). Čas `start`/`end` zdroje se počítá od jeho
+  vytvoření, `Q(t)` dostává čas od `start`.
+- Výbuchy přes `fx.blast(spec, pos, { src })` (působí na okna, nálože, plameny); `fx.addExplosion` je jen obraz.
+- Úvodní obrazovka nesmí viset: výjimka při startu končí hlášením (`fatal` v `main.js`, D-048). Testy hlídají i prostředí
+  uživatele: zvětšení stránky (`test:layout`), start bez WebGL a ztrátu kontextu (`test:nogl`).
+- Hledání na Commons: názvy kategorií neodhadovat (většina neexistuje) – krátké textové dotazy o 2–3 slovech fungují líp.
 - Commons API omezuje rychlost i při jednom dotazu za pár sekund (sdílená adresa): skript musí čekat a opakovat (6–60 s),
   stažení 120 kandidátů trvá přes hodinu; hledání podle kategorie (`generator=categorymembers`) je přesnější než text.
 

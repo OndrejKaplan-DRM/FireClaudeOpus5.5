@@ -7,10 +7,16 @@ Napojení na xEngine: `integrations/xengine/` (systém jádra `fx.fire`).
 **Otevři `dist/index.html`** (jeden soubor, běží offline z disku).
 
 ## Co obsahuje
-- **24 scénářů**: zapalovač (jiskra → plamen), jiskra z brusky, svíčka, louč, ohýnek, táborák, velká hranice, stoh slámy,
+- **39 scénářů**: zapalovač (jiskra → plamen), jiskra z brusky, svíčka, louč, ohýnek, táborák, velká hranice, stoh slámy,
   pneumatiky, řetěz vznícení (přestup tepla mezi předměty), rozlitá nafta 20 l, hořící sud s naftou, prostřelený sud s hořícím
   pramínkem, požár auta, výbuch sudu s benzínem, směs acetylenu s kyslíkem, acetylenová láhev v požáru, granát, 1 t TNT,
   lesní požár, suché křoví, požár domu, parametrický plamen, obecný výbuch (50 g – 5 t).
+  Od iterace 7 navíc: výstřel z pistole, kulomet se žhnoucí hlavní, dělo a dopad granátu, řetězová exploze skladu munice,
+  zápalná láhev, plamenomet, tryskový plamen (hořák → utržený ventil), hořící stopa k sudu, hašení (hasivo × co hoří),
+  následky (saze na zdi, sklo, tavení hliníku), místnost s oknem (celkové vzplanutí), výbuch prachu, ohňostroj,
+  termit a hořčík, ohnivý vír. Každý má popsanou levnou, střední a drahou cestu.
+- **Jádro bez grafiky** (`physics/sim.js`): `FireSim` počítá šíření, hašení a řetěz výbuchů jako protokol událostí – použitelné
+  ve hře, na serveru i v testu. Výstřely (`physics/gun.js`), hašení (`physics/suppress.js`).
 - **Obecný model** (`MODEL.md`): jeden popis ohně a výbuchu (co hoří, kolik, v jakém tvaru → vše ostatní), tepelný tok na
   okolí, vznícení podle materiálu, hořlavé předměty, očouzený a vyhořelý plech.
 - **Podpřípady**: vítr (bezvětří / vánek 2,5 m/s / vítr 9 m/s / vichr 19 m/s, směr), kyslík (ventilace → saze, CO, barva, tvar),

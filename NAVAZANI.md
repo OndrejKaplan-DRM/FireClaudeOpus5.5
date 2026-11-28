@@ -11,6 +11,16 @@
 - xEngine (jen ke čtení, kvůli testu integrace): `OndrejKaplan-DRM/xEngine`, klon do `/home/claude/ondrejkaplan-drm/xengine`,
   `XENGINE=<cesta> npm run test:xengine`. **Do xEngine se nezapisuje.**
 
+## Stav po iteraci 7 (2026-11-28 v noci)
+- `main` obsahuje iteraci 7: 39 scénářů, 36 modelů, jádro bez grafiky (`physics/sim.js`), zbraně, hašení, následky, UI.
+- **Artefakt je sdílený veřejně** a obsahuje jen verzi `1795893249-6463` (oprava rozložení D-047). Novou verzi smím zapsat
+  až po Ondřejově výslovném souhlasu; do té doby dostává `dist/index.html` jako soubor.
+- Ondřej hlásil, že se artefakt nespustil („Error creating WebGL context“): hypotéza zablokovaného WebGL v Chrome, čeká se
+  na jeho ověření (restart prohlížeče, `chrome://gpu`). Na naší straně D-048.
+- Testy: fyzika 116, kouřové T0 a T3 všech 39 scénářů, UI, rozložení (dpr 1–3), start bez WebGL, zvuk, xEngine.
+- Otevřené otázky pro Ondřeje a plán iterace 8: `AUDIT.md` (první oddíl), `TODO.md` („Otevřené po iteraci 7“).
+- Číst navíc: `ANALYZA_2026-11-28.md`, `RESERSE_HRY.md`, `MODEL.md` §9–14.
+
 ## Stav po iteraci 6 (2026-11-27 večer)
 - `main`: 23bac35 (iterace 6: kód a dokumenty), 27d1ac9 (dataset). Artefakt FireLab verze `1795804912-6128`.
 - Testy na tomto stavu: fyzika, T0 a T3 (24 scénářů), UI, zvuk, integrace s xEngine `main` 1f2e623 – vše bez chyb.

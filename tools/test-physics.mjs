@@ -88,5 +88,55 @@ check('táborák 20 kg Q', SP.fireSpec({ kind: 'pile', material: 'softwood', mas
   check('acetylenová láhev: ohnivá koule', c.fb.D, 10, 15, 'm'); check('acetylenová láhev: TNT ekv.', c.W, 0.5, 4, 'kg'); check('acetylenová láhev: úlomky', c.vFrag, 50, 120, 'm/s'); }
 check('materiály mají zdroj paliva', Object.values(MATERIALS).filter((m) => m.mode !== 'inert' && !m.fuel).length, 0, 0);
 
+// ---------------------------------------------------------------------------------------------- iterace 7
+{ const G = await import('../src/physics/gun.js'), SU = await import('../src/physics/suppress.js'), SM = await import('../src/physics/sim.js');
+  for (const k of Object.keys(G.GUNS)) check(`${k}: balistická účinnost`, G.muzzleSpec(k).eff * 100, 24, 45, '%');
+  check('pistole: rána v 1 m', G.muzzleSpec('pistol9').spl(1), 155, 165, 'dB'); check('kulomet 7,62: rána v 1 m', G.muzzleSpec('mg762').spl(1), 160, 170, 'dB');
+  check('pistole: záblesk', G.muzzleSpec('pistol9').flashL * 100, 8, 20, 'cm'); check('tank 125 mm: záblesk', G.muzzleSpec('tank125').flashL, 5, 10, 'm');
+  check('tlumič: útlum rány', G.muzzleSpec('rifle556').spl(1) - G.muzzleSpec('rifle556', { suppressor: true }).spl(1), 15, 35, 'dB');
+  { const ms = G.muzzleSpec('mg762'); let T = 293; for (let i = 0; i < 60; i++) T = G.stepBarrelTemp(T, 200 / 60, 1, ms); check('kulomet: hlaveň po 200 ranách za minutu', T - 273, 250, 480, '°C');
+    T = 293; for (let i = 0; i < 60; i++) T = G.stepBarrelTemp(T, 650 / 60, 1, ms); check('kulomet: hlaveň po 650 ranách v kuse (žhne)', T - 273, 650, 1000, '°C'); }
+  check('voda na 1 MW, plný proud', SU.waterDemand(1e6) * 60, 25, 60, 'l/min'); check('voda na 1 MW, mlha', SU.waterDemand(1e6, 'waterFog') * 60, 12, 30, 'l/min');
+  const sup = (o, T = 120) => { let st = {}, t = 0; for (; t < T; t += 0.1) { st = SU.suppressStep(st, { ...o, dt: 0.1 }); if (st.out) break; } return { st, t }; };
+  { const r = sup({ Q0: 9e5, A: 7, agent: 'waterJet', rate: 3.3, cls: 'A' }); check('proud C uhasí 0,9 MW dřeva', r.st.out ? r.t : 999, 5, 60, 's'); }
+  { const r = sup({ Q0: 9e5, A: 7, agent: 'hose', rate: 0.3, cls: 'A' }); check('zahradní hadice 0,9 MW neuhasí (jen oslabí)', r.st.out ? 0 : r.st.s, 0.2, 0.8); }
+  { const r = sup({ Q0: 2e6, A: 0.1, agent: 'waterJet', rate: 3.3, cls: 'D' }, 10); check('voda na hořčík požár zhorší', r.st.s, -1.6, -0.5); }
+  { const r = sup({ Q0: 2e6, A: 1.1, agent: 'waterJet', rate: 3.3, cls: 'B' }, 20); check('plný proud na benzín požár zhorší', r.st.s, -1.6, -0.05); }
+  { const r = sup({ Q0: 4.6e6, A: 5, agent: 'foam', rate: 3.3, cls: 'B' }, 300); check('pěna uhasí 5 m² benzínu', r.st.out ? r.t : 999, 20, 180, 's'); }
+  { const r = sup({ Q0: 9e5, A: 7, agent: 'powder', rate: 0.4, cls: 'A' }, 15); check('prášek dřevo srazí, ale neuhasí trvale', r.st.out ? 0 : r.st.s, 0.5, 1.01); }
+  check('propustnost vzduchu 10 m', H.transmissivity(10), 0.8, 0.92); check('propustnost vzduchu 100 m', H.transmissivity(100), 0.65, 0.78);
+  check('tryskový plamen 100 kW', SP.jetFlameLength(1e5), 1.0, 1.6, 'm'); check('tryskový plamen 10 MW', SP.jetFlameLength(1e7), 6, 8, 'm');
+  check('zapalovač zůstává laminární', SP.fireSpec({ kind: 'jet', fuel: 'butane', mdot: 1.25e-6 }).L * 1000, 20, 30, 'mm');
+  { const r = SP.fireSpec({ kind: 'room' }).room; check('pokoj 4×3,5 m: flashover', r.Qfo / 1e6, 1.0, 1.6, 'MW'); check('… horká vrstva při flashoveru', r.layerT(r.Qfo) - 273, 450, 620, '°C');
+    check('… strop větráním', r.Qvent / 1e6, 2.5, 3.5, 'MW'); check('… plamen nad oknem', r.zf, 1.2, 4, 'm'); }
+  check('benzínová stopa: šíření', SP.liquidSpread('gasoline'), 1.3, 2.2, 'm/s'); check('naftová stopa: šíření', SP.liquidSpread('diesel') * 100, 1, 12, 'cm/s');
+  check('prach 100 g: ohnivá koule', SP.explosionSpec({ kind: 'dust', mass: 0.1 }).fb.D, 1, 2, 'm'); check('prach 5 kg v silu: TNT ekv.', SP.explosionSpec({ kind: 'dust', mass: 5, confined: true }).W, 1, 3, 'kg');
+  { const y = SP.explosionSpec({ kind: 'pyro', caliber: 150 }); check('puma 150 mm: výška', y.H, 150, 220, 'm'); check('puma 150 mm: průměr květu', 2 * y.R, 70, 100, 'm'); check('puma 150 mm: zpožďovač', y.tLift, 4, 7, 's'); }
+  { const c = SP.explosionSpec({ kind: 'gasCylinder' }), f = SP.explosionSpec({ kind: 'gasCylinder', film: true }); check('filmová láhev: větší koule', f.ex.fireball.D / c.ex.fireball.D, 1.3, 2); check('filmová láhev: stejná tlaková vlna', f.W / c.W, 0.999, 1.001); }
+  { let g = {}, tc = null, t = 0; for (; t < 600; t += 1) { g = H.stepGlass(g, 10e3, 293, 1); if (g.state !== 'celé' && tc == null) tc = t; } check('sklo při 10 kW/m²: praskne za', tc ?? 999, 30, 300, 's'); check('sklo při 10 kW/m²: nevypadne', g.state === 'popraskané' ? 1 : 0, 1, 1);
+    g = {}; for (t = 0; t < 300; t += 1) g = H.stepGlass(g, 25e3, 293, 1); check('sklo při 25 kW/m²: vypadne', g.state === 'vypadlé' ? 1 : 0, 1, 1); }
+  { const b = new SM.ThermalBody({ pos: [0, 0, 0], material: 'aluminium' }); let t = 0, tm = null; for (; t < 1800; t += 1) { b.step({ q: 80e3, Tg: 1200, inFlame: true, tau: 0 }, 1, t); if (b.melt >= 1 && tm == null) tm = t; } check('hliníkový disk v plameni se roztaví za', (tm ?? 99999) / 60, 2, 15, 'min');
+    const s = new SM.ThermalBody({ pos: [0, 0, 0], material: 'steelPainted' }); for (t = 0; t < 1800; t += 1) s.step({ q: 80e3, Tg: 1200, inFlame: true, tau: 0 }, 1, t); check('ocelový plech se netaví', s.melt, 0, 0); }
+  check('zdivo: čistý výpal při 730 °C', H.masonryLook(1003, 1).cleanBurn, 0.99, 1); check('zdivo: saze drží při 230 °C', H.masonryLook(503, 1).soot, 0.99, 1);
+  check('sympatetická detonace 1 m od 26 kg', SM.sympathetic(1, 26, { cased: true }).p, 1, 1); check('… 20 m od 26 kg', SM.sympathetic(20, 26, { cased: true }).p, 0, 0);
+  const mk = (seed) => { const sim = new SM.FireSim({ seed });
+    sim.addObject({ id: 'ohnisko', pos: [0, 0, 0], material: 'softwood', mass: 44, area: 7, size: 1.2, D: 1.1, ignited: true });
+    sim.addObject({ id: 'slama', pos: [2.7, 0, 0.2], material: 'straw', mass: 250, area: 9, size: 1.6, height: 0.5, probe: [-1.0, 0.5, 0] });
+    sim.addObject({ id: 'bedna', pos: [-0.25, 0, -1.5], material: 'softwood', mass: 9, area: 2.2, size: 0.6, probe: [0.05, 0.4, 0.32] });
+    sim.addObject({ id: 'pneu', pos: [-0.3, 0, 1.4], material: 'rubber', mass: 9, area: 1.2, size: 0.65, probe: [0.05, 0.3, -0.33], D: 0.65 });
+    sim.addObject({ id: 'daleko', pos: [-4.5, 0, 0.6], material: 'softwood', mass: 22, area: 3.5, size: 1.2, probe: [0.5, 0.2, 0] }); return sim; };
+  { const sim = mk(1), log = sim.run(1500), ig = (id) => log.find((e) => e.type === 'ignite' && e.id === id)?.t ?? 99999;
+    check('simulace bez grafiky: sláma chytne za', ig('slama'), 120, 240, 's'); check('… bedna za', ig('bedna'), 180, 360, 's'); check('… pneumatika po bedně', ig('pneu') - ig('bedna'), 1, 600, 's');
+    check('… paleta ve 4,5 m nechytne', ig('daleko') > 9999 ? 1 : 0, 1, 1); check('… dva běhy se stejným seedem dají stejný protokol', JSON.stringify(mk(1).run(1500)) === JSON.stringify(log) ? 1 : 0, 1, 1); }
+  { const sim = new SM.FireSim({ maxFires: 3 }); for (let i = 0; i < 10; i++) sim.addObject({ id: 's' + i, pos: [i * 0.5, 0, 0], material: 'straw', mass: 5, area: 2, size: 0.5, ignited: i === 0 }); let mx = 0; for (let t = 0; t < 60; t += 0.5) { sim.step(0.5); mx = Math.max(mx, sim.burningCount); } check('strop počtu ohňů (3) se dodrží', mx, 3, 3); }
+  { const sim = new SM.FireSim({}); sim.addObject({ id: 'p', pos: [0, 0, 0], material: 'softwood', mass: 44, area: 7, size: 1.2, ignited: true }); sim.addAgent({ agent: 'waterJet', rate: 3.3, target: 'p', from: 200, until: 260 }); const log = sim.run(900);
+    check('simulace: proud vody uhasí palety za', (log.find((e) => e.type === 'extinguished')?.t ?? 9999) - 200, 5, 60, 's'); check('… a zůstane uhašeno', sim.get('p').state === 'uhašeno' ? 1 : 0, 1, 1); }
+  { const sim = new SM.FireSim({ seed: 3 }); for (let i = 0; i < 6; i++) sim.addObject({ id: 'g' + i, pos: [i * 1.2, 0, 0], material: 'steelThick', explosive: { spec: { kind: 'he', mass: 26, cased: true }, cookT: 520 } });
+    sim.explode({ kind: 'he', mass: 26, cased: true }, [-1.2, 0, 0]); for (let i = 0; i < 300; i++) sim.step(0.001); const n = sim.log.filter((e) => e.type === 'explode').length;
+    check('řetěz 6 palet po 1,2 m: vybuchne vše', n, 7, 7); check('… za méně než', Math.max(...sim.log.filter((e) => e.type === 'explode').map((e) => e.t)) * 1000, 1, 120, 'ms');
+    const far = new SM.FireSim({ seed: 3 }); for (let i = 0; i < 3; i++) far.addObject({ id: 'g' + i, pos: [i * 25, 0, 0], material: 'steelThick', explosive: { spec: { kind: 'he', mass: 26, cased: true } } });
+    far.explode({ kind: 'he', mass: 26, cased: true }, [-25, 0, 0]); for (let i = 0; i < 300; i++) far.step(0.001); check('řetěz po 25 m se zastaví', far.log.filter((e) => e.type === 'explode').length, 1, 1); }
+}
+
 console.log(fail ? `\n${fail} CHYB` : '\nvše v mezích');
 process.exit(fail ? 1 : 0);

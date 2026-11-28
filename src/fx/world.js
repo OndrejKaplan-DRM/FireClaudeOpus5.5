@@ -35,6 +35,7 @@ export class FXWorld {
     this.time = 0; this.scnTime = 0; this.sources = []; this.explosions = []; this.decals = [];
     this.burnables = []; this.dtReal = 0; // hořlavé a ohřívané předměty (fx/burnable.js)
     this.sprays = []; this.pendingBlasts = []; this.delayed = []; this.events = []; this.blastRnd = mulberry32(4711); // hašení, řetěz výbuchů, protokol událostí
+    this.scnDt = 0; // krok scénářového času za poslední snímek (se zrychlením); před prvním snímkem 0, ne undefined
     this.audioEvents = []; // lupnutí pro zvuk (FireAudio je vybírá každý snímek; bez zvuku se drží max. 64)
     this.gustNoise = fbm1(77); this.o2 = 1; this.vent = C.ventilation(1);
     this.shake = 0; this.flameLum = FLAME_LUM; this.lumRef = 12000; // lumRef: původní klíč 16/expozice (výbuchy, jiskry, žhnutí) – vzhled sudu beze změny
@@ -178,7 +179,7 @@ export class FXWorld {
     for (const e of this.explosions) e.update(dt, this.time, e.wantsBall() && bi < this.balls.length ? this.balls[bi++] : null, camera);
     for (const e of this.explosions) if (e.dead) e.dispose();
     this.explosions = this.explosions.filter((e) => !e.dead);
-    for (const d of this.decals) d.update(dt);
+    { const T = this.env?.T, amb = T ? Math.min(1.2, (PRE.value * (T.hemi * 0.9 + (T.sun + T.moon) * 0.6)) / Math.PI) : 1; for (const d of this.decals) { d.update(dt); d.setLight?.(amb); } }
     // proudění od výbuchů (houbový mrak: vírový prstenec + nasávání u země) – přidá se k větru všech částic
     const flows = this.explosions.filter((e) => e.mf);
     a.extraUp = flows.length ? (x, y, z) => { const o = this._flowOut; o[0] = o[1] = o[2] = 0; for (const e of flows) e.flow(x, y, z, o); return o; } : null;

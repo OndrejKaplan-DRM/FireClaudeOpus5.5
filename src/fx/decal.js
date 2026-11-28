@@ -48,7 +48,7 @@ const WFS = /* glsl */`
 precision highp float; precision highp sampler3D;
 ${GLSL_COMMON}
 varying vec2 vUv; varying vec3 vW;
-uniform float uSoot, uClean, uSeed, uB0, uLf; uniform vec2 uSize, uFire;
+uniform float uSoot, uClean, uSeed, uB0, uLf; uniform vec2 uSize, uFire; uniform vec3 uLit;
 void main(){
   vec2 p = vUv * uSize - uFire;                       // metry od paty ohně na stěně (x do strany, y vzhůru)
   float n = fbm3(vec3(vW.xy * 0.9 + vW.z, uSeed)), n2 = fbm3(vec3(vW.xy * 4.0 + vW.z * 3.0, uSeed + 0.7));
@@ -66,7 +66,8 @@ void main(){
   cClean = mix(cClean, vec3(0.34, 0.22, 0.16) * (0.85 + 0.3 * n), sp);
   vec3 col = mix(cSoot, cClean, clean);
   float a = max(soot * (1.0 - clean), clean * (0.45 + 0.5 * sp));
-  gl_FragColor = vec4(col, a * 0.95);
+  // barva je odrazivost: násobí se osvětlením stěny (obloha + slunce po před-expozici, příspěvek ohně) – jinak by ve tmě svítila
+  gl_FragColor = vec4(col * uLit, a * 0.95);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`;
@@ -77,7 +78,7 @@ export class WallSoot {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: 'varying vec2 vUv; varying vec3 vW; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
       fragmentShader: WFS, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
-      uniforms: { ...sharedUniforms(), uSoot: { value: 0 }, uClean: { value: 0 }, uSeed: { value: seed * 0.17 }, uB0: { value: b0 }, uLf: { value: Lf }, uSize: { value: new THREE.Vector2(w, h) }, uFire: { value: new THREE.Vector2(fire[0], fire[1]) } },
+      uniforms: { ...sharedUniforms(), uSoot: { value: 0 }, uClean: { value: 0 }, uSeed: { value: seed * 0.17 }, uB0: { value: b0 }, uLf: { value: Lf }, uSize: { value: new THREE.Vector2(w, h) }, uFire: { value: new THREE.Vector2(fire[0], fire[1]) }, uLit: { value: new THREE.Vector3(1, 1, 1) } },
     });
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), this.mat);
     if (axis === 'x') this.mesh.rotation.y = sign > 0 ? Math.PI / 2 : -Math.PI / 2; else if (sign < 0) this.mesh.rotation.y = Math.PI;
@@ -85,6 +86,8 @@ export class WallSoot {
     scene.add(this.mesh);
   }
   get u() { return this.mat.uniforms; }
+  /** amb = jas bílé stěny z oblohy a slunce po před-expozici (0..1); fireLit = příspěvek ohně 0..1 (nastavuje scénář). */
+  setLight(amb) { const f = this.fireLit || 0; this.u.uLit.value.set(Math.min(1.2, amb + 0.9 * f), Math.min(1.2, amb + 0.45 * f), Math.min(1.2, amb + 0.18 * f)); }
   update() {}
   dispose() { this.scene.remove(this.mesh); this.mesh.geometry.dispose(); this.mat.dispose(); }
 }

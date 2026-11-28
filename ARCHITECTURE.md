@@ -37,6 +37,21 @@ Spark kreslí i hořící oharky (typ 2); jejich plamínek a kouřová stopa jdo
 - `src/fx/burnable.js` – `Burnable`: hořlavý nebo ohřívaný předmět. `FXWorld.addBurnable`, `heatFlux`, `smokeAt`, `fireList`.
 - `src/fx/char.js` – volba `metal: true` (stavy lakovaného plechu). `src/assets/props2.js` – rekvizity iterace 6.
 - `src/scenarios/iter6.js` – 6 scénářů; vkládají se do seznamu v `scenarios/index.js`. Scénář smí volat `ctx.setTimeScale`.
+
+## Iterace 7 (2026-11-28)
+- `src/physics/sim.js` – `ThermalBody` (stav jednoho předmětu: dávka, hoření, plech, sklo, tavení, zdivo, nálož, hašení),
+  `FireSim` (svět bez grafiky), `blastOn` (účinek výbuchu na předměty – sdílí ho simulace i `FXWorld.blast`), `sympathetic`.
+- `src/physics/gun.js` – `GUNS`, `muzzleSpec`, `stepBarrelTemp`. `src/physics/suppress.js` – `AGENTS`, `RULES`, `suppressStep`.
+- `src/physics/spec.js` – nové druhy (`jet` turbulentní, `line`, `room`, `metal`; `dust`, `vapor`, `pyro`, `film`), `layerTemp`.
+- `src/physics/heat.js` – `transmissivity`, `stepGlass`, `meltStep`, `masonryLook`.
+- `src/fx/burnable.js` – obal nad `ThermalBody` (vizuál, zvuk, události do `fx.events`).
+- `src/fx/world.js` – `blast()`, `addSpray()`, `addWallSoot()`, `events`, `pendingBlasts`/`delayed` (řetěz), `suppK` zdroje, `heatOn`.
+- `src/fx/gun.js` (`GunFX`), `src/fx/spray.js` (`Spray`), `src/fx/heatmap.js` (`HeatMap`), `src/fx/decal.js` (`WallSoot`, barva decalu).
+- `src/fx/particles.js` – typ částice 3 = pyrotechnická hvězdice (barva z palety solí, ne z teploty).
+- `src/assets/props3.js` – 13 modelů (zbraně, munice, místnost, okno, disk, láhev LPG, moždíře, termit, postava).
+- `src/scenarios/iter7.js` – 15 scénářů s polem `tiers` (tři cesty).
+- `src/main.js` – `fatal()` (hlášení při startu bez grafiky a při ztrátě kontextu), ovladače z odkazu (`?c.<id>=`), `?heat=1`.
+- `tools/test-layout.mjs`, `tools/test-nogl.mjs` – testy prostředí uživatele.
 - Nové volby zdroje: `volTongues` (0 = jedna obálka bez jazyků), `shapeK`, `volSoot`; `App.updateExposure` má denní strop jasu.
 
 ## Tok jednoho snímku

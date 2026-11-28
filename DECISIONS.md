@@ -350,3 +350,55 @@ hořlavé materiály. Oheň, který se šíří podle hořlavosti materiálu …
   Strop kreslicí plochy: nejvýš 4096 px na stranu a ~8,3 Mpx celkem (sníží se poměr bodů, ne funkčnost).
 - **Test**: `npm run test:nogl` (Chrome s `--disable-3d-apis`; ztráta a obnovení přes `WEBGL_lose_context`).
 - **Pravidlo**: úvodní obrazovka nesmí zůstat viset – každá výjimka při startu musí skončit hlášením pro člověka.
+
+### D-049 · 2026-11-28 · Jádro bez grafiky: `ThermalBody` a `FireSim` (physics/sim.js)
+- Stavový automat hořlavého a ohřívaného předmětu přesunut z `fx/burnable.js` do fyziky; `Burnable` ho jen obaluje
+  (zdroj plamene, dým, pára, uniformy). Jeden zdroj pravdy pro hru, test i simulaci bez obrazu.
+- `FireSim`: předměty, volné ohně, hasiva, výbuchy, strop počtu ohňů (`maxFires`), protokol událostí, determinismus ze seedu.
+- Ověření: scénář `chain` před a po shodný (sláma 2,9 min, bedna 4,3 min); simulace bez grafiky se stejným průměrem ohně
+  174 s a 254 s. Rozdíly do 3 % jsou z nově přidané propustnosti vzduchu.
+
+### D-050 · 2026-11-28 · Nové druhy popisu: tryska, pruh, místnost, kov; prach, páry, pyrotechnika, filmová láhev
+- `fireSpec`: `jet` turbulentní (Lowesmith), `line` (stopa, čelo), `room` (Thomas + MQH + Law), `metal` (termit, hořčík).
+- `explosionSpec`: `dust`, `vapor`, `pyro`, příznak `film` u `gasCylinder`.
+- Odpověď 3b: filmová varianta acetylenové lahve je ovladač scénáře; mění jen vzhled (koule ×1,55, doba ×1,7, benzín),
+  tlaková vlna a úlomky zůstávají fyzikální. Označeno „umělecké ★1“.
+- Křížová kontrola: Thomas (flashover 1,26 MW) a MQH (vrstva 528 °C při tomtéž výkonu) se shodují.
+
+### D-051 · 2026-11-28 · Výstřel jako druh ohně (physics/gun.js, fx/gun.js)
+- Jedna funkce `muzzleSpec` od pistole po houfnici; energetická bilance z tabulek nábojů (účinnost 26–42 %).
+- Délka a doba záblesku jsou vlastní proložení mezi dvěma body (pistole 12 cm / 1,5 ms; tank ~7 m / 35 ms) → ★2.
+- Záblesk ručních zbraní je kratší než snímek: kreslí se nejméně 1/20 s. Svítící střela letí ¼ rychlostí, aby stopa
+  nepřeskakovala mezi snímky. Obojí umělecké a v kódu tak popsané.
+
+### D-052 · 2026-11-28 · Hašení (odpověď 2c): pravidla hasivo × třída požáru
+- `physics/suppress.js`: 8 hasiv × 5 tříd; voda 2,6 MJ/kg, potřeba 0,5·Q/(η·L); pěna NFPA 11; prášek z hasicí schopnosti 183B.
+- Záporný účinek je součást pravidel (voda na benzín, hořčík, olej). Model potlačení s jednou časovou konstantou ★2.
+- `fx/spray.js`: viditelný proud, pára, pěnový koberec; působí na `Burnable` i na volné zdroje (`suppK`).
+
+### D-053 · 2026-11-28 · Následky na stavbě (odpověď 2b): sklo, tavení, zdivo
+- Sklo v čase (`stepGlass`), tavení kovů (`meltStep`, kus v plameni ohřívaný z obou stran), stopy na zdivu (`masonryLook`),
+  decal `WallSoot` (saze do V, čistý výpal, odprýskání). Saze na zdi mimo plamen se ve scénáři `aftermath` počítají jako
+  čas × výkon (kalibrace na fotky ★2), protože termoforéza v modelu vlečky dává mimo osu nulu.
+- Dvojnásobný příkon v plameni se **nepoužil** pro ocelové pláště (láhev, sud): jejich doby do roztržení jsou vyladěné na
+  starý model. Nekonzistence je vědomá a čeká na model pláště s obsahem.
+
+### D-054 · 2026-11-28 · Doladění vzhledu (odpovědi 2d a 4c)
+- Denní strop jasu plamene ×6,5 → ×10 (`App.dayFlameK = 9`, posuvník v UI). Měření: sud medián 0,58 / p90 0,70 / odstín 27°
+  (před 0,47 / 0,59 / 19°); fotky ve dne 0,32–0,47 / 0,58–0,80. Jsme v horní části rozsahu – na přání „přidat“.
+- Kouř liniových ohňů: osa vztlaku pod každou částicí místo ve středu zdroje → opona místo sloupů (scénář `leak`).
+- Menší stínění sazemi u hořícího pruhu (`volSoot` 0,3 → 0,12).
+
+### D-055 · 2026-11-28 · UI: hledání, tepelná mapa, postava, odkaz, události, tři cesty
+- Tepelná mapa (`fx/heatmap.js`): sálání 16 nejsilnějších ohňů ve výšce 1 m, sedm pásem podle účinku; bez kontaktu a vlečky.
+- Odkaz nese stupeň, vítr, dobu a hodnoty ovladačů (`?c.<id>=`); první načtení je ponechá.
+- Každý scénář iterace 7 má pole `tiers` (levná / střední / drahá cesta) zobrazené v záložce Technika.
+- Artefakt je od 28. 11. sdílený veřejně (nastavil Ondřej); zápis nové verze do veřejného artefaktu vyžaduje jeho výslovný
+  souhlas v dané sešně.
+
+### D-056 · 2026-11-28 · Kontrola NaN v kouřovém testu
+- Dvě tiché chyby iterace 7 (`jetFire` bez plamene, `aftermath` bez sazí při načtení jako první scénář) měly stejný
+  podpis: NaN v uniformě nebo v počtu částic, žádná výjimka, žádná hláška. `tools/test.mjs` proto po každém scénáři
+  prochází uniformy decalů, stav zdrojů a hořlavých předmětů a NaN hlásí jako chybu.
+- `FXWorld.scnDt` má výchozí hodnotu 0 (před prvním snímkem byla `undefined`).
+- Stopy na zdi (`WallSoot`) se násobí osvětlením (obloha, slunce, oheň); bez toho ve tmě svítily.

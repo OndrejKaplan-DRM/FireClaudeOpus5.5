@@ -2378,7 +2378,7 @@ var WFS = (
 precision highp float; precision highp sampler3D;
 ${GLSL_COMMON}
 varying vec2 vUv; varying vec3 vW;
-uniform float uSoot, uClean, uSeed, uB0, uLf; uniform vec2 uSize, uFire;
+uniform float uSoot, uClean, uSeed, uB0, uLf; uniform vec2 uSize, uFire; uniform vec3 uLit;
 void main(){
   vec2 p = vUv * uSize - uFire;                       // metry od paty ohn\u011B na st\u011Bn\u011B (x do strany, y vzh\u016Fru)
   float n = fbm3(vec3(vW.xy * 0.9 + vW.z, uSeed)), n2 = fbm3(vec3(vW.xy * 4.0 + vW.z * 3.0, uSeed + 0.7));
@@ -2396,7 +2396,8 @@ void main(){
   cClean = mix(cClean, vec3(0.34, 0.22, 0.16) * (0.85 + 0.3 * n), sp);
   vec3 col = mix(cSoot, cClean, clean);
   float a = max(soot * (1.0 - clean), clean * (0.45 + 0.5 * sp));
-  gl_FragColor = vec4(col, a * 0.95);
+  // barva je odrazivost: n\xE1sob\xED se osv\u011Btlen\xEDm st\u011Bny (obloha + slunce po p\u0159ed-expozici, p\u0159\xEDsp\u011Bvek ohn\u011B) \u2013 jinak by ve tm\u011B sv\xEDtila
+  gl_FragColor = vec4(col * uLit, a * 0.95);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`
@@ -2413,7 +2414,7 @@ var WallSoot = class {
       polygonOffset: true,
       polygonOffsetFactor: -2,
       polygonOffsetUnits: -2,
-      uniforms: { ...sharedUniforms(), uSoot: { value: 0 }, uClean: { value: 0 }, uSeed: { value: seed * 0.17 }, uB0: { value: b0 }, uLf: { value: Lf }, uSize: { value: new THREE9.Vector2(w, h2) }, uFire: { value: new THREE9.Vector2(fire[0], fire[1]) } }
+      uniforms: { ...sharedUniforms(), uSoot: { value: 0 }, uClean: { value: 0 }, uSeed: { value: seed * 0.17 }, uB0: { value: b0 }, uLf: { value: Lf }, uSize: { value: new THREE9.Vector2(w, h2) }, uFire: { value: new THREE9.Vector2(fire[0], fire[1]) }, uLit: { value: new THREE9.Vector3(1, 1, 1) } }
     });
     this.mesh = new THREE9.Mesh(new THREE9.PlaneGeometry(w, h2), this.mat);
     if (axis === "x") this.mesh.rotation.y = sign > 0 ? Math.PI / 2 : -Math.PI / 2;
@@ -2425,6 +2426,11 @@ var WallSoot = class {
   }
   get u() {
     return this.mat.uniforms;
+  }
+  /** amb = jas bílé stěny z oblohy a slunce po před-expozici (0..1); fireLit = příspěvek ohně 0..1 (nastavuje scénář). */
+  setLight(amb) {
+    const f = this.fireLit || 0;
+    this.u.uLit.value.set(Math.min(1.2, amb + 0.9 * f), Math.min(1.2, amb + 0.45 * f), Math.min(1.2, amb + 0.18 * f));
   }
   update() {
   }
@@ -4143,10 +4149,11 @@ var ThermalBody = class {
         if (this.glass.state !== g0) ev.push({ type: this.glass.state === "vypadl\xE9" ? "fallout" : "crack" });
         this.state = this.glass.state;
       } else if (Number.isFinite(m.rcd)) {
-        this.Ts = stepSheetTemp(this.Ts, env.q * ((this.o.engulfed ?? !!m.melt) && env.inFlame ? 2 : 1), dt, m);
+        const qEff = env.q * ((this.o.engulfed ?? !!m.melt) && env.inFlame ? 2 : 1);
+        this.Ts = stepSheetTemp(this.Ts, qEff, dt, m);
         if (m.melt) {
           const f0 = this.melt;
-          this.melt = meltStep(this.melt, this.Ts, env.q, dt, m);
+          this.melt = meltStep(this.melt, this.Ts, qEff, dt, m);
           if (this.melt > 0) this.Ts = Math.min(this.Ts, m.melt + 30 * this.melt);
           if (f0 === 0 && this.melt > 0) ev.push({ type: "melt" });
           if (f0 < 1 && this.melt >= 1) ev.push({ type: "melted" });
@@ -4617,6 +4624,7 @@ var FXWorld = class {
     this.delayed = [];
     this.events = [];
     this.blastRnd = mulberry32(4711);
+    this.scnDt = 0;
     this.audioEvents = [];
     this.gustNoise = fbm1(77);
     this.o2 = 1;
@@ -4881,7 +4889,13 @@ var FXWorld = class {
     for (const e of this.explosions) e.update(dt, this.time, e.wantsBall() && bi < this.balls.length ? this.balls[bi++] : null, camera);
     for (const e of this.explosions) if (e.dead) e.dispose();
     this.explosions = this.explosions.filter((e) => !e.dead);
-    for (const d of this.decals) d.update(dt);
+    {
+      const T = this.env?.T, amb = T ? Math.min(1.2, PRE.value * (T.hemi * 0.9 + (T.sun + T.moon) * 0.6) / Math.PI) : 1;
+      for (const d of this.decals) {
+        d.update(dt);
+        d.setLight?.(amb);
+      }
+    }
     const flows = this.explosions.filter((e) => e.mf);
     a.extraUp = flows.length ? (x, y, z) => {
       const o = this._flowOut;
@@ -9996,11 +10010,12 @@ var ITER7_AFTER = [
       return {
         update() {
           const ml = masonryLook(lo.Tmax, 1);
-          this.sootK = Math.min(1, (this.sootK || 0) + fx.scnDt * (core.src?.ph?.Q || 0) / 1e6 / 240);
+          this.sootK = Math.min(1, (this.sootK || 0) + (fx.scnDt || 0) * (core.src?.ph?.Q || 0) / 1e6 / 240);
           soot.u.uSoot.value = Math.max(soot.u.uSoot.value, this.sootK, hi.soot);
           soot.u.uClean.value = Math.max(soot.u.uClean.value, ml.cleanBurn);
           if (core.src?.ph) soot.u.uLf.value = Math.max(soot.u.uLf.value * 0.999, core.src.ph.L);
           gp.userData.setSoot(Math.min(0.6, gb.soot));
+          soot.fireLit = Math.min(0.35, (core.src?.ph?.Q || 0) / 4e6);
           wh.scale.y = Math.max(0.06, 1 - 0.94 * ab.melt);
           wh.scale.x = wh.scale.z = 1 + 0.15 * ab.melt;
           pud.scale.setScalar(Math.max(1e-3, 0.5 * Math.sqrt(ab.melt)));
@@ -10111,6 +10126,7 @@ var ITER7_AFTER = [
           soot.u.uSoot.value = Math.max(soot.u.uSoot.value, tFall != null ? Math.min(1, 0.25 * (t - tFall) / 120 + k) : 0);
           soot.u.uClean.value = Math.max(soot.u.uClean.value, k * 0.9);
           if (t >= rm.tFo) sofa.material.color.setRGB(0.05, 0.04, 0.035);
+          soot.fireLit = Math.min(0.5, (win.ph?.Q || 0) / 2e6);
         },
         info() {
           return [

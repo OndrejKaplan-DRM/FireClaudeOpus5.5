@@ -32,6 +32,12 @@ for (const [id, dur] of ids) {
     f.settle();
     const url = f.shot();
     const st = a.stats();
+    // NaN v uniformách a stavech (tichá chyba: plamen nebo stopa zmizí bez hlášky – jetFire a aftermath v iteraci 7)
+    const nan = [];
+    for (const d of a.fx.decals) for (const [k, u] of Object.entries(d.u)) if (typeof u.value === 'number' && Number.isNaN(u.value)) nan.push('decal.' + k);
+    for (const s of a.fx.sources) if (s.ph && [s.ph.Q, s.ph.L, s.demand.flame, s.demand.smoke].some((v) => Number.isNaN(v))) nan.push('source(' + s.o.fuel + ')');
+    for (const b of a.fx.burnables) for (const k of ['q', 'Ts', 'soot', 'heat', 'melt']) if (Number.isNaN(b[k])) nan.push('burnable.' + k);
+    if (nan.length) st.err = 'NaN: ' + [...new Set(nan)].join(', ');
     return { simMs, st, url, info: (a.run?.info?.() || []).slice(0, 6).map((r) => r[0] + ': ' + r[1]) };
   } catch (e) { return { simMs: 0, st: { exposure: 0, calls: 0, gpuTris: 0, flameSmoke: 0, sparks: 0, volumes: 0, err: 'EXC ' + e.message + ' ' + (e.stack || '').split('\n')[1] }, url: window.__fire.shot(), info: [] }; } }, [id, sec, seek]);
   if (res.st.err) errs.push('PAGEERROR ' + res.st.err);

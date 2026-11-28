@@ -117,8 +117,9 @@ export class ThermalBody {
         this.state = this.glass.state;
       } else if (Number.isFinite(m.rcd)) {
         // kus kovu celý v plameni je ohřívaný z obou stran (panel před ohněm jen z jedné) → dvojnásobný příkon ★3
-        this.Ts = stepSheetTemp(this.Ts, env.q * ((this.o.engulfed ?? !!m.melt) && env.inFlame ? 2 : 1), dt, m);
-        if (m.melt) { const f0 = this.melt; this.melt = meltStep(this.melt, this.Ts, env.q, dt, m); if (this.melt > 0) this.Ts = Math.min(this.Ts, m.melt + 30 * this.melt); if (f0 === 0 && this.melt > 0) ev.push({ type: 'melt' }); if (f0 < 1 && this.melt >= 1) ev.push({ type: 'melted' }); }
+        const qEff = env.q * ((this.o.engulfed ?? !!m.melt) && env.inFlame ? 2 : 1);
+        this.Ts = stepSheetTemp(this.Ts, qEff, dt, m);
+        if (m.melt) { const f0 = this.melt; this.melt = meltStep(this.melt, this.Ts, qEff, dt, m); if (this.melt > 0) this.Ts = Math.min(this.Ts, m.melt + 30 * this.melt); if (f0 === 0 && this.melt > 0) ev.push({ type: 'melt' }); if (f0 < 1 && this.melt >= 1) ev.push({ type: 'melted' }); }
       } else { const Te = wallEquilibrium(env.q); this.Ts += (Te - this.Ts) * (1 - Math.exp(-dt / (Te > this.Ts ? 240 : 900))); } // zdivo: povrch se blíží rovnováze pomalu
       this.Tmax = Math.max(this.Tmax, this.Ts);
       this.soot = Math.min(1, Math.max(0, this.soot + sootRate(env.tau || 0, env.Tg, this.Ts) * dt));

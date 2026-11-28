@@ -16,13 +16,23 @@ Hodnocení „dnes“ je **můj odhad** (Kristína, 2026-11-27, po iteraci 5) re
 4. **Ověření:** nový render vedle reference; testy (viz STRATEGIE §5); T0 nesmí ztratit cestu.
 5. **Zápis:** tento soubor (Stav), DECISIONS, TODO.
 
+## Stav po iteraci 7 (2026-11-28 v noci) a návrh iterace 8
+Iterace 7 přidala 15 scénářů a jádro bez grafiky; nic z ní nebylo viděno na skutečné grafické kartě. Návrh iterace 8
+(rozhoduje Ondřej, otázky jsou v odpovědi z 28. 11.):
+1. **Ověření místo rozsahu:** tři stroje (T0 notebook, T3 herní PC, co je po ruce), pět hrdinských scénářů dotáhnout vzhledově
+   (sud s naftou, výstřel z děla, místnost s oknem, hašení, řetěz vznícení).
+2. **Stavebnice scény:** klik na zem → předmět z materiálu a hmotnosti, zapálit, pustit; export a import JSON pro `FireSim`.
+3. **Vzhled podle rešerše:** vektory pohybu ve flipboocích (T0–T1), směrové osvětlení kouře (T1–T2).
+4. **Fyzika:** stínění překážkami (jeden paprsek na dvojici oheň–předmět), model pláště s obsahem, dvouvrstvý model místnosti.
+5. **Otevření:** balíček `firelab-physics` bez Three.js, typy, pět příkladů, anglický README.
+
 ## Stav po iteraci 6 (2026-11-27 večer)
 Hotovo z §4 a §5: zapálení mezi objekty (D-043), jeden popis ohně a obecný výbuch (D-041), hořlavý objekt jako komponenta
 (D-043), stavy plechu (D-042), paliva butan/acetylen/aceton/líh, denní jas plamene (D-039), barva kouře (D-040).
 Přibylo 6 scénářů (celkem 24) a 5 assetů (23). Obecný model je popsaný v `MODEL.md`, paleta 42 fotek v `REFERENCE.md`.
 Z tabulek níže se tím změnily řádky označené **O** (opraveno) nebo **V** (ověřeno snímkem); ostatní čekají.
 
-## 1. Scénáře a jejich průběh (24)
+## 1. Scénáře a jejich průběh (24 z iterací 1–6; 15 nových viz `ANALYZA_2026-11-28.md` §D)
 | Scénář | Dnes | Hlavní rozdíly proti realitě | Průběh k ověření (literatura) | Stav |
 |---|---|---|---|---|
 | spark (bruska) | ★3 | jiskry oceli se nevětví („hvězdičky“ uhlíku), chybí rozžhavený kov v místě řezu, odrazy od podlahy | barva podle slitiny, délka stop | — |

@@ -168,3 +168,54 @@ PFC Gary Silverman/Photog | Public domain | [odkaz](https://commons.wikimedia.or
 | Vyhořelý plech: krémový popílek, rez, černé lemy u otvorů | `applyChar({ metal: true })`: stavy podle nejvyšší teploty, barvy z fotek | teploty ★3, rozložení ★2 |
 | Jiskry zapalovače: krátké tenké stopy, větvení | částice 100–260 µm, silný odpor vzduchu, rozprsk na konci | ★3 |
 | Acetylen na vzduchu: oslnivá žlutá a černé saze | palivo `acetylene` (výtěžek sazí 0,096), koule T 1 800 K, saze 0,9 | ★3–4 |
+
+
+# Paleta iterace 7 – 26 fotografií (2026-11-28)
+
+Zadání: dalších 20 obrázků (požár domu, lesa, auta, výbuchy ve válečných zónách, filmy). Vybráno 26 z 101 stažených kandidátů
+(Wikimedia Commons, jen volné licence). Fotky se necommitují; manifest s autory, licencemi a odkazy: `dataset/reference/palette7.json`.
+**Filmové záběry jsem nepoužila** – jsou chráněné autorským právem; náhradou je jevištní pyrotechnika a vojenská cvičení.
+
+| # | Skupina | Co je na snímku | Autor | Licence | Jas plamene (medián / p90) | Odstín [°] |
+|---|---|---|---|---|---|---|
+| q01 | dům | noční požár domu, hasiči | Pacific Southwest Forest Ser | Public domain | 0.36 / 0.58 | 17.6 |
+| q02 | dům | požár domu ve dne, černý kouř | Panamitsu | CC BY-SA 4.0 | 0.47 / 0.8 | 28.8 |
+| q03 | les | vzplanutí koruny | United States. Forest Servic | No restrictions | 0.44 / 0.62 | 33.9 |
+| q04 | les | stěna plamenů | U.S. Department of Agricultu | Public domain | 0.32 / 0.67 | 9.1 |
+| q05 | les | noční záře za hřebenem | U.S. Forest Service | Public domain | 0.48 / 0.65 | 18.8 |
+| q06 | ulice | hořící barikáda, černý kouř | C4crystal | CC BY-SA 3.0 | 0.36 / 0.73 | 12.7 |
+| q07 | výstřel | tank – koule u ústí | Israel Defense Forces | CC BY-SA 2.0 | 0.7 / 0.9 | 38.8 |
+| q08 | výstřel | tank – záblesk a prach | Alex C. Sauceda, U.S. Marine | Public domain | 0.56 / 0.75 | 24.6 |
+| q09 | výstřel | tank – protáhlý plamen | Jason D. Mills, U.S. Marine  | Public domain | 0.67 / 0.78 | 29.7 |
+| q10 | výstřel | tank – ohnivá koule a zvířený prach | U.S. Department of Defense C | Public domain | 0.61 / 0.77 | 13.4 |
+| q11 | výstřel | automatický kanón | locotenent-colonel Dragoş An | CC BY-SA 3.0 | 0.78 / 0.9 | 39.8 |
+| q12 | výstřel | houfnice – žlutý plamen a prach | Sergeant Earnest J. Barnes | Public domain | 0.45 / 0.65 | 29.0 |
+| q13 | výstřel | zpětný plamen pancéřovky |  | Public domain | 0.92 / 0.96 | 57.7 |
+| q14 | výbuch | ohnivá koule se sprškou jisker | Staff Sgt. Patrick Dixon | Public domain | 0.7 / 0.91 | 38.5 |
+| q15 | výbuch | koule přecházející v hřib | U.S. Navy photo by Photograp | Public domain | 0.5 / 0.74 | 21.2 |
+| q16 | výbuch | malá nálož, prach | U.S. Navy photo by Photograp | Public domain | 0.56 / 0.92 | 20.3 |
+| q17 | výbuch | sloupy kouře po dopadech | Sgt. Steven R. Cushman | Public domain | – / – | – |
+| q18 | zápalné | zapálená láhev | Ministerie van Defensie | CC BY-SA 4.0 | 0.46 / 0.73 | 26.2 |
+| q19 | tryska | pyrotechnický plamen (jevištní efekt) | User:Zafer | CC BY-SA 4.0 | 0.44 / 0.93 | 23.7 |
+| q20 | tryska | fléra ve dne | Joshua Doubek | CC BY-SA 3.0 | 0.62 / 0.83 | 32.7 |
+| q21 | hašení | hasiči s proudem před ohněm | Manuel F. Guerrero, U.S. Mar | Public domain | 0.27 / 0.45 | 6.1 |
+| q22 | pyrotechnika | barevné květy | Jalfyn Benging | CC BY 4.0 | 0.29 / 0.5 | 0.0 |
+| q23 | kovy | hořící hořčík | Capt. John Yossarian | CC BY-SA 3.0 | 0.58 / 0.81 | 29.1 |
+| q24 | kovy | termit – sprška jisker | User:Nikthestunned (Wikipedi | CC BY-SA 3.0 | 0.45 / 0.79 | 21.5 |
+| q25 | škody | vyhořelý interiér | Niera | CC BY-SA 3.0 | – / – | – |
+| q26 | vír | ohnivý vír | Bureau of Land Management | Public domain | 0.51 / 0.68 | 34.7 |
+
+## Co jsem z palety změřila a k čemu to vedlo
+
+- **Záblesky tankových kanónů ve dne** (5 fotek): medián jasu 0,56–0,78, p90 0,75–0,90, odstín 13–40°. Jsou jasnější a žlutější
+  než běžný plamen ve dne (0,36–0,47). → záblesk má vlastní teplotu 2 100 K a násobek jasu 1,6; délka na fotkách odpovídá
+  řádu 5–10 m u ráže 105–125 mm (kalibrační bod proložení).
+- **Ohnivé koule výbuchů ve dne** (3): medián 0,50–0,70, p90 0,74–0,92.
+- **Denní plameny požárů** (dům, les, ulice): medián 0,32–0,47, p90 0,58–0,80, odstín 9–34°. Render sudu po úpravě stropu:
+  0,58 / 0,70, odstín 27° – v horní části rozsahu (tvoje volba 4c „přidat“); hořící pruh 0,33 / 0,51, odstín 11° – u spodního okraje.
+- **Zvířený prach** u výstřelu (tank, houfnice): prachový oblak 1,5–3× delší než plamen, barva půdy. → `dustR = 25·W^⅓`.
+- **Zpětný plamen pancéřovky**: nejjasnější ze všech (p90 0,96, odstín 58° – skoro bílý). Scénář zatím chybí.
+- **Termit a hořčík**: sprška jisker do 1–2 m, bílé jádro; hořčík 583× jasnější než okolí (noc).
+- **Vyhořelý interiér**: saze nahoře, čistší stěny dole, zuhelnatělé dřevo – předloha pro `WallSoot` a `masonryLook`.
+- **Ohnivý vír**: úzký sloup několikanásobně vyšší než plameny okolo; měřit výšku z jedné fotky nejde (chybí měřítko).
+- **Sloupy kouře po dopadech**: tmavě šedé až hnědé, žádný plamen – výbuch trhaviny v zemi je hlavně prach.

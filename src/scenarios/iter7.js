@@ -379,9 +379,10 @@ export const ITER7_AFTER = [
       return {
         update() {
           // saze na stěně mimo plamen: úměrné času × výkonu (stěna vedle ohně zčerná za minuty) – kalibrace na fotky ★2
-          const ml = masonryLook(lo.Tmax, 1); this.sootK = Math.min(1, (this.sootK || 0) + (fx.scnDt * (core.src?.ph?.Q || 0)) / 1e6 / 240); soot.u.uSoot.value = Math.max(soot.u.uSoot.value, this.sootK, hi.soot); soot.u.uClean.value = Math.max(soot.u.uClean.value, ml.cleanBurn);
+          const ml = masonryLook(lo.Tmax, 1); this.sootK = Math.min(1, (this.sootK || 0) + ((fx.scnDt || 0) * (core.src?.ph?.Q || 0)) / 1e6 / 240); soot.u.uSoot.value = Math.max(soot.u.uSoot.value, this.sootK, hi.soot); soot.u.uClean.value = Math.max(soot.u.uClean.value, ml.cleanBurn);
           if (core.src?.ph) soot.u.uLf.value = Math.max(soot.u.uLf.value * 0.999, core.src.ph.L);
           gp.userData.setSoot(Math.min(0.6, gb.soot));
+          soot.fireLit = Math.min(0.35, (core.src?.ph?.Q || 0) / 4e6);
           wh.scale.y = Math.max(0.06, 1 - 0.94 * ab.melt); wh.scale.x = wh.scale.z = 1 + 0.15 * ab.melt; pud.scale.setScalar(Math.max(0.001, 0.5 * Math.sqrt(ab.melt)));
           const gl = Math.max(0, Math.min(1, (ab.Ts - 800) / 200)); pud.userData.mat.emissive.setRGB(0.9 * gl, 0.25 * gl, 0.05 * gl); wh.userData.mat.color.setRGB(0.79 - 0.5 * ab.soot, 0.8 - 0.5 * ab.soot, 0.82 - 0.5 * ab.soot);
           for (let i = 1; i < 3; i++) { const u = pal[i].userData.char, u0 = pal[0].userData.char; u.uChar.value = u0.uChar.value; u.uGlow.value = u0.uGlow.value; }
@@ -434,6 +435,7 @@ export const ITER7_AFTER = [
           const k = t < rm.tFo ? 0 : Math.min(1, (t - rm.tFo) / 240);
           soot.u.uSoot.value = Math.max(soot.u.uSoot.value, tFall != null ? Math.min(1, 0.25 * (t - tFall) / 120 + k) : 0); soot.u.uClean.value = Math.max(soot.u.uClean.value, k * 0.9);
           if (t >= rm.tFo) sofa.material.color.setRGB(0.05, 0.04, 0.035);
+          soot.fireLit = Math.min(0.5, (win.ph?.Q || 0) / 2e6);   // fasádu nad oknem osvětlují plameny z okna
         },
         info() {
           return [...sp.rows, ['Výkon teď', fmtW(this.Q || 0), 'růst t² „fast“ ★3'], ['Horká vrstva pod stropem', degC(this.Tl || 293), 'MQH 1981 ★4'],

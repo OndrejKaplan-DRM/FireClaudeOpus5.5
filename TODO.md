@@ -1,6 +1,27 @@
 # TODO — co se právě dělá
 
-Stav k 2026-11-27 pozdě večer: **iterace 6 hotová** (vše zaškrtnuté je v `main` a v artefaktu FireLab). Iterace 1 viz git historie.
+Stav k 2026-11-28 v noci: **iterace 7 hotová v `main`**; do artefaktu se čeká na Ondřejův souhlas (artefakt je veřejný). Iterace 1 viz git historie.
+
+## Hotovo (iterace 7 – jádro bez grafiky, zbraně, hašení, následky; Ondřej 2026-11-28 19:46)
+- [x] Nezávislá kritika iterace 6 (15 nálezů, 11 opraveno) a dvakrát aliasy: `ANALYZA_2026-11-28.md`.
+- [x] Jádro bez grafiky `physics/sim.js` (`ThermalBody`, `FireSim`), strop počtu ohňů, protokol událostí. D-049.
+- [x] Nové druhy `fireSpec` (tryska turbulentní, pruh, místnost, kov) a `explosionSpec` (prach, páry, pyrotechnika, film). D-050.
+- [x] Výstřely `physics/gun.js` + `fx/gun.js` (7 zbraní jednou funkcí). D-051.
+- [x] Hašení `physics/suppress.js` + `fx/spray.js` (hasivo × třída). D-052.
+- [x] Sklo, tavení, zdivo, `WallSoot`. D-053. Denní jas, kouřová opona. D-054.
+- [x] 15 scénářů (`scenarios/iter7.js`) s levnou, střední a drahou cestou; 13 modelů (`assets/props3.js`). Celkem 39 scénářů, 36 modelů.
+- [x] UI: hledání, tepelná mapa, postava, odkaz, události, tři cesty, denní jas. D-055.
+- [x] Paleta 26 nových fotek (`dataset/reference/palette7.json`, `REFERENCE.md`), rešerše her a enginů (`RESERSE_HRY.md`).
+- [x] Start bez WebGL a ztráta kontextu (D-048), test `test:nogl`; 116 fyzikálních kontrol.
+
+## Otevřené po iteraci 7
+- [ ] **Vydat do artefaktu** – čeká na souhlas (artefakt je veřejný).
+- [ ] Ověřit na skutečné grafické kartě (T2–T5) a poslechnout zvuk výstřelů – z mé strany nejde.
+- [ ] Jeden model ocelového pláště s obsahem (láhev, sud, granát) místo vyladěných konstant.
+- [ ] Staré scénáře (auto, dům, stoh, les) převést na `fireSpec` + `Burnable` (bod 2a, zatím nevybrán).
+- [ ] Vektory pohybu ve flipboocích a směrové osvětlení kouře (poučení z rešerše).
+- [ ] Stavebnice scény v UI + export/import JSON pro `FireSim`.
+- [ ] Vzhled: kapalinové ohně na T0 (řada koulí), záblesk tvarovaný úsťovou brzdou, vír se skutečným stočením plamene.
 
 ## Hotovo (oprava 2026-11-28)
 - [x] Okno se při zvětšení stránky donekonečna rozšiřovalo (plátno časové osy řídilo šířku). D-047, `npm run test:layout`.
