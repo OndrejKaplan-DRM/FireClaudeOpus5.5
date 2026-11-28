@@ -73,3 +73,14 @@ body.noui #app{grid-template-columns:0 1fr 0;grid-template-rows:0 1fr 0}
   #left .it{padding:6px 8px;font-size:12px}#left h4{margin:10px 8px 4px}
   #bottom .tc{min-width:92px}
 }
+
+#left .find{width:calc(100% - 16px);margin:8px;padding:6px 8px;background:var(--pn2);border:1px solid var(--ln);border-radius:6px;min-width:0}
+#pane h5{margin:14px 0 4px;font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.legend{display:grid;gap:3px;font-size:12px}.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}.legend b{font-family:var(--mono);font-weight:500;display:inline-block;min-width:58px}
+.btn.on{background:var(--ac);color:#111}
+#loader.fatal{opacity:1;pointer-events:auto;align-items:center;justify-content:center;padding:16px;overflow:auto}
+#loader.fatal .box{max-width:620px;background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:18px 22px;line-height:1.5}
+#loader.fatal h3{margin:0 0 8px;color:var(--ac2);font-size:17px}#loader.fatal ol{padding-left:20px;margin:10px 0}#loader.fatal li{margin:4px 0}
+#loader.fatal button{background:var(--ac);color:#111;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600}
+#loader.fatal pre{white-space:pre-wrap;overflow-wrap:anywhere;font:11px var(--mono);color:var(--mut);margin:12px 0 0}
+#loader.fatal code{font-family:var(--mono);background:var(--pn2);padding:1px 4px;border-radius:3px}

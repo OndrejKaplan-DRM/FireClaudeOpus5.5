@@ -7,6 +7,7 @@ import { FireLights } from './lights.js';
 import { bakeAtlas } from './bake.js';
 import { Debris } from './debris.js';
 import { Scorch } from './decal.js';
+import { HeatMap } from './heatmap.js';
 import { FUELS } from '../physics/fuels.js';
 import * as C from '../physics/combustion.js';
 import { flameTilt, WIND_CLASSES } from '../physics/wind.js';
@@ -21,6 +22,10 @@ const gauss = (r) => Math.sqrt(-2 * Math.log(Math.max(r(), 1e-9))) * Math.cos(6.
 
 import { Burnable } from './burnable.js';
 import { fluxFromFire } from '../physics/heat.js';
+import { explosionSpec } from '../physics/spec.js';
+import { blastOn } from '../physics/sim.js';
+import { Spray } from './spray.js';
+import { WallSoot } from './decal.js';
 export const FLAME_LUM = 20000; // jas plamene [cd/m²] při 1500 K a ε = 1 (po vizuální kompresi teploty) – viz DECISIONS D-010
 
 export class FXWorld {
@@ -29,6 +34,7 @@ export class FXWorld {
     this.air = new AirField();
     this.time = 0; this.scnTime = 0; this.sources = []; this.explosions = []; this.decals = [];
     this.burnables = []; this.dtReal = 0; // hořlavé a ohřívané předměty (fx/burnable.js)
+    this.sprays = []; this.pendingBlasts = []; this.delayed = []; this.events = []; this.blastRnd = mulberry32(4711); // hašení, řetěz výbuchů, protokol událostí
     this.audioEvents = []; // lupnutí pro zvuk (FireAudio je vybírá každý snímek; bez zvuku se drží max. 64)
     this.gustNoise = fbm1(77); this.o2 = 1; this.vent = C.ventilation(1);
     this.shake = 0; this.flameLum = FLAME_LUM; this.lumRef = 12000; // lumRef: původní klíč 16/expozice (výbuchy, jiskry, žhnutí) – vzhled sudu beze změny
@@ -74,7 +80,7 @@ export class FXWorld {
   clear() {
     for (const s of this.sources) s.dispose?.();
     for (const e of this.explosions) e.dispose?.();
-    this.sources = []; this.explosions = []; this.burnables = [];
+    this.sources = []; this.explosions = []; this.burnables = []; this.sprays = []; this.pendingBlasts = []; this.delayed = []; this.events = []; this.blastRnd = mulberry32(4711);
     this.bb.clear(); this.sp.clear(); this.hz?.clear(); this.debris.clear();
     for (const d of this.decals) d.dispose(); this.decals = [];
     this.vols.forEach((v) => (v.mesh.visible = false)); this.balls.forEach((v) => (v.mesh.visible = false)); this.svols?.forEach((v) => (v.mesh.visible = false));
@@ -85,6 +91,25 @@ export class FXWorld {
   addScorch(opts) { const d = new Scorch(this.scene, opts); this.decals.push(d); return d; }
   /** Hořlavý nebo ohřívaný předmět (vznícení tepelným tokem, vlastní hoření, ohoření, saze na plechu). */
   addBurnable(opts) { const b = new Burnable(this, opts); this.burnables.push(b); return b; }
+  /** Proud hasiva: { agent, rate [kg/s], from: Vector3, to: Vector3, radius [m] } – kapky, pára a účinek na ohně v dosahu. */
+  addSpray(opts) { const sp = new Spray(this, opts); this.sprays.push(sp); return sp; }
+  /** Stopy ohně na svislé stěně (saze do V, čistý výpal, odprýskaná omítka). */
+  addWallSoot(opts) { const d = new WallSoot(this.scene, opts); this.decals.push(d); return d; }
+  /**
+   * Výbuch z popisu (explosionSpec nebo jeho vstup) v místě pos: efekt + účinek na hořlavé předměty (okna, řetěz náloží,
+   * pohlcení ohnivou koulí). src = Burnable, který vybuchl (zmizí ze světa ohně). Vrací popis výbuchu.
+   */
+  blast(spec, pos, { src = null, cause = 'ručně', seed = 17, cased = !!spec.cased, visual = true } = {}) {
+    const es = spec.ex !== undefined ? spec : explosionSpec(spec), P = pos.isVector3 ? pos : new THREE.Vector3(...pos);
+    if (src) { src.body.state = 'burnt'; src.body.exploded = true; if (src.src) src.src.enabled = false; }
+    if (visual && es.ex) { this.addExplosion({ pos: P.clone().setY(P.y + (es.dy ?? 0.3)), seed, ...es.ex }); for (const f of es.fires || []) this.addSource({ pos: new THREE.Vector3(P.x, 0.01, P.z), seed: seed + 1, volume: true, ...f }); }
+    const r = blastOn(this.burnables.map((b) => { b.body.host = b; return b.body; }), es, [P.x, P.y, P.z], { cased, rnd: this.blastRnd, src: src?.body, t: this.scnTime });
+    for (const e of r.events) { const b = e.body.host; if (e.type === 'extinguished' && b.src) b.src.enabled = false; if (e.type === 'ignite' || e.type === 'reignite') { b.startFire(); b.o.onIgnite?.(b); } b.o.onEvent?.(e.type, b, e); this.events.push({ t: this.scnTime, type: e.type, label: b.label, cause: e.cause }); }
+    for (const p of r.pending) this.delayed.push({ t: this.scnTime + p.delay, b: p.body.host, cause: p.cause });
+    this.events.push({ t: this.scnTime, type: 'explode', label: src?.label ?? 'výbuch', cause, W: es.W });
+    src?.o.onEvent?.('exploded', src, { cause, es });
+    return es;
+  }
   /** Popis hořících zdrojů pro výpočet tepelného toku (physics/heat.js). */
   fireList(skip = null) {
     const out = [], cw = Math.cos(this.air.dir), sw = Math.sin(this.air.dir);
@@ -141,7 +166,13 @@ export class FXWorld {
     }
     for (const s of this.sources) s.update(dt, this.time);
     this.sources = this.sources.filter((s) => !s.dead);
-    this.dtReal = dt; for (const b of this.burnables) b.update();
+    this.dtReal = dt; this.scnDt = Math.max(0, this.scnTime - (this._lastScn ?? this.scnTime)); this._lastScn = this.scnTime;
+    if (this.heatOn) { if (!this.heatmap) this.heatmap = new HeatMap(this.scene); this.heatmap.mesh.visible = true; this.heatmap.update(this.fireList()); } else if (this.heatmap) this.heatmap.mesh.visible = false;
+    for (const sp of this.sprays) sp.update(dt);
+    for (const b of this.burnables) b.update();
+    // výbuchy vyvolané teplem (nálože a nádoby) a odložené sympatetické detonace
+    if (this.pendingBlasts.length) { const pb = this.pendingBlasts.splice(0); for (const x of pb) { if (x.b.o.onExplode) x.b.o.onExplode(x.b, x.spec, x.cause); else this.blast(x.spec, x.b.pos, { src: x.b, cause: x.cause, seed: 17 + this.events.length }); } }
+    for (let i = this.delayed.length - 1; i >= 0; i--) if (this.delayed[i].t <= this.scnTime) { const x = this.delayed.splice(i, 1)[0]; if (x.b.o.onExplode) x.b.o.onExplode(x.b, x.b.body.ex.spec, x.cause); else this.blast(x.b.body.ex.spec, x.b.pos, { src: x.b, cause: x.cause, seed: 31 + this.events.length }); }
     let bi = 0;
     this.balls.forEach((v) => (v.mesh.visible = false));
     for (const e of this.explosions) e.update(dt, this.time, e.wantsBall() && bi < this.balls.length ? this.balls[bi++] : null, camera);
@@ -204,7 +235,7 @@ export class FireSource {
   /** Fyzikální stav v čase t (lokální čas zdroje) */
   physics(t) {
     const f = this.fuel, D = this.D, vent = this.o.ventLocal != null ? C.ventilation(this.o.ventLocal) : this.w.vent;
-    const Q = Math.max(0, this.Qat(t)) * vent.chi;
+    const Q = Math.max(0, this.Qat(t)) * vent.chi * (this.suppK ?? 1);
     const Lb = this.o.L ? this.o.L(Q) : C.flameHeight(Q, D);
     const L = Lb * (1 + 0.35 * vent.lift);
     const U = this.w.air.windAt(Math.max(L * 0.5, 0.05) + this.pos.y);
@@ -392,6 +423,7 @@ export class FireSource {
       this.acc.smoke += (nS * w.budgetScale.smoke * dt) / smokeLife;
       const zs = this.pos.y + L * (0.75 + 0.3 * r());
       const b = Math.max(ph.b, D * 0.35, 0.02);
+      const fpr = this.o.footprint, lineK = fpr && fpr.type === 'rect' && Math.max(fpr.w, fpr.d) > 1.6 * Math.min(fpr.w, fpr.d) ? 0.8 : 0;
       while (this.acc.smoke >= 1) {
         this.acc.smoke -= 1;
         const [x, , z] = this.footprintPoint();
@@ -403,7 +435,8 @@ export class FireSource {
         w.bb.spawnSmoke({
           x: x + lean * L * cw * k + push[0] * 0.3, y: zs, z: z + lean * L * sw * k + push[2] * 0.3, vx: push[0] * 0.5, vy: Math.max(1, L * ph.fp * 0.5), vz: push[2] * 0.5,
           life: smokeLife * (0.7 + 0.6 * r()), s0: s0s, s1: s0s * (4 + 4 * r()) + smokeLife * 0.15, tau: tau0,
-          albedo: ph.smoke.rgb, ox: this.pos.x, oz: this.pos.z, pq: ph.Qc, pz0: this.pos.y + ph.z0, drag: 0.5, seed: r(), R0: D / 2,
+          // pruh (liniový oheň): osa vztlaku leží pod částicí, ne ve středu zdroje → souvislá kouřová opona místo sloupů
+          albedo: ph.smoke.rgb, ox: this.pos.x + (x - this.pos.x) * lineK, oz: this.pos.z + (z - this.pos.z) * lineK, pq: ph.Qc * (1 - 0.5 * lineK), pz0: this.pos.y + ph.z0, drag: 0.5, seed: r(), R0: D / 2,
           glowing: ph.vent.lift > 0.5 && r() < 0.3,
         });
       }

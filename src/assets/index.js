@@ -3,6 +3,7 @@ import * as P from './props.js';
 import * as B from './big.js';
 import * as V from './vegetation.js';
 import * as P2 from './props2.js';
+import * as P3 from './props3.js';
 
 export const ASSETS = [
   { id: 'candle', name: 'Svíčka v mosazném svícnu', build: P.candle, size: 0.14, cat: 'rekvizity' },
@@ -28,5 +29,19 @@ export const ASSETS = [
   { id: 'crate', name: 'Dřevěná bedna 0,6 m', build: P2.crate, size: 0.8, cat: 'rekvizity' },
   { id: 'pine', name: 'Borovice 14 m', build: V.pine, size: 15, cat: 'vegetace' },
   { id: 'bush', name: 'Suchý keř', build: V.bush, size: 1.6, cat: 'vegetace' },
+  // iterace 7
+  { id: 'pistol', name: 'Pistole 9 mm ve stolici', build: P3.pistol, size: 0.35, cat: 'zbraně' },
+  { id: 'machineGun', name: 'Kulomet 7,62 mm na trojnožce', build: P3.machineGun, size: 1.5, cat: 'zbraně' },
+  { id: 'fieldGun', name: 'Kanón 125 mm na lafetě', build: P3.fieldGun, size: 8, cat: 'zbraně' },
+  { id: 'shellStack', name: 'Paleta dělostřeleckých granátů', build: P3.shellStack, size: 1.2, cat: 'výbušniny' },
+  { id: 'molotov', name: 'Zápalná láhev', build: P3.molotov, size: 0.4, cat: 'zbraně' },
+  { id: 'flamethrower', name: 'Plamenomet na stojanu', build: P3.flamethrower, size: 1.6, cat: 'zbraně' },
+  { id: 'nozzle', name: 'Hasičská proudnice s hadicí', build: P3.nozzle, size: 2.4, cat: 'hašení' },
+  { id: 'room', name: 'Místnost s oknem', build: P3.room, size: 5.5, cat: 'velké' },
+  { id: 'aluWheel', name: 'Litý hliníkový disk', build: P3.aluWheel, size: 0.5, cat: 'rekvizity' },
+  { id: 'propaneCylinder', name: 'Láhev propan-butanu s hořákem', build: P3.propaneCylinder, size: 1.5, cat: 'výbušniny' },
+  { id: 'mortarRack', name: 'Odpalovací trubky (ohňostroj)', build: P3.mortarRack, size: 0.9, cat: 'výbušniny' },
+  { id: 'thermitePot', name: 'Květináč s termitem', build: P3.thermitePot, size: 0.8, cat: 'rekvizity' },
+  { id: 'figure', name: 'Postava 1,8 m (měřítko)', build: P3.figure, size: 1.9, cat: 'rekvizity' },
 ];
 export const assetById = (id) => ASSETS.find((a) => a.id === id);

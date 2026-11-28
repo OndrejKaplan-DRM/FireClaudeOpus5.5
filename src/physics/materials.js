@@ -76,15 +76,37 @@ export const MATERIALS = {
   },
   aluminium: {
     name: 'Hliník (disky kol, blok motoru)', fuel: null, mode: 'inert', Tig: Infinity, qCrit: Infinity,
-    rcd: 2700 * 900 * 0.004, melt: 933, cool: 200, look: 'metal', residue: 'ztuhlé stříbrné louže a kapky', conf: 5,
+    rcd: 2700 * 900 * 0.004, cp: 900, melt: 933, latent: 397e3, cool: 200, look: 'metal', residue: 'ztuhlé stříbrné louže a kapky', conf: 5,
   },
   glass: {
     name: 'Okenní sklo 4 mm', fuel: null, mode: 'inert', Tig: Infinity, qCrit: Infinity,
-    crackQ: 5e3, falloutQ: 20e3, look: 'glass', residue: 'popraskané, vypadlé, střepy; nad 700 °C měkne', conf: 2,
+    rcd: 2500 * 840 * 0.004, crackDT: 70, crackQ: 5e3, falloutQ: 20e3, falloutT: 630, soften: 973, look: 'glass', residue: 'popraskané, vypadlé, střepy; nad 700 °C měkne', conf: 2,
   },
   masonry: {
     name: 'Zdivo, beton, omítka', fuel: null, mode: 'inert', Tig: Infinity, qCrit: Infinity,
-    rcd: Infinity, look: 'mineral', residue: 'saze nad otvory, „čistý výpal“ u ohniska, odprýskaná omítka', conf: 3,
+    rcd: Infinity, spall: 573, cleanBurn: 700, look: 'mineral', residue: 'saze nad otvory, „čistý výpal“ u ohniska, odprýskaná omítka', conf: 3,
+  },
+  // --- doplněno v iteraci 7
+  magnesium: {
+    // třísky a tenké odlitky; masivní kus teplo odvede a nechytne (k = 156 W/mK). Zapálí se až kolem bodu tání 650 °C. ★3
+    name: 'Hořčík (třísky, tenký odlitek)', fuel: 'magnesium', mode: 'thin', Tig: 900, qCrit: 30e3, rcd: 1740 * 1020 * 0.0005,
+    hrrpua: 700e3, spread: 0.01, burnFrac: 1, cool: 20, look: 'metal', residue: 'bílý kyprý oxid hořečnatý', conf: 3,
+  },
+  cardboardBox: {
+    name: 'Kartonová krabice s obsahem', fuel: 'woodDry', mode: 'thin', Tig: 533, qCrit: 10e3, rcd: 700 * 1340 * 0.003,
+    hrrpua: 220e3, spread: 0.006, burnFrac: 0.9, cool: 25, look: 'fluff', residue: 'zborcená černá hromádka, popel', conf: 3,
+  },
+  curtain: {
+    name: 'Záclona, závěs', fuel: 'woodDry', mode: 'thin', Tig: 560, qCrit: 9e3, rcd: 250 * 1300 * 0.0004,
+    hrrpua: 180e3, spread: 0.03, burnFrac: 0.95, cool: 6, look: 'fluff', residue: 'cáry a hořící kapky (syntetika)', conf: 2,
+  },
+  leadSolder: {
+    name: 'Olovo, pájka, zinkové odlitky', fuel: null, mode: 'inert', Tig: Infinity, qCrit: Infinity,
+    rcd: 11340 * 130 * 0.003, cp: 130, melt: 600, latent: 23e3, cool: 120, look: 'metal', residue: 'ztuhlé kapky; ukazatel teplot nad 330–420 °C', conf: 4,
+  },
+  copper: {
+    name: 'Měď (vodiče, trubky)', fuel: null, mode: 'inert', Tig: Infinity, qCrit: Infinity,
+    rcd: 8960 * 385 * 0.002, cp: 385, melt: 1358, latent: 205e3, cool: 150, look: 'metal', residue: 'zčernalá, v běžném požáru se netaví (1 085 °C)', conf: 5,
   },
 };
 

@@ -92,6 +92,41 @@ export const FUELS = {
     fv: 0.15, name: 'Líh (etanol)', dHc: 26.8e6, mInf: 0.015, kBeta: 100, rho: 790, ys: 0.008, yCO: 0.001, chiR: 0.2,
     Tflame: 1500, water: 0.0, tar: 0.0, embers: 0, sparks: 0, conf: 4,
   },
+  // --- doplněno v iteraci 7 (zbraně, plyny pod tlakem, kovy, prach)
+  propane: {
+    fv: 2.0, Tlum: 1400, name: 'Propan-butan (LPG)', dHc: 46.0e6, mInf: 0.099, kBeta: 1.4, rho: 510, ys: 0.024, yCO: 0.005, chiR: 0.28,
+    Tflame: 1350, water: 0.0, tar: 0.0, embers: 0, sparks: 0, conf: 4,
+  },
+  methane: {
+    // zemní plyn: málo sazí, namodralý až bledě žlutý plamen, u velkých úniků oranžový
+    fv: 0.4, name: 'Zemní plyn (metan)', dHc: 50.0e6, rho: 0.68, ys: 0.004, yCO: 0.002, chiR: 0.2,
+    Tflame: 1450, water: 0.0, tar: 0.0, embers: 0, sparks: 0, conf: 4,
+  },
+  magnesium: {
+    // hořčík: 24,7 MJ/kg, hoří při ~3 100 °C oslnivě bíle (žhavé částice MgO), hustý bílý dým; voda ho rozhoří (vodík) ★4
+    fv: 8, Tlum: 3200, name: 'Hořčík', dHc: 24.7e6, rho: 1740, ys: 0.05, yCO: 0, chiR: 0.55,
+    Tflame: 3200, water: 1.0, tar: 0.0, embers: 0.3, sparks: 1, conf: 3,
+  },
+  thermite: {
+    // termit Fe₂O₃ + 2 Al: 3,98 MJ/kg, ~2 500 °C, žádný plyn → žádný vysoký plamen, sprška jisker a tekuté železo ★4
+    fv: 6, Tlum: 2700, name: 'Termit (Fe₂O₃ + Al)', dHc: 3.98e6, rho: 3000, ys: 0.03, yCO: 0, chiR: 0.6,
+    Tflame: 2700, water: 0.8, tar: 0.0, embers: 0.6, sparks: 1, conf: 4,
+  },
+  flourDust: {
+    // rozvířený organický prach (mouka, škrob, piliny): hoří jako plyn, valivá oranžová koule; K_St 100–200 bar·m/s ★3
+    fv: 1.2, name: 'Organický prach (mouka)', dHc: 15.5e6, rho: 600, ys: 0.02, yCO: 0.05, chiR: 0.3,
+    Tflame: 1250, water: 0.2, tar: 0.1, embers: 0.2, sparks: 0.2, conf: 3,
+  },
+  propellant: {
+    // bezdýmný prach: výbuchové teplo ~4,0 MJ/kg bez vzduchu; plyny (CO, H₂) u ústí dohoří se vzduchem ★3
+    fv: 0.5, name: 'Bezdýmný prach (nitrocelulóza)', dHc: 4.0e6, rho: 1600, ys: 0.005, yCO: 0.3, chiR: 0.2,
+    Tflame: 2100, water: 0.3, tar: 0.0, embers: 0, sparks: 0.4, conf: 3,
+  },
+  napalm: {
+    // zahuštěný benzín (plamenomet, zápalná láhev s příměsí): hoří jako benzín, ale drží na povrchu a hoří déle ★3
+    sootBlack: 0.95, fv: 2.4, Tlum: 1400, name: 'Zahuštěný benzín', dHc: 43.0e6, mInf: 0.045, kBeta: 2.1, rho: 780, ys: 0.06, yCO: 0.012, chiR: 0.38,
+    Tflame: 1200, water: 0.0, tar: 0.2, embers: 0, sparks: 0, conf: 3,
+  },
   steelSpark: {
     fv: 0, name: 'Ocelová jiskra (broušení)', dHc: 0, rho: 7850, ys: 0, yCO: 0, chiR: 1, Tflame: 1800,
     water: 0, tar: 0, embers: 0, sparks: 1, conf: 4,

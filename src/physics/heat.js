@@ -20,6 +20,12 @@ export function emissivePower(D, sooty = true) {
 /** Sálání bodového zdroje (Modak 1977): q″ = χr·Q / (4π R²). Platí pro R ≳ 2,5 D. ★4 */
 export const pointSourceFlux = (Q, chiR, R) => (chiR * Q) / (4 * Math.PI * Math.max(R * R, 1e-6));
 
+/**
+ * Propustnost vzduchu pro sálání plamene: τ = 2,02·(p_w·R)^(−0,09), p_w = parciální tlak vodní páry [Pa], R [m]
+ * (Bagster & Pitblado; TNO „Yellow Book“). Při 20 °C a 50 % vlhkosti: 10 m → 0,87, 100 m → 0,71. ★4
+ */
+export const transmissivity = (R, pw = 1170) => Math.min(1, 2.02 * Math.pow(Math.max(pw * R, 1), -0.09));
+
 /** Tok při přímém kontaktu s plamenem [W/m²]: malé plameny 50–80, pohlcení velkým uhlovodíkovým požárem 100–150 kW/m². ★3 (SFPE, Babrauskas) */
 export const contactFlux = (D) => 60e3 + 90e3 * (1 - Math.exp(-0.3 * D));
 
@@ -51,7 +57,8 @@ export function fluxFromFire(fire, p) {
   for (const f of [1 / 6, 1 / 2, 5 / 6]) {
     const h = f * L, ex = dx - ax * h, ey = dy - ay * h, ez = dz - az * h;
     const eh = Math.hypot(ex, ez), sh = Math.max(eh - (D / 2) * (1 - 0.6 * f), Math.min(eh, 0.05 * D + 0.01));
-    rad += pointSourceFlux(Q / 3, chiR, Math.hypot(sh, ey));
+    const Rp = Math.hypot(sh, ey);
+    rad += pointSourceFlux(Q / 3, chiR, Rp) * transmissivity(Rp);
   }
   rad = Math.min(rad, emissivePower(D, fire.sooty ?? true));
   // oblak nad plamenem i vedle něj (mimo obálku)
@@ -174,6 +181,46 @@ export function sootRate(tauPerM, Tg, Ts) {
 export function glassState(q, mat = 'glass') {
   const m = material(mat);
   return q >= m.falloutQ ? 'vypadlé' : q >= m.crackQ ? 'popraskané' : 'celé';
+}
+
+/**
+ * Okenní sklo v čase: tabule se ohřívá jako tenká deska (ρcδ), okraj v rámu zůstává studený → praskne při rozdílu
+ * ΔT ≈ 60–90 K (Pagni & Joshi; Keski-Rahkonen ★4). Vypadne při toku nad ~20 kW/m² (9 začátek, 35 jistota) nebo teplotě
+ * plynu nad ~360 °C (Babrauskas: Glass breakage in fires ★2–3). Tvrzené sklo vydrží až do celkového vzplanutí místnosti.
+ * st = { T, state: 'celé' | 'popraskané' | 'vypadlé' }; q″ [W/m²], Tg [K].
+ */
+export function stepGlass(st, q, Tg, dt, mat = 'glass') {
+  const m = material(mat), T0 = AMB.T;
+  let T = st.T ?? T0, state = st.state ?? 'celé';
+  if (state === 'vypadlé') return { T, state };
+  const n = Math.max(1, Math.ceil(dt / 2));
+  for (let i = 0; i < n; i++) T += ((0.9 * q - 2 * 0.9 * SIGMA * (T ** 4 - T0 ** 4) - 2 * 10 * (T - T0)) / m.rcd) * (dt / n);
+  T = Math.max(T0, T);
+  if (state === 'celé' && T - T0 >= m.crackDT) state = 'popraskané';
+  if (state === 'popraskané' && (q >= m.falloutQ || Tg >= m.falloutT)) state = 'vypadlé';
+  return { T, state };
+}
+
+/**
+ * Tavení kovu: nad bodem tání jde teplo do skupenského tepla; vrací podíl roztaveného 0..1.
+ * Hliník 660 °C (disky kol stečou do louží), olovo a zinek 330–420 °C, měď 1 085 °C (běžný požár ji neroztaví). ★5
+ */
+export function meltStep(frac, T, q, dt, mat) {
+  const m = material(mat);
+  if (!m.melt || T < m.melt || frac >= 1) return frac;
+  const rhoD = m.rcd / (m.cp || 500); // kg/m²
+  return Math.min(1, frac + (Math.max(0, 0.85 * q - 2 * 0.85 * SIGMA * (m.melt ** 4 - AMB.T ** 4)) * dt) / (m.latent * rhoD));
+}
+
+/**
+ * Stopy na zdivu a betonu podle nejvyšší teploty povrchu Tmax [K] (NFPA 921; Ingham 2009 ★3):
+ *  saze drží do ~430 °C, nad tím shoří → světlý „čistý výpal“ u ohniska s černým lemem okolo;
+ *  beton s křemičitým kamenivem růžoví od ~300 °C, šedne nad 600 °C; omítka a povrch betonu odprýskává od ~300 °C.
+ */
+export function masonryLook(Tmax, soot = 0) {
+  const s = (a, b, x) => Math.min(1, Math.max(0, (x - a) / (b - a)));
+  const clean = s(650, 760, Tmax);
+  return { soot: soot * (1 - clean), cleanBurn: clean, pink: s(560, 640, Tmax) * (1 - s(850, 950, Tmax)), grey: s(850, 950, Tmax), spall: s(570, 800, Tmax) };
 }
 
 /** Účinky toku na člověka a věci (orientační, SFPE/CCPS). */

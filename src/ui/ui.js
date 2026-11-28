@@ -9,6 +9,8 @@ import { LOD_NAMES, tris } from '../assets/geo.js';
 import { atlasToCanvas, atlasPreviewCanvas } from '../fx/bake.js';
 import { FUELS } from '../physics/fuels.js';
 import { fmtW } from '../scenarios/index.js';
+import { HEAT_LEGEND } from '../fx/heatmap.js';
+import { figure } from '../assets/props3.js';
 
 const h = (tag, attrs = {}, ...kids) => {
   const e = document.createElement(tag);
@@ -45,6 +47,7 @@ async function download(name, data) {
   document.body.append(a); a.click(); a.remove();
 }
 
+const EVENT_NAMES = { ignite: 'vznícení', reignite: 'znovu vzplálo', burnout: 'vyhořelo', explode: 'VÝBUCH', extinguished: 'uhašeno', crack: 'sklo prasklo', fallout: 'sklo vypadlo', melt: 'taví se', melted: 'roztaveno' };
 export class UI {
   constructor(app) {
     this.app = app; this.tab = 'fyzika'; this.hist = []; window.__fireUI = this;
@@ -73,10 +76,14 @@ export class UI {
       this.sndBtn = h('button', { class: 'btn', onclick: () => { if (a.audio.on) a.audio.disable(); else a.audio.enable(); this.sndBtn.textContent = a.audio.on ? '🔊' : '🔇'; }, title: 'Zvuk ohně a výbuchů (procedurální, rána se zpožděním 343 m/s)' }, '🔇'),
       h('button', { class: 'btn', onclick: () => this.shot(), title: 'Snímek PNG' }, '📷'),
       h('button', { class: 'btn', onclick: () => this.showAtlas(), title: 'Flipbook atlas' }, 'Atlas'),
+      this.heatBtn = h('button', { class: 'btn', onclick: () => { a.fx.heatOn = !a.fx.heatOn; this.refresh(); this.renderPane(true); }, title: 'Tepelná mapa: sálání na zemi v kW/m² (kde to bolí, kde chytne sláma a dřevo)' }, 'Teplo'),
+      this.figBtn = h('button', { class: 'btn', onclick: () => this.toggleFigure(), title: 'Postava 1,8 m jako měřítko (3 m od středu)' }, 'Postava'),
+      h('button', { class: 'btn', onclick: () => this.copyLink(), title: 'Zkopírovat odkaz na tento scénář s nastavením' }, 'Odkaz'),
       h('button', { class: 'btn', onclick: () => document.body.classList.toggle('noui'), title: 'H – skrýt rozhraní' }, '⛶'),
     );
     // levý panel
     const left = $('#left');
+    left.append(h('input', { class: 'find', type: 'search', placeholder: `Hledat (${SCENARIOS.length} scénářů, ${ASSETS.length} modelů)`, oninput: (e) => this.filter(e.target.value) }));
     const groups = [...new Set(SCENARIOS.map((s) => s.group))];
     for (const g of groups) {
       left.append(h('h4', {}, g));
@@ -104,6 +111,31 @@ export class UI {
     this.refresh();
   }
 
+  /** Hledání v levém panelu: skryje položky, které neobsahují text, a prázdné nadpisy skupin. */
+  filter(txt) {
+    const t = txt.trim().toLowerCase(), left = $('#left'); let head = null, any = false;
+    for (const e of [...left.children]) {
+      if (e.tagName === 'H4') { if (head) head.style.display = any ? '' : 'none'; head = e; any = false; }
+      else if (e.classList.contains('it')) { const ok = !t || e.textContent.toLowerCase().includes(t) || (e.dataset.s || e.dataset.a || '').toLowerCase().includes(t); e.style.display = ok ? '' : 'none'; any = any || ok; }
+    }
+    if (head) head.style.display = any ? '' : 'none';
+  }
+  toggleFigure() {
+    const a = this.app;
+    if (this.fig) { a.scene.remove(this.fig); this.fig = null; } else { this.fig = figure({ lod: 2 }); this.fig.position.set(3, 0, 0.5); a.scene.add(this.fig); }
+    this.refresh();
+  }
+  /** Odkaz na aktuální scénář se stupněm, větrem, dobou a hodnotami ovladačů. */
+  copyLink() {
+    const a = this.app, q = new URLSearchParams();
+    if (a.mode === 'asset') q.set('asset', a.assetId); else q.set('scn', a.scnId);
+    q.set('tier', a.tierId); if (a.wind) q.set('wind', a.wind); if (a.timeOverride) q.set('time', a.timeOverride); if (a.fx.heatOn) q.set('heat', '1');
+    for (const c of a.scn?.controls || []) if (a.controlsVals[c.id] !== c.value) q.set('c.' + c.id, a.controlsVals[c.id]);
+    const url = location.origin + location.pathname + '?' + q.toString();
+    const done = () => this.toast('Odkaz zkopírován: ?' + q.toString()), fail = () => this.toast('Parametry odkazu: ?' + q.toString());
+    try { navigator.clipboard.writeText(url).then(done, fail); } catch { fail(); }
+  }
+
   restart() { const a = this.app; if (a.mode === 'asset') a.loadAsset(a.assetId); else a.loadScenario(a.scnId, { keepCamera: true }); }
 
   seek(e) {
@@ -124,6 +156,7 @@ export class UI {
     [...this.windSeg.children].forEach((b, i) => b.classList.toggle('on', i === a.wind));
     [...this.timeSeg.children].forEach((b) => b.classList.toggle('on', b.textContent === a.env.time));
     this.playBtn.textContent = a.paused ? '▶' : '⏸';
+    this.heatBtn.classList.toggle('on', !!a.fx.heatOn); this.figBtn.classList.toggle('on', !!this.fig);
     this.speedSel.value = String(a.timeScale);
     document.querySelectorAll('#left .it').forEach((b) => b.classList.toggle('on', (a.mode === 'scenario' && b.dataset.s === a.scnId) || (a.mode === 'asset' && b.dataset.a === a.assetId)));
     document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.t === this.tab));
@@ -166,6 +199,9 @@ export class UI {
       }
       const rows = a.run?.info?.() || [];
       p.append(this.rowsTable([['Čas scénáře', fmt(a.t, 1) + ' s' + (a.scn.duration ? ' / ' + a.scn.duration + ' s' : ''), ''], ['Vítr (10 m)', `${WIND_CLASSES[a.wind].name} ${WIND_CLASSES[a.wind].U10} m/s`, 'Beaufort'], ['Kyslík (ventilace)', (a.o2 * 100).toFixed(0) + ' %', ''], ...rows]));
+      const ev = a.fx.events || [];
+      if (ev.length) p.append(h('h5', {}, 'Události'), this.rowsTable(ev.slice(-8).map((e) => [`${e.t < 100 ? e.t.toFixed(e.t < 10 ? 2 : 1) + ' s' : (e.t / 60).toFixed(1) + ' min'}  ${EVENT_NAMES[e.type] || e.type}`, e.label || '', e.cause || (e.W ? e.W.toFixed(e.W < 1 ? 3 : 1) + ' kg TNT' : '')])));
+      if (a.fx.heatOn) p.append(h('h5', {}, 'Tepelná mapa (sálání v 1 m nad zemí, kW/m²)'), h('div', { class: 'legend' }, ...HEAT_LEGEND.map(([r, t, c]) => h('div', {}, h('i', { style: 'background:' + c }), h('b', {}, r), ' ' + t))));
       p.append(h('p', { class: 'note' }, '★ = míra jistoty vzorce/čísla (1–5). Zdroje a rozhodnutí: DECISIONS.md v repozitáři.'));
     } else if (this.tab === 'technika') {
       const st = a.stats(), t = TIERS[a.tierId];
@@ -183,6 +219,7 @@ export class UI {
         ['Textur / geometrií / programů', `${st.textures} / ${st.geometries} / ${st.programs}`, ''],
         ['Zahozené částice (limit)', st.dropped, ''],
       ]));
+      if (a.scn?.tiers && a.mode !== 'asset') p.append(h('h5', {}, 'Tři cesty tohoto scénáře'), this.rowsTable(a.scn.tiers.map((x, i) => [['Levná', 'Střední', 'Drahá'][i] + (Math.floor(a.tierId / 2) === i ? ' ◀ teď' : ''), x.replace(/^T\d–T\d: /, ''), x.slice(0, 5)])));
     } else if (this.tab === 'ovládání') {
       if (!full) return;
       p.innerHTML = '';
@@ -197,6 +234,7 @@ export class UI {
       p.append(range('Lokální adaptace plamene (klíč)', 0.5, 20, 0.1, a.flameKey, (v) => (a.flameKey = v)));
       p.append(range('Korekce expozice (EV)', -4, 4, 0.25, Math.log2(a.expBias || 1), (v) => (a.expBias = 2 ** v), (v) => (v > 0 ? '+' : '') + v));
       p.append(range('Bloom', 0, 2, 0.05, a.pipeline.bloomStrength, (v) => (a.pipeline.bloomStrength = v)));
+      p.append(range('Denní jas plamene (strop adaptace)', 0, 16, 0.5, a.dayFlameK, (v) => (a.dayFlameK = v), (v) => '×' + (1 + v).toFixed(1)));
       if (a.scn?.controls) {
         p.append(h('h4', {}, 'Parametry scénáře'));
         for (const c of a.scn.controls) {

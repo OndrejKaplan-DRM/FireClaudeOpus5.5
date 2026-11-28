@@ -18,7 +18,8 @@ for (const [id, dur] of ids) {
   if (only && !only.includes(id)) continue;
   const e0 = errs.length, ts = Date.now();
   // explozím dát čas po spuštění, dlouhým scénářům posunout čas
-  const sec = { barrel: 7.2, acetylene: 1.7, grenade: 1.62, tnt: 2.6, forest: 4, brush: 4, lighter: 2.6, blastLab: 2.2, chain: 40, leak: 30, dieselBarrel: 20, acetyleneCyl: +(process.env.CYL_SEC ?? 21) }[id] ?? 3;
+  const sec = { barrel: 7.2, acetylene: 1.7, grenade: 1.62, tnt: 2.6, forest: 4, brush: 4, lighter: 2.6, blastLab: 2.2, chain: 40, leak: 30, dieselBarrel: 20, acetyleneCyl: +(process.env.CYL_SEC ?? 21),
+    pistol: 1.22, machineGun: 1.7, cannon: 2.05, chainBlast: 2.1, molotov: 3.0, flamethrower: 3.2, jetFire: 3, trail: 6, extinguish: 14, aftermath: 45, flashover: 36, dust: 3.35, fireworks: 6.6, thermite: 8, whirl: 8 }[id] ?? 3;
   const seek = { haystack: 300, tires: 200, car: 700, forest: 1800, brush: 500, house: 700, diesel: 20 }[id] ?? 0;
   const res = await page.evaluate(([id, sec, seek]) => { try {
     const f = window.__fire, a = f.app;

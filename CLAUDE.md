@@ -27,6 +27,7 @@ npm run bake           # dataset/: flipbooky PNG, GLB modely, náhledy, presety 
 npm run test:xengine   # integrace s xEngine (jádro + vykreslení z klonu, systém fx.fire)
 npm run test:audio     # zvuk bez reproduktoru (OfflineAudioContext): hlasy ohně, zpoždění rány, útlum výšek
 npm run test:layout   # rozložení při zvětšení stránky (dpr 1–3) a úzkých oknech; nic nesmí přetéct ani růst
+npm run test:nogl     # start bez WebGL a ztráta kontextu za běhu: hlášení místo nekonečného načítání (D-048)
 node tools/audio-demo.mjs [outdir]                        # ukázky zvuku do WAV
 node tools/tri.mjs <scn> <tier> <seek s> <sim s>          # volání kreslení a △ jednoho snímku
 node tools/look.mjs <scn> <tier> <s> "x,y,z" "tx,ty,tz" out.png "<js>"   # snímek s úpravou stavu

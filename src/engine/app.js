@@ -16,7 +16,13 @@ import { FireAudio } from '../audio/fireAudio.js';
 export class App {
   constructor(canvas, q = {}) {
     this.canvas = canvas;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: !!q.preserve });
+    // Kontext se zkouší třikrát: výkonná grafika → výchozí → úsporná i s softwarovým vykreslením. Když prohlížeč nevydá žádný
+    // (zablokované WebGL po pádech ovladače, vypnutá akcelerace, moc otevřených kontextů), hlásí to main.js uživateli (D-048).
+    let err = null; this.renderer = null;
+    for (const t of [{ powerPreference: 'high-performance' }, { powerPreference: 'default' }, { powerPreference: 'low-power', failIfMajorPerformanceCaveat: false }]) {
+      try { this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, preserveDrawingBuffer: !!q.preserve, ...t }); this.glTry = t.powerPreference; break; } catch (e) { err = e; }
+    }
+    if (!this.renderer) throw Object.assign(new Error('WEBGL_UNAVAILABLE'), { cause: err });
     this.renderer.info.autoReset = false;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     const g = guessTier(this.renderer);
@@ -37,7 +43,7 @@ export class App {
     this.audio = new FireAudio();
     this.fx.env = this.env;
     this.objects = []; this.disposables = []; this.flora = [];
-    this.timeScale = 1; this.paused = false; this.t = 0; this.wind = 0; this.windDir = 0; this.o2 = 1;
+    this.timeScale = 1; this.dayFlameK = 9; this.paused = false; this.t = 0; this.wind = 0; this.windDir = 0; this.o2 = 1;
     this.flameKey = 140; // γ 0,45 v plameni: chladnější místa tmavší, klíč vyrovná střed (iterace 4) this.lodOverride = null; this.wire = false;
     this.controlsVals = {};
     this.mode = 'scenario';
@@ -54,7 +60,8 @@ export class App {
 
   resize() {
     const r = this.canvas.parentElement.getBoundingClientRect();
-    const w = Math.max(320, r.width | 0), h = Math.max(200, r.height | 0);
+    // strop: kreslicí plocha nikdy přes 4096 px na stranu – ochrana proti vyčerpání paměti grafiky (a ztrátě kontextu), kdyby rozložení selhalo
+    const w = Math.min(4096, Math.max(320, r.width | 0)), h = Math.min(4096, Math.max(200, r.height | 0));
     this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
     this.pipeline.resize(w, h);
   }
@@ -99,7 +106,7 @@ export class App {
     this.env.setGround(s.ground || 'dirt', s.groundSize || 800);
     this.env.setTime(this.timeOverride || s.time || 'soumrak');
     this.env.ground.visible = true;
-    for (const c of s.controls || []) if (!(c.id in this.controlsVals) || this._lastScn !== s.id) this.controlsVals[c.id] = c.value;
+    for (const c of s.controls || []) if (!(c.id in this.controlsVals) || (this._lastScn !== s.id && this._lastScn !== undefined)) this.controlsVals[c.id] = c.value; // první načtení ponechá hodnoty z odkazu (?c.id=)
     this._lastScn = s.id;
     if (s.wind != null && this._lastWindScn !== s.id) { this.wind = s.wind; this._windFromScn = true; }
     else if (s.wind == null && this._windFromScn) { this.wind = 0; this._windFromScn = false; }
@@ -179,7 +186,7 @@ export class App {
     // strop jasu: ve dne (malá expozice) až 6,5× FLAME_LUM – na denních fotkách jsou sazové plameny jasně oranžové až žluté
     // i vedle osluněné země (svítivé víry 1 500–1 650 K ≈ 6–25 tis. cd/m²; se stropem 20 tis. při 1 500 K vycházel plamen
     // ve dne tmavě hnědočervený). V noci a za soumraku se strop neuplatní (umělecké ★2 podle fotek, D-039).
-    const cap = FLAME_LUM * (1 + 5.5 * Math.min(1, Math.max(0, (Math.log10(1 / ex) - 3.3) / 0.9)));
+    const cap = FLAME_LUM * (1 + this.dayFlameK * Math.min(1, Math.max(0, (Math.log10(1 / ex) - 3.3) / 0.9)));
     this.fx.flameLum = Math.min(cap, (this.flameKey / ex) * Math.min(1.3, Math.max(0.1, Math.pow(ex / 0.25, 0.4))));
     this.fx.lumRef = Math.min(12000, 16 / ex);
     PRE.value = this.pipeline.exposure;
@@ -203,6 +210,7 @@ export class App {
   loop() {
     const tick = () => {
       requestAnimationFrame(tick);
+      if (this.contextLost) return; // grafický kontext je pryč – nekreslit, čeká se na obnovení (main.js)
       const dt = Math.min(this.clock.getDelta(), 0.1);
       const t0 = performance.now();
       if (!this.paused) this.step(dt);

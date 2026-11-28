@@ -116,7 +116,7 @@ export const ITER6_LIQUIDS = [
       for (let i = 0; i < N; i++) {
         const xc = x0 + (N - 0.5 - i) * seg, start = tIgn + (i * seg) / spread;
         const kq = 0.75 + 0.5 * ((i * 0.618) % 1); // nestejně vydatné úseky (nerovnosti podkladu) ★2
-        srcs.push(ctx.fx.addSource({ pos: V(xc, 0.01, (i % 2 ? 0.06 : -0.06)), fuel, seed: 40 + i * 7, volume: true, footprint: { type: 'rect', w: seg * 1.7, d: w * 1.15 }, start, shapeK: 1.45, taper: 0.6, puffAmp: 0.7, volSoot: 0.3, mult: { smoke: 1.5, haze: 0.35 },
+        srcs.push(ctx.fx.addSource({ pos: V(xc, 0.01, (i % 2 ? 0.06 : -0.06)), fuel, seed: 40 + i * 7, volume: true, footprint: { type: 'rect', w: seg * 1.7, d: w * 1.15 }, start, shapeK: 1.45, taper: 0.6, puffAmp: 0.7, volSoot: 0.12, mult: { smoke: 1.5, haze: 0.35 },
           Q: (t) => (sp.Q(ctx.t) / N) * kq * Math.min(1, t / (fuel === 'diesel' ? 14 : 2)) }));
         ctx.fx.addScorch({ pos: V(xc, 0, 0), radius: seg * 0.75, rate: 1 / 200, seed: 12 + i });
       }
@@ -147,6 +147,7 @@ export const ITER6_BLAST = [
     id: 'acetyleneCyl', group: 'Exploze', name: 'Výbuch acetylenové lahve (v požáru)', ground: 'dirt', time: 'soumrak', timeScale: 20, duration: 560,
     desc: 'Tlaková láhev 50 l (7 kg C₂H₂ v acetonu) v hořící hranici palet. Ocel při ~550 °C ztrácí polovinu pevnosti, acetylen se uvnitř rozkládá → plášť se roztrhne na kusy, plyn vzplane v ohnivou kouli ~13 m (1 s), oslnivě žlutou a plnou sazí. Tlaková vlna ≈ 1–2 kg TNT, úlomky letí ~80 m/s na stovky metrů (zóna hasičů 200 m).',
     cams: [{ name: 'celek', pos: [15, 4, 19], target: [0, 4.5, 0] }, { name: 'hráč (12 m)', pos: [9, 1.7, 8], target: [0, 2.5, 0] }, { name: 'z dálky (70 m)', pos: [55, 6, 45], target: [0, 7, 0] }],
+    controls: [{ id: 'cylLook', label: 'Varianta výbuchu', type: 'select', value: 'fyzikální', options: ['fyzikální', 'filmová'], restart: true }],
     build(ctx) {
       const pal = []; const rr = mulberry32(5);
       for (let i = 0; i < 4; i++) { const p = P2.pallet({ lod: Math.min(ctx.lod, 3) }); p.position.set((rr() - 0.5) * 0.08, i * 0.146, (rr() - 0.5) * 0.08); p.rotation.y = (rr() - 0.5) * 0.25 + (i % 2) * Math.PI / 2; ctx.add(p); pal.push(p); }
@@ -159,7 +160,7 @@ export const ITER6_BLAST = [
       const shell = ctx.fx.addBurnable({ pos: V(0, 0, 0), material: { ...MATERIALS.steelThick, rcd: MATERIALS.steelThick.rcd * 2 }, char: cyl.userData.char, probe: [0, 0.75, 0], label: 'plášť lahve' });
       cyl.userData.char.uHeatFall.value = 0.1;
       ctx.fx.addScorch({ pos: V(0, 0, 0), radius: 2.2, rate: 1 / 300, glow: 0.3, seed: 7 });
-      const es = explosionSpec({ kind: 'gasCylinder' });
+      const es = explosionSpec({ kind: 'gasCylinder', film: ctx.controls.cylLook === 'filmová' });
       const Tburst = MATERIALS.steelThick.weak; let boom = false, tBoom = 0; const frags = [];
       return {
         update(dt, t) {

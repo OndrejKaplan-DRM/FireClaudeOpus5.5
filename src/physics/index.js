@@ -8,3 +8,6 @@ export * from './spread.js';
 export * from './materials.js';
 export * from './heat.js';
 export * from './spec.js';
+export * from './gun.js';
+export * from './suppress.js';
+export * from './sim.js';

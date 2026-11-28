@@ -14,6 +14,7 @@ import { fbm2 } from '../assets/textures.js';
 import { PRE, FLAMEK, sharedUniforms, GLSL_COMMON } from '../fx/shared.js';
 import { forestDetail } from './forestDetail.js';
 import { ITER6_FIRST, ITER6_LIQUIDS, ITER6_BLAST, ITER6_SPREAD } from './iter6.js';
+import { ITER7_GUNS, ITER7_CHAIN, ITER7_INCEND, ITER7_AFTER, ITER7_SPECIAL } from './iter7.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 export const fmtW = (q) => (q >= 1e6 ? (q / 1e6).toFixed(2) + ' MW' : q >= 1e3 ? (q / 1e3).toFixed(1) + ' kW' : q.toFixed(0) + ' W');
@@ -381,6 +382,14 @@ insertAfter(SCENARIOS, 'tires', ITER6_SPREAD);
 insertAfter(SCENARIOS, 'diesel', ITER6_LIQUIDS);
 insertAfter(SCENARIOS, 'acetylene', [ITER6_BLAST[0]]);
 insertAfter(SCENARIOS, 'lab', [ITER6_BLAST[1]]);
+// iterace 7: zbraně, řetěz, zápalné, hašení, následky, prach, pyrotechnika, kovy, vír
+const i7 = (id) => [...ITER7_INCEND, ...ITER7_SPECIAL].find((x) => x.id === id);
+insertAfter(SCENARIOS, 'lighter', [i7('jetFire')]);
+insertAfter(SCENARIOS, 'bonfire', [i7('whirl')]);
+insertAfter(SCENARIOS, 'tires', [i7('thermite')]);
+insertAfter(SCENARIOS, 'leak', [i7('trail'), i7('molotov'), i7('flamethrower')]);
+insertAfter(SCENARIOS, 'acetyleneCyl', [i7('dust'), i7('fireworks'), ...ITER7_CHAIN]);
+insertAfter(SCENARIOS, 'tnt', [...ITER7_GUNS, ...ITER7_AFTER]);
 
 // =====================================================================================================
 /** Krajinný požár: porost, mapa paliva, časy příchodu (Dijkstra), bazén zdrojů pro hořící buňky. */

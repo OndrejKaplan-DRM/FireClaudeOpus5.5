@@ -338,3 +338,15 @@ hořlavé materiály. Oheň, který se šíří podle hořlavosti materiálu …
   zalamuje dlouhé hodnoty (`table-layout:fixed`), výběrová pole se vejdou do panelu; pod 760 px se panely skládají pod sebe.
 - **Pravidlo**: žádné plátno nesmí určovat rozměr svého rodiče. Každá změna UI se zkouší při dpr 1,25 a 1,5
   (`npm run test:layout`: 9 velikostí × zvětšení, 3 běhy skutečné smyčky, přetečení pravého panelu u všech scénářů a záložek).
+
+### D-048 · 2026-11-28 · Spuštění bez grafického kontextu a ztráta kontextu za běhu
+- **Hlášení Ondřeje**: artefakt zůstal viset na „generuji šum, textury…“. V konzoli `THREE.WebGLRenderer: Error creating WebGL
+  context` – prohlížeč kontext nevydal a stránka to neuměla říct.
+- **Hypotéza příčiny** (neověřeno na jeho stroji): Chrome po opakované ztrátě kontextu zablokuje WebGL pro danou adresu do
+  restartu; ztrátu mohla vyvolat chyba D-047 (plátno rostlo bez omezení → paměť grafiky).
+- **Oprava na naší straně**: `App` zkouší kontext třikrát (výkonná → výchozí → úsporná grafika i se softwarovým kreslením);
+  když neuspěje, `main.js` ukáže srozumitelné hlášení s postupem a diagnostikou (WebGL 2/1 ano/ne, chyba, prohlížeč).
+  Ztráta kontextu za běhu: `webglcontextlost` zastaví kreslení a ukáže hlášení, `webglcontextrestored` stránku načte znovu.
+  Strop kreslicí plochy: nejvýš 4096 px na stranu a ~8,3 Mpx celkem (sníží se poměr bodů, ne funkčnost).
+- **Test**: `npm run test:nogl` (Chrome s `--disable-3d-apis`; ztráta a obnovení přes `WEBGL_lose_context`).
+- **Pravidlo**: úvodní obrazovka nesmí zůstat viset – každá výjimka při startu musí skončit hlášením pro člověka.

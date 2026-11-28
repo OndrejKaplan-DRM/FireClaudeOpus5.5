@@ -163,6 +163,7 @@ export class FireAudio {
       boom(ctx, this.master, { when: at + Math.max(0.01, delay), W: e.o.W || 0.05, dist, seed: (e.o.seed ?? 3) + this.seed++ });
     }
     for (const ev of fx.audioEvents || []) if (ev.type === 'pop') pop(ctx, this.master, { when: at + ev.pos.distanceTo(cp) / C_SOUND, dist: ev.pos.distanceTo(cp), seed: this.seed++ });
+    for (const ev of fx.audioEvents || []) if (ev.type === 'shot') boom(ctx, this.master, { when: at + ev.pos.distanceTo(cp) / C_SOUND, W: Math.max(ev.W, 1e-5), dist: ev.pos.distanceTo(cp), seed: this.seed++ }); // výstřel = malý výbuch
     if (fx.audioEvents) fx.audioEvents.length = 0;
   }
 }

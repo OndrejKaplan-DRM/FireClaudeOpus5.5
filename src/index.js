@@ -25,3 +25,7 @@ export { ASSETS, assetById } from './assets/index.js';
 export { SCENARIOS, scenarioById } from './scenarios/index.js';
 export * as physics from './physics/index.js';
 export { Burnable } from './fx/burnable.js';
+export { GunFX } from './fx/gun.js';
+export { Spray } from './fx/spray.js';
+export { WallSoot } from './fx/decal.js';
+export { FireSim, ThermalBody } from './physics/sim.js';

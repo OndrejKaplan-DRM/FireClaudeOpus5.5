@@ -156,6 +156,9 @@ export class Pipeline {
 
   resize(w, h) {
     this.w = w; this.h = h;
+    // strop počtu bodů kreslicí plochy (~8,3 Mpx = 4K): při velkém okně a vysokém dpr se sníží poměr bodů, ne funkčnost
+    const pr0 = Math.min(window.devicePixelRatio || 1, this.tier.maxPixelRatio), cap = Math.sqrt(8.3e6 / Math.max(1, w * h * pr0 * pr0));
+    if (cap < 1) this.r.setPixelRatio(pr0 * cap); else if (this.r.getPixelRatio() !== pr0) this.r.setPixelRatio(pr0);
     this.r.setSize(w, h, false);
     const pr = this.r.getPixelRatio(), s = this.tier.renderScale;
     const W = Math.max(2, Math.round(w * pr * s)), H = Math.max(2, Math.round(h * pr * s));

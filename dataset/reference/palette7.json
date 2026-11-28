@@ -1,0 +1,536 @@
+[
+ {
+  "file": "q01_eHouse_0.jpg",
+  "category": "dům",
+  "note": "noční požár domu, hasiči",
+  "title": "File:2025 Southern California fires and the United States Forest Service (USFS) - Eaton Fire Initial Attack (54263442283).jpg",
+  "artist": "Pacific Southwest Forest Service, USDA from USA",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:2025_Southern_California_fires_and_the_United_States_Forest_Service_(USFS)_-_Eaton_Fire_Initial_Attack_(54263442283).jpg",
+  "stats": {
+   "scene_median": 0.024,
+   "night": false,
+   "dark_frac": 0.456,
+   "flame_frac": 0.083,
+   "flame_hue": 17.6,
+   "flame_sat": 0.79,
+   "flame_Y_med": 0.36,
+   "flame_Y_p90": 0.58,
+   "flame_over_scene": 18.0,
+   "clipped": 0.01
+  }
+ },
+ {
+  "file": "q02_eHouse_2.jpg",
+  "category": "dům",
+  "note": "požár domu ve dne, černý kouř",
+  "title": "File:House fire in Waikanae, 16 May 2026, P 01.jpg",
+  "artist": "Panamitsu",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:House_fire_in_Waikanae,_16_May_2026,_P_01.jpg",
+  "stats": {
+   "scene_median": 0.174,
+   "night": false,
+   "dark_frac": 0.007,
+   "flame_frac": 0.002,
+   "flame_hue": 28.8,
+   "flame_sat": 0.72,
+   "flame_Y_med": 0.47,
+   "flame_Y_p90": 0.8,
+   "flame_over_scene": 2.7,
+   "clipped": 8.52
+  }
+ },
+ {
+  "file": "q03_fWild_0.jpg",
+  "category": "les",
+  "note": "vzplanutí koruny",
+  "title": "File:1980-1990 national program of research for forests and associated rangelands. - (1982) (19950320884).jpg",
+  "artist": "United States. Forest Service",
+  "license": "No restrictions",
+  "url": "https://commons.wikimedia.org/wiki/File:1980-1990_national_program_of_research_for_forests_and_associated_rangelands._-_(1982)_(19950320884).jpg",
+  "stats": {
+   "scene_median": 0.122,
+   "night": false,
+   "dark_frac": 0.277,
+   "flame_frac": 0.385,
+   "flame_hue": 33.9,
+   "flame_sat": 0.98,
+   "flame_Y_med": 0.44,
+   "flame_Y_p90": 0.62,
+   "flame_over_scene": 11.6,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "q04_fForest_0.jpg",
+  "category": "les",
+  "note": "stěna plamenů",
+  "title": "File:Pioneer Fire - Night - Flames fury burn trees.jpg",
+  "artist": "U.S. Department of Agriculture\n\nU.S. Forest Service/USDA",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Pioneer_Fire_-_Night_-_Flames_fury_burn_trees.jpg",
+  "stats": {
+   "scene_median": 0.115,
+   "night": false,
+   "dark_frac": 0.13,
+   "flame_frac": 0.386,
+   "flame_hue": 9.1,
+   "flame_sat": 1.0,
+   "flame_Y_med": 0.32,
+   "flame_Y_p90": 0.67,
+   "flame_over_scene": 6.2,
+   "clipped": 0.01
+  }
+ },
+ {
+  "file": "q05_fForest_3.jpg",
+  "category": "les",
+  "note": "noční záře za hřebenem",
+  "title": "File:Task Force Utah on Autumn Lane fire night shift.jpg",
+  "artist": "U.S. Forest Service",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Task_Force_Utah_on_Autumn_Lane_fire_night_shift.jpg",
+  "stats": {
+   "scene_median": 0.004,
+   "night": true,
+   "dark_frac": 0.713,
+   "flame_frac": 0.007,
+   "flame_hue": 18.8,
+   "flame_sat": 0.6,
+   "flame_Y_med": 0.48,
+   "flame_Y_p90": 0.65,
+   "flame_over_scene": 118.7,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "q06_fCarFire_3.jpg",
+  "category": "ulice",
+  "note": "hořící barikáda, černý kouř",
+  "title": "File:A public motorbike being burnt in Nepal Chitwan during a protest in 2009.jpg",
+  "artist": "C4crystal",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:A_public_motorbike_being_burnt_in_Nepal_Chitwan_during_a_protest_in_2009.jpg",
+  "stats": {
+   "scene_median": 0.072,
+   "night": false,
+   "dark_frac": 0.307,
+   "flame_frac": 0.032,
+   "flame_hue": 12.7,
+   "flame_sat": 0.94,
+   "flame_Y_med": 0.36,
+   "flame_Y_p90": 0.73,
+   "flame_over_scene": 5.4,
+   "clipped": 0.06
+  }
+ },
+ {
+  "file": "q07_fTank_0.jpg",
+  "category": "výstřel",
+  "note": "tank – koule u ústí",
+  "title": "File:Merkava Muzzle Flash.jpg",
+  "artist": "Israel Defense Forces",
+  "license": "CC BY-SA 2.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Merkava_Muzzle_Flash.jpg",
+  "stats": {
+   "scene_median": 0.198,
+   "night": false,
+   "dark_frac": 0.061,
+   "flame_frac": 0.106,
+   "flame_hue": 38.8,
+   "flame_sat": 0.87,
+   "flame_Y_med": 0.7,
+   "flame_Y_p90": 0.9,
+   "flame_over_scene": 4.6,
+   "clipped": 0.22
+  }
+ },
+ {
+  "file": "q08_fTank_1.jpg",
+  "category": "výstřel",
+  "note": "tank – záblesk a prach",
+  "title": "File:Firing M1A1 tank in Djibouti.jpg",
+  "artist": "Alex C. Sauceda, U.S. Marine Corps",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Firing_M1A1_tank_in_Djibouti.jpg",
+  "stats": {
+   "scene_median": 0.297,
+   "night": false,
+   "dark_frac": 0.036,
+   "flame_frac": 0.059,
+   "flame_hue": 24.6,
+   "flame_sat": 0.66,
+   "flame_Y_med": 0.56,
+   "flame_Y_p90": 0.75,
+   "flame_over_scene": 2.0,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "q09_fTank_3.jpg",
+  "category": "výstřel",
+  "note": "tank – protáhlý plamen",
+  "title": "File:Firing M1A1 Abrams tank.JPG",
+  "artist": "Jason D. Mills, U.S. Marine Corps",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Firing_M1A1_Abrams_tank.JPG",
+  "stats": {
+   "scene_median": 0.102,
+   "night": false,
+   "dark_frac": 0.075,
+   "flame_frac": 0.013,
+   "flame_hue": 29.7,
+   "flame_sat": 0.6,
+   "flame_Y_med": 0.67,
+   "flame_Y_p90": 0.78,
+   "flame_over_scene": 6.7,
+   "clipped": 1.9
+  }
+ },
+ {
+  "file": "q10_fMG_1.jpg",
+  "category": "výstřel",
+  "note": "tank – ohnivá koule a zvířený prach",
+  "title": "File:151008-A-HE359-363 (21946576820).jpg",
+  "artist": "U.S. Department of Defense Current Photos",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:151008-A-HE359-363_(21946576820).jpg",
+  "stats": {
+   "scene_median": 0.484,
+   "night": false,
+   "dark_frac": 0.049,
+   "flame_frac": 0.095,
+   "flame_hue": 13.4,
+   "flame_sat": 0.69,
+   "flame_Y_med": 0.61,
+   "flame_Y_p90": 0.77,
+   "flame_over_scene": 1.3,
+   "clipped": 1.6
+  }
+ },
+ {
+  "file": "q11_fMG_3.jpg",
+  "category": "výstřel",
+  "note": "automatický kanón",
+  "title": "File:Batalionul 191 infanterie 48.jpg",
+  "artist": "locotenent-colonel Dragoş Anghelache",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Batalionul_191_infanterie_48.jpg",
+  "stats": {
+   "scene_median": 0.267,
+   "night": false,
+   "dark_frac": 0.037,
+   "flame_frac": 0.004,
+   "flame_hue": 39.8,
+   "flame_sat": 0.63,
+   "flame_Y_med": 0.78,
+   "flame_Y_p90": 0.9,
+   "flame_over_scene": 2.9,
+   "clipped": 0.97
+  }
+ },
+ {
+  "file": "q12_fArty_1.jpg",
+  "category": "výstřel",
+  "note": "houfnice – žlutý plamen a prach",
+  "title": "File:Flickr - DVIDSHUB - Afghan Army plans, executes artillery training (Image 2 of 6).jpg",
+  "artist": "Sergeant Earnest J. Barnes",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Flickr_-_DVIDSHUB_-_Afghan_Army_plans,_executes_artillery_training_(Image_2_of_6).jpg",
+  "stats": {
+   "scene_median": 0.287,
+   "night": false,
+   "dark_frac": 0.006,
+   "flame_frac": 0.343,
+   "flame_hue": 29.0,
+   "flame_sat": 0.89,
+   "flame_Y_med": 0.45,
+   "flame_Y_p90": 0.65,
+   "flame_over_scene": 1.9,
+   "clipped": 0.03
+  }
+ },
+ {
+  "file": "q13_fRocket_2.jpg",
+  "category": "výstřel",
+  "note": "zpětný plamen pancéřovky",
+  "title": "File:AT4 rocket launcher.jpg",
+  "artist": "",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:AT4_rocket_launcher.jpg",
+  "stats": {
+   "scene_median": 0.192,
+   "night": false,
+   "dark_frac": 0.027,
+   "flame_frac": 0.118,
+   "flame_hue": 57.7,
+   "flame_sat": 0.73,
+   "flame_Y_med": 0.92,
+   "flame_Y_p90": 0.96,
+   "flame_over_scene": 5.0,
+   "clipped": 1.35
+  }
+ },
+ {
+  "file": "q14_fExpl_0.jpg",
+  "category": "výbuch",
+  "note": "ohnivá koule se sprškou jisker",
+  "title": "File:Defense.gov photo essay 080620-F-9876D-295.jpg",
+  "artist": "Staff Sgt. Patrick Dixon",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Defense.gov_photo_essay_080620-F-9876D-295.jpg",
+  "stats": {
+   "scene_median": 0.193,
+   "night": false,
+   "dark_frac": 0.008,
+   "flame_frac": 0.05,
+   "flame_hue": 38.5,
+   "flame_sat": 0.77,
+   "flame_Y_med": 0.7,
+   "flame_Y_p90": 0.91,
+   "flame_over_scene": 3.7,
+   "clipped": 1.99
+  }
+ },
+ {
+  "file": "q15_fDemo_0.jpg",
+  "category": "výbuch",
+  "note": "koule přecházející v hřib",
+  "title": "File:US Navy 020220-N-3236B-017 Explosive Ordnance Disposal (EOD) Technicians.jpg",
+  "artist": "U.S. Navy photo by Photographer’s Mate 1st Class Ted Banks.",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:US_Navy_020220-N-3236B-017_Explosive_Ordnance_Disposal_(EOD)_Technicians.jpg",
+  "stats": {
+   "scene_median": 0.134,
+   "night": false,
+   "dark_frac": 0.038,
+   "flame_frac": 0.191,
+   "flame_hue": 21.2,
+   "flame_sat": 0.93,
+   "flame_Y_med": 0.5,
+   "flame_Y_p90": 0.74,
+   "flame_over_scene": 4.2,
+   "clipped": 0.02
+  }
+ },
+ {
+  "file": "q16_fDemo_3.jpg",
+  "category": "výbuch",
+  "note": "malá nálož, prach",
+  "title": "File:US Navy 060607-N-7987M-068 Explosive Ordnance Disposal Training and Evaluation Unit Two (EODTEU-2) demonstrates the destruction of an explosive device at Fort Story.jpg",
+  "artist": "U.S. Navy photo by Photographer's Mate Airman Mandy Mclaurin",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:US_Navy_060607-N-7987M-068_Explosive_Ordnance_Disposal_Training_and_Evaluation_Unit_Two_(EODTEU-2)_demonstrates_the_destruction_of_an_explosive_device_at_Fort_Story.jpg",
+  "stats": {
+   "scene_median": 0.421,
+   "night": false,
+   "dark_frac": 0.109,
+   "flame_frac": 0.052,
+   "flame_hue": 20.3,
+   "flame_sat": 0.78,
+   "flame_Y_med": 0.56,
+   "flame_Y_p90": 0.92,
+   "flame_over_scene": 1.4,
+   "clipped": 0.27
+  }
+ },
+ {
+  "file": "q17_fAir_0.jpg",
+  "category": "výbuch",
+  "note": "sloupy kouře po dopadech",
+  "title": "File:Airstrike Shewan Farah province.jpg",
+  "artist": "Sgt. Steven R. Cushman",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Airstrike_Shewan_Farah_province.jpg",
+  "stats": {
+   "scene_median": 0.288,
+   "night": false,
+   "dark_frac": 0.0,
+   "flame_frac": 0.0
+  }
+ },
+ {
+  "file": "q18_fMolotov_0.jpg",
+  "category": "zápalné",
+  "note": "zapálená láhev",
+  "title": "File:Training bijstandseenheid 12 (molotov zoom).jpg",
+  "artist": "Ministerie van Defensie",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Training_bijstandseenheid_12_(molotov_zoom).jpg",
+  "stats": {
+   "scene_median": 0.038,
+   "night": false,
+   "dark_frac": 0.351,
+   "flame_frac": 0.024,
+   "flame_hue": 26.2,
+   "flame_sat": 0.89,
+   "flame_Y_med": 0.46,
+   "flame_Y_p90": 0.73,
+   "flame_over_scene": 12.9,
+   "clipped": 0.03
+  }
+ },
+ {
+  "file": "q19_fFlame_3.jpg",
+  "category": "tryska",
+  "note": "pyrotechnický plamen (jevištní efekt)",
+  "title": "File:Flamethrower 20261005 (15).JPG",
+  "artist": "User:Zafer",
+  "license": "CC BY-SA 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Flamethrower_20261005_(15).JPG",
+  "stats": {
+   "scene_median": 0.007,
+   "night": true,
+   "dark_frac": 0.599,
+   "flame_frac": 0.061,
+   "flame_hue": 23.7,
+   "flame_sat": 0.96,
+   "flame_Y_med": 0.44,
+   "flame_Y_p90": 0.93,
+   "flame_over_scene": 81.1,
+   "clipped": 2.43
+  }
+ },
+ {
+  "file": "q20_eGasFlare_3.jpg",
+  "category": "tryska",
+  "note": "fléra ve dne",
+  "title": "File:Bakken Flaring Gas at night.JPG",
+  "artist": "Joshua Doubek",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Bakken_Flaring_Gas_at_night.JPG",
+  "stats": {
+   "scene_median": 0.023,
+   "night": false,
+   "dark_frac": 0.475,
+   "flame_frac": 0.115,
+   "flame_hue": 32.7,
+   "flame_sat": 0.83,
+   "flame_Y_med": 0.62,
+   "flame_Y_p90": 0.83,
+   "flame_over_scene": 37.1,
+   "clipped": 0.02
+  }
+ },
+ {
+  "file": "q21_fHose_2.jpg",
+  "category": "hašení",
+  "note": "hasiči s proudem před ohněm",
+  "title": "File:Aircraft Rescue Firefighting training.jpg",
+  "artist": "Manuel F. Guerrero, U.S. Marine Corps",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:Aircraft_Rescue_Firefighting_training.jpg",
+  "stats": {
+   "scene_median": 0.109,
+   "night": false,
+   "dark_frac": 0.102,
+   "flame_frac": 0.256,
+   "flame_hue": 6.1,
+   "flame_sat": 0.99,
+   "flame_Y_med": 0.27,
+   "flame_Y_p90": 0.45,
+   "flame_over_scene": 3.9,
+   "clipped": 0.0
+  }
+ },
+ {
+  "file": "q22_fFirework_1.jpg",
+  "category": "pyrotechnika",
+  "note": "barevné květy",
+  "title": "File:Colourful Fireworks Expanding Across the Night Sky.jpg",
+  "artist": "Jalfyn Benging",
+  "license": "CC BY 4.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Colourful_Fireworks_Expanding_Across_the_Night_Sky.jpg",
+  "stats": {
+   "scene_median": 0.006,
+   "night": true,
+   "dark_frac": 0.636,
+   "flame_frac": 0.033,
+   "flame_hue": 0.0,
+   "flame_sat": 0.84,
+   "flame_Y_med": 0.29,
+   "flame_Y_p90": 0.5,
+   "flame_over_scene": 50.9,
+   "clipped": 0.01
+  }
+ },
+ {
+  "file": "q23_fMg_0.jpg",
+  "category": "kovy",
+  "note": "hořící hořčík",
+  "title": "File:Magnesium ribbon burning.jpg",
+  "artist": "Capt. John Yossarian",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Magnesium_ribbon_burning.jpg",
+  "stats": {
+   "scene_median": 0.001,
+   "night": true,
+   "dark_frac": 0.838,
+   "flame_frac": 0.015,
+   "flame_hue": 29.1,
+   "flame_sat": 0.69,
+   "flame_Y_med": 0.58,
+   "flame_Y_p90": 0.81,
+   "flame_over_scene": 583.4,
+   "clipped": 1.8
+  }
+ },
+ {
+  "file": "q24_fThermite_0.jpg",
+  "category": "kovy",
+  "note": "termit – sprška jisker",
+  "title": "File:ThermiteReaction.jpg",
+  "artist": "User:Nikthestunned (Wikipedia)",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:ThermiteReaction.jpg",
+  "stats": {
+   "scene_median": 0.01,
+   "night": true,
+   "dark_frac": 0.599,
+   "flame_frac": 0.091,
+   "flame_hue": 21.5,
+   "flame_sat": 0.91,
+   "flame_Y_med": 0.45,
+   "flame_Y_p90": 0.79,
+   "flame_over_scene": 58.1,
+   "clipped": 0.79
+  }
+ },
+ {
+  "file": "q25_fBurned_0.jpg",
+  "category": "škody",
+  "note": "vyhořelý interiér",
+  "title": "File:Burned house in Hamina, interior.JPG",
+  "artist": "Niera",
+  "license": "CC BY-SA 3.0",
+  "url": "https://commons.wikimedia.org/wiki/File:Burned_house_in_Hamina,_interior.JPG",
+  "stats": {
+   "scene_median": 0.085,
+   "night": false,
+   "dark_frac": 0.24,
+   "flame_frac": 0.0
+  }
+ },
+ {
+  "file": "q26_eWhirl_0.jpg",
+  "category": "vír",
+  "note": "ohnivý vír",
+  "title": "File:20120727-LavaFire-005 (7680421628).jpg",
+  "artist": "Bureau of Land Management",
+  "license": "Public domain",
+  "url": "https://commons.wikimedia.org/wiki/File:20120727-LavaFire-005_(7680421628).jpg",
+  "stats": {
+   "scene_median": 0.476,
+   "night": false,
+   "dark_frac": 0.002,
+   "flame_frac": 0.273,
+   "flame_hue": 34.7,
+   "flame_sat": 0.71,
+   "flame_Y_med": 0.51,
+   "flame_Y_p90": 0.68,
+   "flame_over_scene": 1.1,
+   "clipped": 0.0
+  }
+ }
+]

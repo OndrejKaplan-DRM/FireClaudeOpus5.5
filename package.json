@@ -12,7 +12,8 @@
     "perf": "node tools/perf-cpu.mjs",
     "test:xengine": "node tools/test-xengine-node.mjs && node tools/test-xengine.mjs",
     "test:audio": "node tools/test-audio.mjs",
-    "test:layout": "node tools/test-layout.mjs"
+    "test:layout": "node tools/test-layout.mjs",
+    "test:nogl": "node tools/test-nogl.mjs"
   },
   "repository": {
     "type": "git",

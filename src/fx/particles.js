@@ -353,6 +353,11 @@ void main(){
   if (vB > 0.5) f *= 0.25 + 0.75 * smoothstep(0.35, 0.75, n3(vec3(p * 1.6, fract(vB) * 37.0)));
   // ×2,5: bodový zdroj pod pixel oko vnímá jasněji (oslnění, Purkyně/Stiles–Crawford) – umělecké ★2, D-021
   vec3 c = bbColor(vT) * f * vA * uLum * 2.5;
+  if (vB < -0.5) { // pyrotechnická hvězdice: barvu dává čárové spektrum kovové soli, ne teplota (Sr, Ba, Cu, Na, Sr+Cu, bílá)
+    int k = int(-vB + 0.5);
+    vec3 tint = k == 1 ? vec3(1.0, 0.07, 0.04) : k == 2 ? vec3(0.1, 1.0, 0.18) : k == 3 ? vec3(0.14, 0.3, 1.0) : k == 4 ? vec3(1.0, 0.7, 0.08) : k == 5 ? vec3(0.62, 0.18, 1.0) : vec3(1.0, 0.95, 0.88);
+    c = tint * dot(bbColor(vT), vec3(0.2126, 0.7152, 0.0722)) * 1.6 * f * vA * uLum * 2.5;
+  }
   o = fxOut(vec4(c, 0.0));
 }`;
 
@@ -373,12 +378,12 @@ export class SparkSystem extends BaseSystem {
     this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.layers.set(LAYER_FX); this.mesh.renderOrder = 6;
   }
   /** Jiskra/uhlík: T0 [K], chladnutí τc [s], průměr d [m]. */
-  spawn({ x, y, z, vx, vy, vz, life, T, tauC = 0.6, size = 0.002, drag = 1.5, grav = 1, buoy = 0, ox, oz, pq = 0, pz0 = 0, seed, R0 = 0, ember = false, vt = 1, brand = 0, smokeRGB = null }) {
+  spawn({ x, y, z, vx, vy, vz, life, T, tauC = 0.6, size = 0.002, drag = 1.5, grav = 1, buoy = 0, ox, oz, pq = 0, pz0 = 0, seed, R0 = 0, ember = false, vt = 1, brand = 0, smokeRGB = null, star = 0 }) {
     const o = this.alloc(); if (o < 0) return;
     const d = this.d;
-    d[o + F.type] = brand > 0 ? 2 : ember ? 1 : 0; d[o + F.tau0] = vt;
+    d[o + F.type] = star > 0 ? 3 : brand > 0 ? 2 : ember ? 1 : 0; d[o + F.tau0] = vt;
     // oharek: podíl života s vlastním plamenem (cr), albedo kouře stopy (cg), akumulátor stopy (extra)
-    d[o + F.cr] = brand; d[o + F.cg] = smokeRGB ? smokeRGB[0] : 0.22;
+    d[o + F.cr] = star > 0 ? star : brand; d[o + F.cg] = smokeRGB ? smokeRGB[0] : 0.22;
     d[o + F.px] = x; d[o + F.py] = y; d[o + F.pz] = z; d[o + F.vx] = vx; d[o + F.vy] = vy; d[o + F.vz] = vz;
     d[o + F.life] = life; d[o + F.T0] = T; d[o + F.dT] = tauC; d[o + F.s0] = size; d[o + F.drag] = drag; d[o + F.grav] = grav; d[o + F.buoy] = buoy;
     d[o + F.seed] = seed ?? Math.random(); d[o + F.ox] = ox ?? x; d[o + F.oz] = oz ?? z; d[o + F.pq] = pq; d[o + F.pz0] = pz0; d[o + F.glowR] = R0;
@@ -427,13 +432,16 @@ export class SparkSystem extends BaseSystem {
         const burn = a01 > 0.75 ? 1 - (a01 - 0.75) * 4 : 1;
         Tk = (700 + (d[o + F.T0] - 700) * burn) * ash * (1 + 0.04 * Math.sin(age * 31 + sd * 40));
         sz *= 0.55 + 0.45 * burn;
+      } else if (ty === 3) {
+        // hvězdice: hoří stálým jasem, na konci rychle dohoří; mihotání (nestejnoměrné hoření slože)
+        Tk = d[o + F.T0] * (1 - Math.max(0, a01 - 0.8) * 2.5) * (1 + 0.12 * Math.sin(age * 41 + sd * 40));
       } else {
         // jiskra: radiační + konvektivní chladnutí → exponenciála k ~600 K
         Tk = 600 + (d[o + F.T0] - 600) * Math.exp(-age / d[o + F.dT]);
         Tk *= (1 + 0.25 * Math.sin(age * 23 + sd * 40)) * (1 - Math.max(0, a01 - 0.85) * 2);
       }
       PS[i * 4] = d[o]; PS[i * 4 + 1] = d[o + 1]; PS[i * 4 + 2] = d[o + 2]; PS[i * 4 + 3] = sz;
-      V[i * 4] = d[o + F.vx]; V[i * 4 + 1] = d[o + F.vy]; V[i * 4 + 2] = d[o + F.vz]; V[i * 4 + 3] = d[o + F.type] === 2 ? 1 + sd * 0.99 : 0;
+      V[i * 4] = d[o + F.vx]; V[i * 4 + 1] = d[o + F.vy]; V[i * 4 + 2] = d[o + F.vz]; V[i * 4 + 3] = ty === 2 ? 1 + sd * 0.99 : ty === 3 ? -d[o + F.cr] : 0;
       T[i] = Tk;
     }
     this.geo.instanceCount = n;
